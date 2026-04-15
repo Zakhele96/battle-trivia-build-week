@@ -9,6 +9,8 @@ public sealed class TriviaRoundDetails
     public string Status { get; set; } = string.Empty;
     public DateTime StartedAt { get; set; }
     public DateTime EndsAt { get; set; }
+    public string? Category { get; set; }
+    public string? Difficulty { get; set; }
 
     public string QuestionText { get; set; } = string.Empty;
     public string CorrectAnswer { get; set; } = string.Empty;

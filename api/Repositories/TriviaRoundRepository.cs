@@ -93,28 +93,30 @@ public sealed class TriviaRoundRepository : ITriviaRoundRepository
     public async Task<TriviaRoundDetails?> GetActiveRoundDetailsByRoomIdAsync(Guid roomId)
     {
         const string sql = """
-            SELECT
-                r.id AS RoundId,
-                r.session_id AS SessionId,
-                r.question_id AS QuestionId,
-                r.round_number AS RoundNumber,
-                r.status AS Status,
-                r.started_at AS StartedAt,
-                r.ends_at AS EndsAt,
-                q.question_text AS QuestionText,
-                q.correct_answer AS CorrectAnswer,
-                q.accepted_answers::text AS AcceptedAnswersJson
-            FROM trivia_rounds r
-            INNER JOIN trivia_game_sessions s
-                ON s.id = r.session_id
-            INNER JOIN trivia_questions q
-                ON q.id = r.question_id
-            WHERE s.room_id = @RoomId
-              AND s.status = 'active'
-              AND r.status = 'active'
-            ORDER BY r.round_number DESC
-            LIMIT 1;
-            """;
+        SELECT
+            r.id AS RoundId,
+            r.session_id AS SessionId,
+            r.question_id AS QuestionId,
+            r.round_number AS RoundNumber,
+            r.status AS Status,
+            r.started_at AS StartedAt,
+            r.ends_at AS EndsAt,
+            q.question_text AS QuestionText,
+            q.category AS Category,
+            q.difficulty AS Difficulty,
+            q.correct_answer AS CorrectAnswer,
+            q.accepted_answers::text AS AcceptedAnswersJson
+        FROM trivia_rounds r
+        INNER JOIN trivia_game_sessions s
+            ON s.id = r.session_id
+        INNER JOIN trivia_questions q
+            ON q.id = r.question_id
+        WHERE s.room_id = @RoomId
+        AND s.status = 'active'
+        AND r.status = 'active'
+        ORDER BY r.round_number DESC
+        LIMIT 1;
+        """;
 
         using var connection = _context.CreateConnection();
         return await connection.QuerySingleOrDefaultAsync<TriviaRoundDetails>(sql, new { RoomId = roomId });

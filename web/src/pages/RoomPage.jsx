@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import ChatInput from "../components/ChatInput";
 import ChatStream from "../components/chat/ChatStream";
 import AchievementToastStack from "../components/profile/AchievementToastStack";
 import RoomFooterBar from "../components/room/RoomFooterBar";
-import RoomHeader from "../components/room/RoomHeader";
 import RoomModerationControlCard from "../components/room/RoomModerationControlCard";
 import RoomShell from "../components/room/RoomShell";
 import DesktopTriviaSidebar from "../components/trivia/DesktopTriviaSidebar";
@@ -70,6 +69,110 @@ function getViewportState() {
     height: Math.round(vv?.height || window.innerHeight || 0),
     offsetTop: Math.round(vv?.offsetTop || 0),
   };
+}
+
+function getRoomModeMeta(room, isBattleTrivia, isWordScramble) {
+  if (isBattleTrivia) {
+    return {
+      eyebrow: "Battle Trivia",
+      badgeLabel: "Featured competition",
+      badgeClass: "text-blue-300 border-blue-400/20 bg-blue-500/10",
+    };
+  }
+
+  if (isWordScramble) {
+    return {
+      eyebrow: "Word Scramble",
+      badgeLabel: "Game room",
+      badgeClass: "text-violet-300 border-violet-400/20 bg-violet-500/10",
+    };
+  }
+
+  if (room?.roomType === "chat") {
+    return {
+      eyebrow: "Community room",
+      badgeLabel: "Chat room",
+      badgeClass: "text-emerald-300 border-emerald-400/20 bg-emerald-500/10",
+    };
+  }
+
+  return {
+    eyebrow: "Room",
+    badgeLabel: "Live room",
+    badgeClass: "text-neutral-300 border-white/10 bg-white/[0.04]",
+  };
+}
+
+function RoomUtilityBar({
+  room,
+  user,
+  sessionLabel,
+  isBattleTrivia,
+  isWordScramble,
+}) {
+  const meta = getRoomModeMeta(room, isBattleTrivia, isWordScramble);
+
+  return (
+    <div className="mb-3 rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015))] px-3 py-3 shadow-[0_14px_34px_rgba(0,0,0,0.14)] sm:px-4">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.035] px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.16em] text-neutral-300 transition hover:border-white/15 hover:bg-white/[0.05]"
+            >
+              <span aria-hidden="true">←</span>
+              Back to lobby
+            </Link>
+
+            <span
+              className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-medium uppercase tracking-[0.16em] ${meta.badgeClass}`}
+            >
+              {meta.badgeLabel}
+            </span>
+
+            {sessionLabel ? (
+              <span className="inline-flex rounded-full border border-white/10 bg-white/[0.035] px-3 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-neutral-300">
+                {sessionLabel}
+              </span>
+            ) : null}
+          </div>
+
+          <div className="mt-3 text-[11px] uppercase tracking-[0.2em] text-blue-300/70">
+            {meta.eyebrow}
+          </div>
+
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <h2 className="truncate text-[20px] font-semibold tracking-[-0.03em] text-white sm:text-[22px]">
+              {room?.name || "Room"}
+            </h2>
+
+            {user?.displayName || user?.username ? (
+              <span className="text-sm text-neutral-500">
+                · {user.displayName || user.username}
+              </span>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Link
+            to="/profile"
+            className="inline-flex items-center gap-2 rounded-[16px] border border-white/10 bg-white/[0.035] px-4 py-2.5 text-sm font-medium text-white transition hover:border-white/15 hover:bg-white/[0.05]"
+          >
+            Profile
+          </Link>
+
+          <Link
+            to="/leaderboards?mode=combined&period=current"
+            className="inline-flex items-center gap-2 rounded-[16px] border border-white/10 bg-white/[0.035] px-4 py-2.5 text-sm font-medium text-white transition hover:border-white/15 hover:bg-white/[0.05]"
+          >
+            Leaderboards
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function RoomPage() {
@@ -562,16 +665,6 @@ export default function RoomPage() {
     </div>
   );
 
-  const header = (
-    <RoomHeader
-      roomName={room?.name}
-      status={status}
-      sessionLabel={effectiveSessionLabel}
-      userDisplayName={user?.displayName || user?.username}
-      isBattleTrivia={showGameSidebar}
-    />
-  );
-
   const roomStateBanner =
     status === "reconnecting" ? (
       <div className="mb-3 rounded-[18px] border border-amber-500/15 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
@@ -583,43 +676,47 @@ export default function RoomPage() {
       </div>
     ) : null;
 
-  const topContent = isBattleTrivia ? (
+  const topContent = (
     <div className="shrink-0 border-b border-white/5 bg-neutral-950/95 backdrop-blur-xl [padding-top:env(safe-area-inset-top)]">
       <div className="mx-auto w-full max-w-[68rem] px-3 py-2.5 sm:px-4 sm:py-3 lg:px-5">
+        <RoomUtilityBar
+          room={room}
+          user={user}
+          sessionLabel={effectiveSessionLabel}
+          isBattleTrivia={isBattleTrivia}
+          isWordScramble={isWordScramble}
+        />
+
         {roomStateBanner}
 
-        <TriviaHeroCard
-          currentRoundNumber={currentRoundNumber}
-          sessionStatus={sessionStatus}
-          timeLeft={timeLeft}
-          currentQuestion={currentQuestion}
-          correctAnswer={correctAnswer}
-          roundWinners={roundWinners}
-          isQuestionFresh={isQuestionFresh}
-          isRoundReveal={isRoundReveal}
-          hasActiveRound={!!currentRoundId}
-          lastRoundPlacement={lastRoundPlacement}
-        />
+        {isBattleTrivia ? (
+          <TriviaHeroCard
+            currentRoundNumber={currentRoundNumber}
+            sessionStatus={sessionStatus}
+            timeLeft={timeLeft}
+            currentQuestion={currentQuestion}
+            correctAnswer={correctAnswer}
+            roundWinners={roundWinners}
+            isQuestionFresh={isQuestionFresh}
+            isRoundReveal={isRoundReveal}
+            hasActiveRound={!!currentRoundId}
+            lastRoundPlacement={lastRoundPlacement}
+          />
+        ) : isWordScramble ? (
+          <WordScrambleHeroCard
+            roundNumber={wordScrambleState?.roundNumber}
+            maskedWord={wordScrambleState?.maskedWord}
+            answerWord={wordScrambleState?.answerWord}
+            category={wordScrambleState?.category}
+            hint={wordScrambleState?.hint}
+            phase={wordScrambleState?.phase}
+            timeLeft={wordScrambleState?.timeLeft ?? 0}
+            winners={wordScrambleState?.winners || []}
+          />
+        ) : null}
       </div>
     </div>
-  ) : isWordScramble ? (
-    <div className="shrink-0 border-b border-white/5 bg-neutral-950/95 backdrop-blur-xl [padding-top:env(safe-area-inset-top)]">
-      <div className="mx-auto w-full max-w-[68rem] px-3 py-2.5 sm:px-4 sm:py-3 lg:px-5">
-        {roomStateBanner}
-
-        <WordScrambleHeroCard
-          roundNumber={wordScrambleState?.roundNumber}
-          maskedWord={wordScrambleState?.maskedWord}
-          answerWord={wordScrambleState?.answerWord}
-          category={wordScrambleState?.category}
-          hint={wordScrambleState?.hint}
-          phase={wordScrambleState?.phase}
-          timeLeft={wordScrambleState?.timeLeft ?? 0}
-          winners={wordScrambleState?.winners || []}
-        />
-      </div>
-    </div>
-  ) : null;
+  );
 
   const stream = (
     <ChatStream
@@ -724,7 +821,7 @@ export default function RoomPage() {
     >
       <RoomShell
         sidebar={sidebar}
-        header={header}
+        header={null}
         topContent={topContent}
         stream={stream}
         footer={footer}

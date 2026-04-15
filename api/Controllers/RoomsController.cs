@@ -15,7 +15,6 @@ public sealed class RoomsController : ControllerBase
     private readonly ChatService _chatService;
     private readonly BattleTriviaSessionStatusService _battleTriviaSessionStatusService;
     private readonly RoomModerationStateService _roomModerationStateService;
-
     private readonly WordScrambleSessionStatusService _wordScrambleSessionStatusService;
     private readonly WordScrambleStateService _wordScrambleStateService;
 
@@ -23,12 +22,14 @@ public sealed class RoomsController : ControllerBase
         RoomService roomService,
         ChatService chatService,
         BattleTriviaSessionStatusService battleTriviaSessionStatusService,
+        RoomModerationStateService roomModerationStateService,
         WordScrambleSessionStatusService wordScrambleSessionStatusService,
         WordScrambleStateService wordScrambleStateService)
     {
         _roomService = roomService;
         _chatService = chatService;
         _battleTriviaSessionStatusService = battleTriviaSessionStatusService;
+        _roomModerationStateService = roomModerationStateService;
         _wordScrambleSessionStatusService = wordScrambleSessionStatusService;
         _wordScrambleStateService = wordScrambleStateService;
     }
@@ -99,6 +100,4 @@ public sealed class RoomsController : ControllerBase
         var state = await _wordScrambleStateService.GetRoomStateAsync(roomId);
         return Ok(state);
     }
-
-
 }

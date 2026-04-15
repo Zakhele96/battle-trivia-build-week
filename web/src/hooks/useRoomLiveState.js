@@ -306,7 +306,11 @@ export default function useRoomLiveState({
       currentRoundIdRef.current = payload.roundId;
       lastRoundPlacementRef.current = null;
 
-      setCurrentQuestion(payload.questionText);
+      setCurrentQuestion({
+        questionText: payload.questionText,
+        category: payload.category,
+        difficulty: payload.difficulty,
+      });
       setCurrentRoundId(payload.roundId);
       setCurrentRoundNumber(payload.roundNumber);
       setRoundEndsAt(endsAt);

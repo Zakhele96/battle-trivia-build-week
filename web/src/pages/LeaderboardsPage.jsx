@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { getLeaderboard } from "../api/leaderboardsApi";
+import AppTopBar from "../components/layout/AppTopBar";
 
 const MODES = [
   { key: "combined", label: "Combined" },
@@ -84,50 +85,55 @@ export default function LeaderboardsPage() {
   return (
     <div className="min-h-screen bg-neutral-950 text-white">
       <div className="mx-auto w-full max-w-[76rem] px-4 py-6 sm:px-5 sm:py-8 lg:px-6 lg:py-10">
-        <div className="mb-8">
-          <div className="text-[11px] uppercase tracking-[0.22em] text-blue-300/70">
-            Leaderboards
+        <AppTopBar
+          eyebrow="Leaderboards"
+          title="Weekly standings"
+          description="Compare Battle Trivia, Word Scramble, and combined performance without leaving the main app flow."
+          actions={[
+            {
+              to: "/profile",
+              label: "Profile",
+              sublabel: "Your stats and history",
+            },
+          ]}
+        />
+
+        <div className="mb-6 rounded-[24px] border border-white/10 bg-white/[0.03] p-4 sm:p-5">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-wrap gap-2">
+              {MODES.map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => updateQuery(item.key, period)}
+                  className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+                    mode === item.key
+                      ? "bg-blue-500 text-white"
+                      : "border border-white/10 bg-white/[0.03] text-neutral-300 hover:bg-white/[0.05]"
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {PERIODS.map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => updateQuery(mode, item.key)}
+                  className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+                    period === item.key
+                      ? "bg-violet-500 text-white"
+                      : "border border-white/10 bg-white/[0.03] text-neutral-300 hover:bg-white/[0.05]"
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
           </div>
-          <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.04em] text-white sm:text-[36px]">
-            Weekly standings
-          </h1>
-          <p className="mt-3 text-sm leading-7 text-neutral-400 sm:text-[15px]">
-            Switch between Battle Trivia, Word Scramble, and combined weekly standings.
-          </p>
-        </div>
-
-        <div className="mb-4 flex flex-wrap gap-2">
-          {MODES.map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              onClick={() => updateQuery(item.key, period)}
-              className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                mode === item.key
-                  ? "bg-blue-500 text-white"
-                  : "border border-white/10 bg-white/[0.03] text-neutral-300 hover:bg-white/[0.05]"
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="mb-6 flex flex-wrap gap-2">
-          {PERIODS.map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              onClick={() => updateQuery(mode, item.key)}
-              className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                period === item.key
-                  ? "bg-violet-500 text-white"
-                  : "border border-white/10 bg-white/[0.03] text-neutral-300 hover:bg-white/[0.05]"
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
         </div>
 
         <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4 sm:p-5">

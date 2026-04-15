@@ -56,10 +56,12 @@ public sealed class ChatHub : Hub
         if (activeRound is not null &&
             string.Equals(activeRound.Status, "active", StringComparison.OrdinalIgnoreCase))
         {
-            await Clients.Caller.SendAsync("QuestionStarted", new
+           await Clients.Caller.SendAsync("QuestionStarted", new
             {
                 roundId = activeRound.RoundId,
                 questionText = activeRound.QuestionText,
+                category = activeRound.Category,
+                difficulty = activeRound.Difficulty,
                 roundNumber = activeRound.RoundNumber,
                 endsAt = activeRound.EndsAt
             });

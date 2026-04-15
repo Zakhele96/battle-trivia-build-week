@@ -266,6 +266,8 @@ public sealed class BattleTriviaHostedService : BackgroundService
             {
                 roundId = round.Id,
                 questionText = question.QuestionText,
+                category = question.Category,
+                difficulty = question.Difficulty,
                 roundNumber = round.RoundNumber,
                 endsAt = round.EndsAt.ToUniversalTime().ToString("O")
             }, stoppingToken);

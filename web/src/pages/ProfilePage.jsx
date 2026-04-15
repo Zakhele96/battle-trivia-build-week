@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   changeMyPassword,
   getMyProfile,
@@ -8,6 +9,7 @@ import {
 } from "../api/profileApi";
 import ProfileAchievementsCard from "../components/profile/ProfileAchievementsCard";
 import ProfileProgressCard from "../components/profile/ProfileProgressCard";
+import AppTopBar from "../components/layout/AppTopBar";
 
 function formatFastest(ms) {
   if (typeof ms !== "number") return "—";
@@ -36,6 +38,42 @@ function StatCard({ label, value }) {
         {label}
       </div>
       <div className="mt-1 text-lg font-semibold text-white">{value}</div>
+    </div>
+  );
+}
+
+function IdentityCard({ profile }) {
+  return (
+    <div className="rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015))] p-5">
+      <div className="text-[11px] uppercase tracking-[0.18em] text-neutral-500">
+        Account identity
+      </div>
+
+      <div className="mt-3 text-[24px] font-semibold tracking-[-0.03em] text-white">
+        {profile?.displayName || profile?.username || "Player"}
+      </div>
+
+      <div className="mt-2 text-sm text-neutral-400">
+        @{profile?.username || "username"}
+      </div>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-[18px] border border-white/8 bg-black/20 px-4 py-3">
+          <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
+            Email
+          </div>
+          <div className="mt-1 text-sm text-white">{profile?.email || "—"}</div>
+        </div>
+
+        <div className="rounded-[18px] border border-white/8 bg-black/20 px-4 py-3">
+          <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
+            Phone
+          </div>
+          <div className="mt-1 text-sm text-white">
+            {profile?.phoneNumber || "Not added"}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -199,17 +237,18 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-neutral-950 text-white">
       <div className="mx-auto w-full max-w-[76rem] px-4 py-6 sm:px-5 sm:py-8 lg:px-6 lg:py-10">
-        <div className="mb-8">
-          <div className="text-[11px] uppercase tracking-[0.24em] text-blue-300/70">
-            BTS
-          </div>
-          <h1 className="mt-2 text-[30px] font-semibold tracking-[-0.04em] text-white sm:text-[38px]">
-            Your profile
-          </h1>
-          <p className="mt-3 max-w-[42rem] text-sm leading-7 text-neutral-400 sm:text-[16px]">
-            Update your account details and track your all-time performance.
-          </p>
-        </div>
+        <AppTopBar
+          eyebrow="Profile"
+          title="Your account"
+          description="Manage your details, progression, and all-time performance from one place."
+          actions={[
+            {
+              to: "/leaderboards?mode=combined&period=current",
+              label: "Leaderboards",
+              sublabel: "View standings",
+            },
+          ]}
+        />
 
         {error ? (
           <div className="mb-4 rounded-[20px] border border-red-900/35 bg-red-950/25 px-4 py-3 text-sm text-red-300/90">
@@ -222,6 +261,10 @@ export default function ProfilePage() {
             {message}
           </div>
         ) : null}
+
+        <div className="mb-6">
+          <IdentityCard profile={profile} />
+        </div>
 
         <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="space-y-6">
@@ -344,8 +387,17 @@ export default function ProfilePage() {
             />
 
             <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5">
-              <div className="mb-4 text-sm font-semibold text-white">
-                All-time stats
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div className="text-sm font-semibold text-white">
+                  All-time stats
+                </div>
+
+                <Link
+                  to="/leaderboards?mode=combined&period=current"
+                  className="text-[11px] font-medium uppercase tracking-[0.16em] text-blue-300/80"
+                >
+                  View standings
+                </Link>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
