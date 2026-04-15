@@ -1,0 +1,446 @@
+import { useEffect, useMemo, useState } from "react";
+import {
+  changeMyPassword,
+  getMyProfile,
+  getMyProfileHistory,
+  getMyProgression,
+  updateMyProfile,
+} from "../api/profileApi";
+import ProfileAchievementsCard from "../components/profile/ProfileAchievementsCard";
+import ProfileProgressCard from "../components/profile/ProfileProgressCard";
+
+function formatFastest(ms) {
+  if (typeof ms !== "number") return "—";
+  if (ms < 1000) return `${ms} ms`;
+  if (ms < 10000) return `${(ms / 1000).toFixed(2)}s`;
+  return `${(ms / 1000).toFixed(1)}s`;
+}
+
+function formatDate(value) {
+  if (!value) return "—";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+}
+
+function StatCard({ label, value }) {
+  return (
+    <div className="rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-3">
+      <div className="text-[10px] uppercase tracking-[0.14em] text-neutral-500">
+        {label}
+      </div>
+      <div className="mt-1 text-lg font-semibold text-white">{value}</div>
+    </div>
+  );
+}
+
+export default function ProfilePage() {
+  const [profile, setProfile] = useState(null);
+  const [progression, setProgression] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const [totalPages, setTotalPages] = useState(1);
+
+  const [displayName, setDisplayName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [isLoadingProgression, setIsLoadingProgression] = useState(true);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadProfile() {
+      setIsLoadingProfile(true);
+
+      try {
+        const data = await getMyProfile();
+        if (!isMounted) return;
+
+        setProfile(data);
+        setDisplayName(data?.displayName || "");
+        setPhoneNumber(data?.phoneNumber || "");
+      } catch {
+        if (!isMounted) return;
+        setError("Failed to load profile.");
+      } finally {
+        if (!isMounted) return;
+        setIsLoadingProfile(false);
+      }
+    }
+
+    loadProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadProgression() {
+      setIsLoadingProgression(true);
+
+      try {
+        const data = await getMyProgression();
+        if (!isMounted) return;
+        setProgression(data);
+      } catch {
+        if (!isMounted) return;
+        setError("Failed to load progression.");
+      } finally {
+        if (!isMounted) return;
+        setIsLoadingProgression(false);
+      }
+    }
+
+    loadProgression();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadHistory() {
+      setIsLoadingHistory(true);
+
+      try {
+        const data = await getMyProfileHistory(page, pageSize);
+        if (!isMounted) return;
+
+        setHistory(Array.isArray(data?.items) ? data.items : []);
+        setTotalPages(data?.totalPages || 1);
+      } catch {
+        if (!isMounted) return;
+        setError("Failed to load profile history.");
+      } finally {
+        if (!isMounted) return;
+        setIsLoadingHistory(false);
+      }
+    }
+
+    loadHistory();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [page]);
+
+  const stats = useMemo(() => profile?.stats || {}, [profile]);
+
+  async function handleSaveProfile(e) {
+    e.preventDefault();
+    setError("");
+    setMessage("");
+
+    try {
+      setIsSavingProfile(true);
+
+      const updated = await updateMyProfile({
+        displayName,
+        phoneNumber,
+      });
+
+      setProfile(updated);
+      setMessage("Profile updated.");
+    } catch (err) {
+      setError(err?.response?.data?.message || "Failed to update profile.");
+    } finally {
+      setIsSavingProfile(false);
+    }
+  }
+
+  async function handleChangePassword(e) {
+    e.preventDefault();
+    setError("");
+    setMessage("");
+
+    try {
+      setIsSavingPassword(true);
+
+      await changeMyPassword({
+        currentPassword,
+        newPassword,
+        confirmPassword,
+      });
+
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setMessage("Password changed.");
+    } catch (err) {
+      setError(err?.response?.data?.message || "Failed to change password.");
+    } finally {
+      setIsSavingPassword(false);
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-neutral-950 text-white">
+      <div className="mx-auto w-full max-w-[76rem] px-4 py-6 sm:px-5 sm:py-8 lg:px-6 lg:py-10">
+        <div className="mb-8">
+          <div className="text-[11px] uppercase tracking-[0.24em] text-blue-300/70">
+            BTS
+          </div>
+          <h1 className="mt-2 text-[30px] font-semibold tracking-[-0.04em] text-white sm:text-[38px]">
+            Your profile
+          </h1>
+          <p className="mt-3 max-w-[42rem] text-sm leading-7 text-neutral-400 sm:text-[16px]">
+            Update your account details and track your all-time performance.
+          </p>
+        </div>
+
+        {error ? (
+          <div className="mb-4 rounded-[20px] border border-red-900/35 bg-red-950/25 px-4 py-3 text-sm text-red-300/90">
+            {error}
+          </div>
+        ) : null}
+
+        {message ? (
+          <div className="mb-4 rounded-[20px] border border-emerald-900/35 bg-emerald-950/25 px-4 py-3 text-sm text-emerald-300/90">
+            {message}
+          </div>
+        ) : null}
+
+        <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="space-y-6">
+            <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5">
+              <div className="mb-4 text-sm font-semibold text-white">
+                Account
+              </div>
+
+              {isLoadingProfile ? (
+                <div className="rounded-[18px] border border-white/6 bg-white/[0.03] px-4 py-6 text-sm text-neutral-500">
+                  Loading profile...
+                </div>
+              ) : (
+                <form onSubmit={handleSaveProfile} className="space-y-4">
+                  <div>
+                    <label className="mb-2 block text-[11px] uppercase tracking-[0.14em] text-neutral-500">
+                      Username
+                    </label>
+                    <input
+                      value={profile?.username || ""}
+                      disabled
+                      className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-neutral-400 outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-[11px] uppercase tracking-[0.14em] text-neutral-500">
+                      Email
+                    </label>
+                    <input
+                      value={profile?.email || ""}
+                      disabled
+                      className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-neutral-400 outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-[11px] uppercase tracking-[0.14em] text-neutral-500">
+                      Display name
+                    </label>
+                    <input
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none focus:border-blue-400/20"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-[11px] uppercase tracking-[0.14em] text-neutral-500">
+                      Phone number
+                    </label>
+                    <input
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none focus:border-blue-400/20"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isSavingProfile}
+                    className="rounded-[16px] bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:opacity-60"
+                  >
+                    {isSavingProfile ? "Saving..." : "Save profile"}
+                  </button>
+                </form>
+              )}
+            </div>
+
+            <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5">
+              <div className="mb-4 text-sm font-semibold text-white">
+                Change password
+              </div>
+
+              <form onSubmit={handleChangePassword} className="space-y-4">
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="Current password"
+                  className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none focus:border-blue-400/20"
+                />
+
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="New password"
+                  className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none focus:border-blue-400/20"
+                />
+
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm new password"
+                  className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none focus:border-blue-400/20"
+                />
+
+                <button
+                  type="submit"
+                  disabled={isSavingPassword}
+                  className="rounded-[16px] bg-white/[0.08] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.12] disabled:opacity-60"
+                >
+                  {isSavingPassword ? "Updating..." : "Update password"}
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <ProfileProgressCard
+              progression={progression}
+              loading={isLoadingProgression}
+            />
+
+            <ProfileAchievementsCard
+              progression={progression}
+              loading={isLoadingProgression}
+            />
+
+            <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5">
+              <div className="mb-4 text-sm font-semibold text-white">
+                All-time stats
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <StatCard
+                  label="Correct answers"
+                  value={stats.totalCorrectAnswers ?? 0}
+                />
+                <StatCard
+                  label="Best streak"
+                  value={`x${stats.bestStreak ?? 0}`}
+                />
+                <StatCard
+                  label="Weekly wins"
+                  value={stats.weeklyWins ?? 0}
+                />
+                <StatCard
+                  label="Fastest correct"
+                  value={formatFastest(stats.fastestCorrectAnswerMs)}
+                />
+              </div>
+            </div>
+
+            <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5">
+              <div className="mb-4 text-sm font-semibold text-white">
+                Battle Trivia history
+              </div>
+
+              {isLoadingHistory ? (
+                <div className="rounded-[18px] border border-white/6 bg-white/[0.03] px-4 py-6 text-sm text-neutral-500">
+                  Loading history...
+                </div>
+              ) : history.length === 0 ? (
+                <div className="rounded-[18px] border border-white/6 bg-white/[0.03] px-4 py-6 text-sm text-neutral-500">
+                  No history yet.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {history.map((item) => (
+                    <div
+                      key={item.id}
+                      className="rounded-[18px] border border-white/6 bg-white/[0.03] px-4 py-3"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <div className="text-sm font-medium text-white">
+                            {item.title || "Battle Trivia session"}
+                          </div>
+                          <div className="mt-1 text-[11px] text-neutral-500">
+                            {formatDate(item.endedAt)}
+                          </div>
+                        </div>
+
+                        <div className="text-right">
+                          <div className="text-sm font-semibold text-blue-300">
+                            {item.score} pts
+                          </div>
+                          <div className="mt-1 text-[11px] text-neutral-500">
+                            #{item.rank}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  <div className="flex items-center justify-between pt-2">
+                    <button
+                      type="button"
+                      disabled={page <= 1}
+                      onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                      className="rounded-[14px] border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white transition hover:bg-white/[0.06] disabled:opacity-50"
+                    >
+                      Previous
+                    </button>
+
+                    <div className="text-sm text-neutral-400">
+                      Page {page} of {totalPages}
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={page >= totalPages}
+                      onClick={() =>
+                        setPage((prev) => Math.min(totalPages, prev + 1))
+                      }
+                      className="rounded-[14px] border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white transition hover:bg-white/[0.06] disabled:opacity-50"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
