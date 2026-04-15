@@ -217,6 +217,29 @@ function WeeklyWinnersCard({ data }) {
   );
 }
 
+function MobileFloatingRoomNav() {
+  return (
+    <div className="pointer-events-none fixed inset-x-0 top-0 z-[60] sm:hidden">
+      <div className="flex items-start justify-between px-3 pt-[calc(env(safe-area-inset-top)+0.55rem)]">
+        <Link
+          to="/"
+          className="pointer-events-auto inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-neutral-950/78 px-3 py-1.5 text-[11px] font-medium text-white shadow-[0_10px_24px_rgba(0,0,0,0.22)] backdrop-blur-xl transition hover:border-white/15 hover:bg-neutral-900/85"
+        >
+          <span aria-hidden="true">←</span>
+          Lobby
+        </Link>
+
+        <Link
+          to="/profile"
+          className="pointer-events-auto inline-flex items-center rounded-full border border-white/10 bg-neutral-950/78 px-3 py-1.5 text-[11px] font-medium text-white shadow-[0_10px_24px_rgba(0,0,0,0.22)] backdrop-blur-xl transition hover:border-white/15 hover:bg-neutral-900/85"
+        >
+          Profile
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 export default function RoomPage() {
   const { roomId } = useParams();
   const { user, token } = useAuth();
@@ -721,14 +744,16 @@ export default function RoomPage() {
 
   const topContent = (
     <div className="shrink-0 border-b border-white/5 bg-neutral-950/95 backdrop-blur-xl [padding-top:env(safe-area-inset-top)]">
-      <div className="mx-auto w-full max-w-[68rem] px-3 py-2.5 sm:px-4 sm:py-3 lg:px-5">
-        <RoomUtilityBar
-          room={room}
-          user={user}
-          sessionLabel={effectiveSessionLabel}
-          isBattleTrivia={isBattleTrivia}
-          isWordScramble={isWordScramble}
-        />
+      <div className="mx-auto w-full max-w-[68rem] px-3 pt-11 pb-2.5 sm:px-4 sm:py-3 lg:px-5">
+        <div className="hidden sm:block">
+          <RoomUtilityBar
+            room={room}
+            user={user}
+            sessionLabel={effectiveSessionLabel}
+            isBattleTrivia={isBattleTrivia}
+            isWordScramble={isWordScramble}
+          />
+        </div>
 
         {isBattleTrivia ? <WeeklyWinnersCard data={weeklyWinners} /> : null}
 
@@ -864,6 +889,8 @@ export default function RoomPage() {
           : "100dvh",
       }}
     >
+      <MobileFloatingRoomNav />
+
       <RoomShell
         sidebar={sidebar}
         header={null}
