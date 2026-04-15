@@ -1,0 +1,210 @@
+using System.Text;
+using Bts.Api.Auth;
+using Bts.Api.Data;
+using Bts.Api.Repositories;
+using Bts.Api.Services;
+using FluentValidation;
+using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.SignalR;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers();
+
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<IUserIdProvider, SignalRUserIdProvider>();
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "BTS API",
+        Version = "v1"
+    });
+
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter your JWT token here"
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+
+builder.Services.Configure<JwtOptions>(
+    builder.Configuration.GetSection(JwtOptions.SectionName));
+
+builder.Services.AddSingleton<DapperContext>();
+
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IRoomRepository, RoomRepository>();
+builder.Services.AddScoped<IMessageRepository, MessageRepository>();
+builder.Services.AddScoped<ITriviaQuestionRepository, TriviaQuestionRepository>();
+builder.Services.AddScoped<ITriviaSessionRepository, TriviaSessionRepository>();
+builder.Services.AddScoped<ITriviaRoundRepository, TriviaRoundRepository>();
+builder.Services.AddScoped<ITriviaAnswerRepository, TriviaAnswerRepository>();
+builder.Services.AddScoped<ITriviaScoreLedgerRepository, TriviaScoreLedgerRepository>();
+builder.Services.AddScoped<ITriviaLeaderboardRepository, TriviaLeaderboardRepository>();
+builder.Services.AddScoped<ITriviaSessionWindowRepository, TriviaSessionWindowRepository>();
+builder.Services.AddScoped<ITriviaSessionResultRepository, TriviaSessionResultRepository>();
+builder.Services.AddScoped<IBattleTriviaProfileStatsRepository, BattleTriviaProfileStatsRepository>();
+builder.Services.AddScoped<IBattleTriviaSessionSummaryRepository, BattleTriviaSessionSummaryRepository>();
+builder.Services.AddScoped<IRoomModerationRepository, RoomModerationRepository>();
+builder.Services.AddSingleton<IChatRateLimitService, InMemoryChatRateLimitService>();
+builder.Services.AddSingleton<IProfanityFilterService, BasicProfanityFilterService>();
+builder.Services.AddScoped<IAchievementRepository, AchievementRepository>();
+builder.Services.AddScoped<IProfileProgressionRepository, ProfileProgressionRepository>();
+
+
+builder.Services.AddScoped<IWordScrambleSessionRepository, WordScrambleSessionRepository>();
+builder.Services.AddScoped<IWordScrambleRoundRepository, WordScrambleRoundRepository>();
+builder.Services.AddScoped<IWordScrambleAnswerRepository, WordScrambleAnswerRepository>();
+builder.Services.AddScoped<IWordScrambleScoreLedgerRepository, WordScrambleScoreLedgerRepository>();
+builder.Services.AddScoped<IWordScrambleLeaderboardRepository, WordScrambleLeaderboardRepository>();
+builder.Services.AddScoped<IWordScrambleSessionResultRepository, WordScrambleSessionResultRepository>();
+builder.Services.AddScoped<IWordScrambleWordRepository, WordScrambleWordRepository>();
+
+builder.Services.AddScoped<WordScrambleMaskService>();
+builder.Services.AddScoped<WordScrambleRoundBuilderService>();
+builder.Services.AddScoped<WordScrambleAnswerService>();
+
+builder.Services.AddScoped<WordScrambleStateService>();
+builder.Services.AddScoped<WordScrambleSessionStatusService>();
+
+
+
+
+builder.Services.AddScoped<ProgressionService>();
+builder.Services.AddScoped<MessageModerationService>();
+builder.Services.AddSingleton<InMemoryChatRateLimitService>();
+builder.Services.AddSingleton<BasicProfanityFilterService>();
+builder.Services.AddScoped<RoomModerationService>();
+builder.Services.AddScoped<ChatModerationService>();
+builder.Services.AddScoped<BattleTriviaSessionSummaryService>();
+builder.Services.AddScoped<BattleTriviaProfileStatsService>();
+builder.Services.AddScoped<TriviaSessionFinalizerService>();
+builder.Services.AddScoped<JwtTokenGenerator>();
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<RoomService>();
+builder.Services.AddScoped<ChatService>();
+builder.Services.AddScoped<TriviaAnswerService>();
+builder.Services.AddScoped<TriviaLeaderboardService>();
+builder.Services.AddScoped<BattleTriviaSessionStatusService>();
+builder.Services.AddScoped<AdminTriviaQuestionService>();
+builder.Services.AddScoped<AdminBattleTriviaSettingsService>();
+builder.Services.AddScoped<RoomModerationStateService>();
+builder.Services.AddScoped<ProfileService>();
+builder.Services.AddScoped<ProgressionRealtimeService>();
+builder.Services.AddScoped<GameLeaderboardService>();
+
+
+builder.Services.AddHostedService<BattleTriviaHostedService>();
+builder.Services.AddHostedService<WordScrambleHostedService>();
+
+
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Frontend", policy =>
+    {
+        policy
+            .WithOrigins(
+                "http://192.168.0.161:5173",
+                "https://brotechnodevs.co.za",
+                "https://www.brotechnodevs.co.za",
+                "http://localhost:5173",
+                "http://localhost:5174")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
+
+var jwtSection = builder.Configuration.GetSection(JwtOptions.SectionName);
+var jwtOptions = jwtSection.Get<JwtOptions>()!;
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateIssuerSigningKey = true,
+            ValidateLifetime = true,
+            ValidIssuer = jwtOptions.Issuer,
+            ValidAudience = jwtOptions.Audience,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtOptions.Key))
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) &&
+                    path.StartsWithSegments("/hubs/chat"))
+                {
+                    context.Token = accessToken;
+                }
+
+                return Task.CompletedTask;
+            }
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+var app = builder.Build();
+
+
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseCors("Frontend");
+
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
+
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+
+app.MapControllers();
+app.MapHub<Bts.Api.Hubs.ChatHub>("/hubs/chat");
+
+app.Run();

@@ -1,0 +1,17 @@
+.env
+.env.local
+.env.development
+
+api/bin/
+api/obj/
+api/.vs/
+api/.vscode/
+api/*.user
+api/*.suo
+
+web/node_modules/
+web/dist/
+web/.vite/
+web/.env
+web/.env.local
+web/.env.development

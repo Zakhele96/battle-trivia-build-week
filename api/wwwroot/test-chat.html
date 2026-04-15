@@ -1,0 +1,114 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>BTS Chat Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 24px;
+        }
+
+        input, button, textarea {
+            margin: 6px 0;
+            width: 100%;
+            padding: 10px;
+        }
+
+        #messages {
+            border: 1px solid #ccc;
+            padding: 12px;
+            height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h2>BTS Chat Hub Test</h2>
+
+    <label>JWT Token</label>
+    <textarea id="token" rows="5" placeholder="Paste JWT token here"></textarea>
+
+    <label>Room ID</label>
+    <input id="roomId" type="text" placeholder="Paste room UUID here" />
+
+    <button onclick="connect()">Connect</button>
+    <button onclick="joinRoom()">Join Room</button>
+    <button onclick="leaveRoom()">Leave Room</button>
+
+    <hr />
+
+    <label>Message</label>
+    <input id="messageText" type="text" placeholder="Type a message" />
+    <button onclick="sendMessage()">Send Message</button>
+
+    <hr />
+    <div id="messages"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+    <script>
+    let connection = null;
+
+    function log(message) {
+      const messages = document.getElementById("messages");
+      messages.innerHTML += message + "\n";
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    async function connect() {
+      const token = document.getElementById("token").value.trim();
+
+      connection = new signalR.HubConnectionBuilder()
+        .withUrl("/hubs/chat", {
+          accessTokenFactory: () => token
+        })
+        .withAutomaticReconnect()
+        .build();
+
+      connection.on("ReceiveMessage", (message) => {
+        log(JSON.stringify(message, null, 2));
+      });
+
+      try {
+        await connection.start();
+        log("Connected to hub.");
+      } catch (err) {
+        log("Connection failed: " + err);
+      }
+    }
+
+    async function joinRoom() {
+      const roomId = document.getElementById("roomId").value.trim();
+      try {
+        await connection.invoke("JoinRoom", roomId);
+        log("Joined room: " + roomId);
+      } catch (err) {
+        log("JoinRoom failed: " + err);
+      }
+    }
+
+    async function leaveRoom() {
+      const roomId = document.getElementById("roomId").value.trim();
+      try {
+        await connection.invoke("LeaveRoom", roomId);
+        log("Left room: " + roomId);
+      } catch (err) {
+        log("LeaveRoom failed: " + err);
+      }
+    }
+
+    async function sendMessage() {
+      const roomId = document.getElementById("roomId").value.trim();
+      const text = document.getElementById("messageText").value;
+
+      try {
+        await connection.invoke("SendMessage", roomId, text);
+        document.getElementById("messageText").value = "";
+      } catch (err) {
+        log("SendMessage failed: " + err);
+      }
+    }
+    </script>
+</body>
+</html>

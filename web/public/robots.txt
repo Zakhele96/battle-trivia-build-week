@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin
+Disallow: /preview
+
+Sitemap: https://sivubelaintuthuko.co.za/sitemap.xml
