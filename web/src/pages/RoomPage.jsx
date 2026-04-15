@@ -175,6 +175,48 @@ function RoomUtilityBar({
   );
 }
 
+function WeeklyWinnersCard({ data }) {
+  const winners = Array.isArray(data?.winners) ? data.winners : [];
+  if (winners.length === 0) return null;
+
+  return (
+    <div className="mb-3 rounded-[20px] border border-amber-400/20 bg-[linear-gradient(180deg,rgba(245,158,11,0.12),rgba(245,158,11,0.04))] px-3.5 py-3 sm:px-4">
+      <div className="flex items-center gap-2">
+        <span className="rounded-full bg-amber-400/15 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-amber-200">
+          Weekly winners
+        </span>
+        <span aria-hidden="true">🏆</span>
+      </div>
+
+      <div className="mt-2 text-sm text-amber-100/90">
+        Last week’s champions have been crowned.
+      </div>
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+        {winners.slice(0, 3).map((winner) => (
+          <div
+            key={`${winner.userId}-${winner.rank}`}
+            className="rounded-[16px] border border-amber-300/15 bg-black/20 px-3 py-2.5"
+          >
+            <div className="text-[10px] uppercase tracking-[0.14em] text-amber-200/80">
+              #{winner.rank}
+            </div>
+            <div className="mt-1 text-sm font-semibold text-white">
+              {winner.displayName || winner.username}
+            </div>
+            <div className="mt-1 text-[11px] text-neutral-400">
+              @{winner.username}
+            </div>
+            <div className="mt-2 text-sm font-semibold text-amber-200">
+              {winner.score} pts
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function RoomPage() {
   const { roomId } = useParams();
   const { user, token } = useAuth();
@@ -227,6 +269,7 @@ export default function RoomPage() {
     timeLeft,
     correctAnswer,
     roundWinners,
+    weeklyWinners,
     leaderboard,
     answerFeedback,
     sessionStatus,
@@ -686,6 +729,8 @@ export default function RoomPage() {
           isBattleTrivia={isBattleTrivia}
           isWordScramble={isWordScramble}
         />
+
+        {isBattleTrivia ? <WeeklyWinnersCard data={weeklyWinners} /> : null}
 
         {roomStateBanner}
 

@@ -35,29 +35,30 @@ public sealed class TriviaSessionRepository : ITriviaSessionRepository
         return await connection.QuerySingleOrDefaultAsync<TriviaGameSession>(sql, new { Id = id });
     }
 
-    public async Task<TriviaGameSession?> GetActiveByRoomIdAsync(Guid roomId)
-    {
-        const string sql = """
-            SELECT
-                id,
-                room_id AS RoomId,
-                status,
-                session_type AS SessionType,
-                run_mode AS RunMode,
-                started_at AS StartedAt,
-                ended_at AS EndedAt,
-                period_start AS PeriodStart,
-                period_end AS PeriodEnd,
-                winners_announced AS WinnersAnnounced
-            FROM trivia_game_sessions
-            WHERE room_id = @RoomId
-              AND status = 'active'
-            LIMIT 1;
-            """;
+   public async Task<TriviaGameSession?> GetActiveByRoomIdAsync(Guid roomId)
+{
+    const string sql = """
+        SELECT
+            id,
+            room_id AS RoomId,
+            status,
+            session_type AS SessionType,
+            run_mode AS RunMode,
+            started_at AS StartedAt,
+            ended_at AS EndedAt,
+            period_start AS PeriodStart,
+            period_end AS PeriodEnd,
+            winners_announced AS WinnersAnnounced
+        FROM trivia_game_sessions
+        WHERE room_id = @RoomId
+          AND status = 'active'
+        ORDER BY started_at DESC
+        LIMIT 1;
+        """;
 
-        using var connection = _context.CreateConnection();
-        return await connection.QuerySingleOrDefaultAsync<TriviaGameSession>(sql, new { RoomId = roomId });
-    }
+    using var connection = _context.CreateConnection();
+    return await connection.QuerySingleOrDefaultAsync<TriviaGameSession>(sql, new { RoomId = roomId });
+}
 
     public async Task<TriviaGameSession?> GetLatestEndedByRoomIdAsync(Guid roomId)
     {

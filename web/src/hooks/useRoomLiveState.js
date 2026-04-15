@@ -41,6 +41,7 @@ export default function useRoomLiveState({
   const [timeLeft, setTimeLeft] = useState(0);
   const [correctAnswer, setCorrectAnswer] = useState("");
   const [roundWinners, setRoundWinners] = useState([]);
+  const [weeklyWinners, setWeeklyWinners] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
   const [answerFeedback, setAnswerFeedback] = useState("");
   const [sessionStatus, setSessionStatus] = useState(null);
@@ -80,42 +81,45 @@ export default function useRoomLiveState({
     room?.slug === "battle-trivia" || room?.roomType === "trivia";
   const isWordScrambleRoom = room?.slug === "word-scramble";
 
-  const applyWordScrambleGuessPayload = useCallback((payload, forceRejected = false) => {
-    if (!payload) return;
+  const applyWordScrambleGuessPayload = useCallback(
+    (payload, forceRejected = false) => {
+      if (!payload) return;
 
-    if (forceRejected || payload.success === false) {
+      if (forceRejected || payload.success === false) {
+        setWordScrambleGuessFeedback({
+          ...payload,
+          isCorrect: false,
+          message: payload?.message || "Guess rejected.",
+        });
+        return;
+      }
+
+      if (payload?.alreadyAnsweredCorrectly) {
+        setWordScrambleGuessFeedback({
+          ...payload,
+          isCorrect: true,
+          message: payload?.message || "You already solved this round.",
+        });
+        return;
+      }
+
+      if (payload?.isCorrect) {
+        setWordScrambleGuessFeedback({
+          ...payload,
+          isCorrect: true,
+          message: payload?.message || "Correct guess!",
+        });
+        return;
+      }
+
       setWordScrambleGuessFeedback({
         ...payload,
         isCorrect: false,
-        message: payload?.message || "Guess rejected.",
+        message: payload?.message || "Incorrect guess.",
       });
-      return;
-    }
-
-    if (payload?.alreadyAnsweredCorrectly) {
-      setWordScrambleGuessFeedback({
-        ...payload,
-        isCorrect: true,
-        message: payload?.message || "You already solved this round.",
-      });
-      return;
-    }
-
-    if (payload?.isCorrect) {
-      setWordScrambleGuessFeedback({
-        ...payload,
-        isCorrect: true,
-        message: payload?.message || "Correct guess!",
-      });
-      return;
-    }
-
-    setWordScrambleGuessFeedback({
-      ...payload,
-      isCorrect: false,
-      message: payload?.message || "Incorrect guess.",
-    });
-  }, []);
+    },
+    []
+  );
 
   useEffect(() => {
     onMessageDeletedRef.current = onMessageDeleted;
@@ -213,7 +217,8 @@ export default function useRoomLiveState({
   }, [answerFeedback, currentRoundId]);
 
   useEffect(() => {
-    if (!wordScrambleGuessFeedback?.message || !wordScrambleState?.roundId) return;
+    if (!wordScrambleGuessFeedback?.message || !wordScrambleState?.roundId)
+      return;
 
     const timeoutId = window.setTimeout(() => {
       setWordScrambleGuessFeedback(null);
@@ -243,6 +248,7 @@ export default function useRoomLiveState({
     setTimeLeft(0);
     setCorrectAnswer("");
     setRoundWinners([]);
+    setWeeklyWinners(null);
     setLeaderboard([]);
     setAnswerFeedback("");
     setSessionStatus(null);
@@ -384,6 +390,11 @@ export default function useRoomLiveState({
     connection.on("RoundWinners", (payload) => {
       if (isCancelled) return;
       setRoundWinners(Array.isArray(payload) ? payload : []);
+    });
+
+    connection.on("WeeklyWinnersAnnounced", (payload) => {
+      if (isCancelled) return;
+      setWeeklyWinners(payload || null);
     });
 
     connection.on("LeaderboardUpdated", (payload) => {
@@ -626,7 +637,11 @@ export default function useRoomLiveState({
       }
 
       if (mode === "word-scramble") {
-        const result = await connection.invoke("SubmitWordScrambleGuess", roomId, text);
+        const result = await connection.invoke(
+          "SubmitWordScrambleGuess",
+          roomId,
+          text
+        );
 
         if (result && typeof result === "object") {
           applyWordScrambleGuessPayload(result, result.success === false);
@@ -650,6 +665,7 @@ export default function useRoomLiveState({
     timeLeft,
     correctAnswer,
     roundWinners,
+    weeklyWinners,
     leaderboard,
     answerFeedback,
     sessionStatus,

@@ -29,16 +29,18 @@ function formatEndedAt(value) {
 
 function SectionHeader({ eyebrow, title, description, action }) {
   return (
-    <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+    <div className="mb-4 flex flex-wrap items-end justify-between gap-3 sm:mb-5">
       <div>
-        <div className="text-[11px] uppercase tracking-[0.2em] text-neutral-500">
+        <div className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 sm:text-[11px]">
           {eyebrow}
         </div>
-        <div className="mt-1 text-xl font-semibold tracking-[-0.03em] text-white">
+        <div className="mt-1 text-[17px] font-semibold tracking-[-0.03em] text-white sm:text-xl">
           {title}
         </div>
         {description ? (
-          <div className="mt-2 text-sm text-neutral-400">{description}</div>
+          <div className="mt-1.5 text-[13px] text-neutral-400 sm:mt-2 sm:text-sm">
+            {description}
+          </div>
         ) : null}
       </div>
 
@@ -51,18 +53,18 @@ function QuickLinkCard({ to, eyebrow, title, description }) {
   return (
     <Link
       to={to}
-      className="rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015))] p-4 transition hover:border-white/15 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.02))]"
+      className="rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015))] p-3.5 transition hover:border-white/15 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.02))] sm:p-4"
     >
-      <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500">
+      <div className="text-[9px] uppercase tracking-[0.18em] text-neutral-500 sm:text-[10px]">
         {eyebrow}
       </div>
-      <div className="mt-2 text-lg font-semibold tracking-[-0.03em] text-white">
+      <div className="mt-2 text-[15px] font-semibold tracking-[-0.03em] text-white sm:text-lg">
         {title}
       </div>
-      <div className="mt-2 text-sm leading-6 text-neutral-400">
+      <div className="mt-1.5 text-[13px] leading-5 text-neutral-400 sm:mt-2 sm:text-sm sm:leading-6">
         {description}
       </div>
-      <div className="mt-4 inline-flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.16em] text-blue-300/80">
+      <div className="mt-3 inline-flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.16em] text-blue-300/80 sm:mt-4 sm:text-[11px]">
         Open
         <span aria-hidden="true">→</span>
       </div>
@@ -75,7 +77,7 @@ function LeaderCard({ entry }) {
 
   return (
     <div
-      className={`rounded-[18px] border p-3.5 ${
+      className={`rounded-[16px] border p-3 sm:rounded-[18px] sm:p-3.5 ${
         isChampion
           ? "border-amber-400/20 bg-amber-500/10"
           : "border-white/8 bg-black/20"
@@ -83,7 +85,7 @@ function LeaderCard({ entry }) {
     >
       <div className="flex items-center gap-2">
         <span
-          className={`rounded-full px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.14em] ${
+          className={`rounded-full px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] sm:text-[10px] ${
             isChampion
               ? "bg-amber-400/15 text-amber-200"
               : "bg-white/[0.05] text-neutral-400"
@@ -95,16 +97,16 @@ function LeaderCard({ entry }) {
         {isChampion ? <span aria-hidden="true">👑</span> : null}
       </div>
 
-      <div className="mt-3 truncate text-sm font-semibold text-white">
+      <div className="mt-2.5 truncate text-[13px] font-semibold text-white sm:mt-3 sm:text-sm">
         {entry.displayName || entry.username}
       </div>
 
-      <div className="mt-1 text-[11px] text-neutral-500">
+      <div className="mt-1 text-[10px] text-neutral-500 sm:text-[11px]">
         @{entry.username}
       </div>
 
       <div
-        className={`mt-3 text-sm font-semibold ${
+        className={`mt-2.5 text-[13px] font-semibold sm:mt-3 sm:text-sm ${
           isChampion ? "text-amber-200" : "text-blue-300"
         }`}
       >
@@ -116,24 +118,66 @@ function LeaderCard({ entry }) {
 
 function LeadersPanel({ title, subtitle, entries }) {
   return (
-    <div className="mt-4 rounded-[22px] border border-white/10 bg-white/[0.03] p-4">
+    <div className="mt-3.5 rounded-[20px] border border-white/10 bg-white/[0.03] p-3.5 sm:mt-4 sm:rounded-[22px] sm:p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="text-[11px] uppercase tracking-[0.18em] text-neutral-500">
+          <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500 sm:text-[11px]">
             {title}
           </div>
-          <div className="mt-1 text-sm text-neutral-300">{subtitle}</div>
+          <div className="mt-1 text-[13px] text-neutral-300 sm:text-sm">
+            {subtitle}
+          </div>
         </div>
 
-        <div className="rounded-full border border-white/8 bg-white/[0.03] px-3 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-neutral-400">
+        <div className="rounded-full border border-white/8 bg-white/[0.03] px-3 py-1 text-[9px] font-medium uppercase tracking-[0.16em] text-neutral-400 sm:text-[10px]">
           Top {entries.length}
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+      <div className="mt-3.5 grid gap-2.5 sm:mt-4 sm:grid-cols-3 sm:gap-3">
         {entries.map((entry) => (
           <LeaderCard key={`${entry.userId}-${entry.rank}`} entry={entry} />
         ))}
+      </div>
+    </div>
+  );
+}
+
+function MobileEntryStrip({ featuredRoom }) {
+  return (
+    <div className="mb-5 sm:hidden">
+      <div className="rounded-[18px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.015))] p-3.5">
+        <div className="text-[10px] uppercase tracking-[0.18em] text-blue-300/70">
+          Jump in
+        </div>
+
+        <div className="mt-2 text-[17px] font-semibold tracking-[-0.03em] text-white">
+          Choose where you want to go
+        </div>
+
+        <div className="mt-1.5 text-[13px] leading-5 text-neutral-400">
+          Go straight to the featured room or open weekly standings.
+        </div>
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          {featuredRoom ? (
+            <Link
+              to={`/rooms/${featuredRoom.id}`}
+              className="inline-flex items-center gap-2 rounded-full bg-[linear-gradient(180deg,rgba(64,156,255,1)_0%,rgba(10,132,255,1)_100%)] px-4 py-2 text-[12px] font-semibold text-white"
+            >
+              Featured room
+              <span aria-hidden="true">→</span>
+            </Link>
+          ) : null}
+
+          <Link
+            to="/leaderboards?mode=combined&period=current"
+            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[12px] font-semibold text-white"
+          >
+            Standings
+            <span aria-hidden="true">→</span>
+          </Link>
+        </div>
       </div>
     </div>
   );
@@ -277,7 +321,7 @@ export default function LobbyPage() {
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white">
-      <div className="mx-auto w-full max-w-[76rem] px-4 py-5 sm:px-5 sm:py-7 lg:px-6 lg:py-9">
+      <div className="mx-auto w-full max-w-[76rem] px-4 py-4 sm:px-5 sm:py-7 lg:px-6 lg:py-9">
         <AppTopBar
           eyebrow="BTS"
           title={`Welcome${user?.displayName ? `, ${user.displayName}` : ""}`}
@@ -291,33 +335,35 @@ export default function LobbyPage() {
             },
             {
               to: "/leaderboards?mode=combined&period=current",
-              label: "Leaderboards",
+              label: "Standings",
               sublabel: "Weekly standings",
             },
           ]}
         />
 
         {error ? (
-          <div className="mb-6 rounded-[22px] border border-red-900/35 bg-red-950/25 px-4 py-3 text-sm text-red-300/90">
+          <div className="mb-5 rounded-[20px] border border-red-900/35 bg-red-950/25 px-4 py-3 text-sm text-red-300/90 sm:mb-6 sm:rounded-[22px]">
             {error}
           </div>
         ) : null}
 
         {isLoading ? (
-          <div className="rounded-[24px] border border-white/10 bg-white/[0.03] px-4 py-12 text-center text-sm text-neutral-500">
+          <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-10 text-center text-sm text-neutral-500 sm:rounded-[24px] sm:py-12">
             Loading rooms...
           </div>
         ) : (
           <>
-            <section className="mb-8 grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
+            <MobileEntryStrip featuredRoom={featuredRoom} />
+
+            <section className="mb-6 hidden gap-4 lg:mb-8 sm:grid lg:grid-cols-[1.25fr_0.75fr]">
               <div className="rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.14),transparent_32%),linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015))] p-5 shadow-[0_20px_48px_rgba(0,0,0,0.16)]">
                 <div className="text-[11px] uppercase tracking-[0.22em] text-blue-300/70">
                   Live now
                 </div>
-                <h2 className="mt-3 text-[28px] font-semibold tracking-[-0.04em] text-white sm:text-[34px]">
+                <h2 className="mt-3 text-[34px] font-semibold tracking-[-0.04em] text-white">
                   The cleanest way into the action
                 </h2>
-                <p className="mt-3 max-w-[40rem] text-sm leading-7 text-neutral-400 sm:text-[15px]">
+                <p className="mt-3 max-w-[40rem] text-[15px] leading-7 text-neutral-400">
                   Start with the featured room if you want live competition, or
                   head straight into game and community spaces below.
                 </p>
@@ -360,7 +406,7 @@ export default function LobbyPage() {
             </section>
 
             {featuredRoom ? (
-              <section className="mb-10">
+              <section className="mb-8 sm:mb-10">
                 <SectionHeader
                   eyebrow="Featured"
                   title="Main competition"
@@ -382,11 +428,11 @@ export default function LobbyPage() {
                     entries={currentLeaders}
                   />
                 ) : (
-                  <div className="mt-4 rounded-[22px] border border-white/10 bg-white/[0.03] p-4">
-                    <div className="text-[11px] uppercase tracking-[0.18em] text-neutral-500">
+                  <div className="mt-3.5 rounded-[20px] border border-white/10 bg-white/[0.03] p-3.5 sm:mt-4 sm:rounded-[22px] sm:p-4">
+                    <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500 sm:text-[11px]">
                       Weekly podium
                     </div>
-                    <div className="mt-2 text-sm text-neutral-400">
+                    <div className="mt-2 text-[13px] text-neutral-400 sm:text-sm">
                       This week’s champions will appear here when the session
                       ends.
                     </div>
@@ -395,7 +441,7 @@ export default function LobbyPage() {
               </section>
             ) : null}
 
-            <section className="mb-10">
+            <section className="mb-8 sm:mb-10">
               <SectionHeader
                 eyebrow="Rooms"
                 title="Game rooms"
@@ -403,11 +449,11 @@ export default function LobbyPage() {
               />
 
               {gameRooms.length === 0 ? (
-                <div className="rounded-[24px] border border-white/10 bg-white/[0.03] px-4 py-12 text-center text-sm text-neutral-500">
+                <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-10 text-center text-sm text-neutral-500 sm:rounded-[24px] sm:py-12">
                   No game rooms available yet.
                 </div>
               ) : (
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
                   {gameRooms.map((room) => (
                     <RoomCard key={room.id} room={room} />
                   ))}
@@ -415,7 +461,7 @@ export default function LobbyPage() {
               )}
             </section>
 
-            <section className="mb-10">
+            <section className="mb-8 sm:mb-10">
               <SectionHeader
                 eyebrow="Rooms"
                 title="Community spaces"
@@ -423,11 +469,11 @@ export default function LobbyPage() {
               />
 
               {communityRooms.length === 0 ? (
-                <div className="rounded-[24px] border border-white/10 bg-white/[0.03] px-4 py-12 text-center text-sm text-neutral-500">
+                <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-10 text-center text-sm text-neutral-500 sm:rounded-[24px] sm:py-12">
                   No community rooms available yet.
                 </div>
               ) : (
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
                   {communityRooms.map((room) => (
                     <RoomCard key={room.id} room={room} />
                   ))}
@@ -443,7 +489,7 @@ export default function LobbyPage() {
                 action={
                   <Link
                     to="/leaderboards?mode=combined&period=current"
-                    className="inline-flex items-center gap-2 rounded-[18px] border border-white/10 bg-white/[0.035] px-4 py-2.5 text-sm font-medium text-white transition hover:border-white/15 hover:bg-white/[0.05]"
+                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.035] px-3.5 py-2 text-[12px] font-medium text-white transition hover:border-white/15 hover:bg-white/[0.05] sm:rounded-[18px] sm:px-4 sm:py-2.5 sm:text-sm"
                   >
                     Open full page
                     <span aria-hidden="true">→</span>
@@ -451,7 +497,7 @@ export default function LobbyPage() {
                 }
               />
 
-              <div className="grid gap-4 lg:grid-cols-3">
+              <div className="grid gap-3 sm:gap-4 lg:grid-cols-3">
                 <LeaderboardPreviewCard
                   title="Battle Trivia"
                   subtitle={battleTriviaPreviewSubtitle}
