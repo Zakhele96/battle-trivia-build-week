@@ -10,6 +10,7 @@ import {
 import ProfileAchievementsCard from "../components/profile/ProfileAchievementsCard";
 import ProfileProgressCard from "../components/profile/ProfileProgressCard";
 import AppTopBar from "../components/layout/AppTopBar";
+import AppSectionNav from "../components/layout/AppSectionNav";
 import { useAuth } from "../hooks/useAuth";
 
 function formatFastest(ms) {
@@ -54,7 +55,11 @@ function StatCard({ label, value }) {
 
 function IdentityCard({ profile, authUser }) {
   const displayName =
-    profile?.displayName || authUser?.displayName || profile?.username || authUser?.username || "Player";
+    profile?.displayName ||
+    authUser?.displayName ||
+    profile?.username ||
+    authUser?.username ||
+    "Player";
 
   const username = profile?.username || authUser?.username || "username";
   const avatarUrl = authUser?.avatarUrl || null;
@@ -100,7 +105,9 @@ function IdentityCard({ profile, authUser }) {
           <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
             Email
           </div>
-          <div className="mt-1 text-sm text-white">{profile?.email || authUser?.email || "—"}</div>
+          <div className="mt-1 text-sm text-white">
+            {profile?.email || authUser?.email || "—"}
+          </div>
         </div>
 
         <div className="rounded-[18px] border border-white/8 bg-black/20 px-4 py-3">
@@ -119,9 +126,7 @@ function IdentityCard({ profile, authUser }) {
 function SignInMethodCard({ isGoogleAccount }) {
   return (
     <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5">
-      <div className="mb-4 text-sm font-semibold text-white">
-        Sign-in method
-      </div>
+      <div className="mb-4 text-sm font-semibold text-white">Sign-in method</div>
 
       <div className="rounded-[18px] border border-white/8 bg-black/20 px-4 py-4">
         <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
@@ -311,12 +316,18 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white">
-      <div className="mx-auto w-full max-w-[76rem] px-4 py-6 sm:px-5 sm:py-8 lg:px-6 lg:py-10">
+      <div className="mx-auto w-full max-w-[76rem] px-4 py-6 pb-24 sm:px-5 sm:py-8 sm:pb-8 lg:px-6 lg:py-10">
+        <AppSectionNav />
         <AppTopBar
           eyebrow="Profile"
           title="Your account"
           description="Manage your details, progression, and all-time performance from one place."
           actions={[
+            {
+              to: "/activity",
+              label: "Activity",
+              sublabel: "Recent results",
+            },
             {
               to: "/leaderboards?mode=combined&period=current",
               label: "Leaderboards",
@@ -344,9 +355,7 @@ export default function ProfilePage() {
         <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="space-y-6">
             <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5">
-              <div className="mb-4 text-sm font-semibold text-white">
-                Account
-              </div>
+              <div className="mb-4 text-sm font-semibold text-white">Account</div>
 
               {isLoadingProfile ? (
                 <div className="rounded-[18px] border border-white/6 bg-white/[0.03] px-4 py-6 text-sm text-neutral-500">
@@ -510,8 +519,17 @@ export default function ProfilePage() {
             </div>
 
             <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5">
-              <div className="mb-4 text-sm font-semibold text-white">
-                Battle Trivia history
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div className="text-sm font-semibold text-white">
+                  Battle Trivia history
+                </div>
+
+                <Link
+                  to="/activity"
+                  className="text-[11px] font-medium uppercase tracking-[0.16em] text-blue-300/80"
+                >
+                  Open activity
+                </Link>
               </div>
 
               {isLoadingHistory ? (

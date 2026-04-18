@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import FeaturedTriviaCard from "../components/lobby/FeaturedTriviaCard";
 import LeaderboardPreviewCard from "../components/lobby/LeaderboardPreviewCard";
-import RoomCard from "../components/lobby/RoomCard";
+import AppSectionNav from "../components/layout/AppSectionNav";
 import {
   getBattleTriviaSessionPodium,
   getCurrentBattleTriviaLeaderboard,
@@ -10,6 +10,7 @@ import {
   getRooms,
 } from "../api/roomsApi";
 import { getLeaderboard } from "../api/leaderboardsApi";
+import { getMyProfile, getMyProfileHistory } from "../api/profileApi";
 import { useAuth } from "../hooks/useAuth";
 
 function formatEndedAt(value) {
@@ -26,6 +27,18 @@ function formatEndedAt(value) {
   }).format(date);
 }
 
+function formatShortDate(value) {
+  if (!value) return "Recently";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Recently";
+
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+  }).format(date);
+}
+
 function getInitials(value) {
   if (!value) return "P";
 
@@ -35,44 +48,45 @@ function getInitials(value) {
   return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
 }
 
-function SectionHeader({ eyebrow, title, description, action }) {
+function SectionHeader({ eyebrow, title, description }) {
   return (
-    <div className="mb-4 flex flex-wrap items-end justify-between gap-3 sm:mb-5">
+    <div className="mb-3 flex flex-wrap items-end justify-between gap-2.5 sm:mb-4">
       <div>
-        <div className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 sm:text-[11px]">
+        <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500 sm:text-[11px]">
           {eyebrow}
         </div>
-        <div className="mt-1 text-[17px] font-semibold tracking-[-0.03em] text-white sm:text-xl">
+        <div className="mt-1 text-[16px] font-semibold tracking-[-0.03em] text-white sm:text-[19px]">
           {title}
         </div>
         {description ? (
-          <div className="mt-1.5 text-[13px] text-neutral-400 sm:mt-2 sm:text-sm">
+          <div className="mt-1 text-[12px] leading-5 text-neutral-400 sm:mt-1.5 sm:text-[13px]">
             {description}
           </div>
         ) : null}
       </div>
-
-      {action ? action : null}
     </div>
   );
 }
 
-function QuickLinkCard({ to, eyebrow, title, description }) {
+function QuickDestinationCard({ to, eyebrow, title, description }) {
   return (
     <Link
       to={to}
-      className="rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015))] p-3.5 transition hover:border-white/15 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.02))] sm:p-4"
+      className="rounded-[18px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-3.5 transition hover:border-white/15 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.018))] sm:rounded-[20px] sm:p-4"
     >
-      <div className="text-[9px] uppercase tracking-[0.18em] text-neutral-500 sm:text-[10px]">
+      <div className="text-[9px] uppercase tracking-[0.16em] text-neutral-500 sm:text-[10px]">
         {eyebrow}
       </div>
-      <div className="mt-2 text-[15px] font-semibold tracking-[-0.03em] text-white sm:text-lg">
+
+      <div className="mt-1.5 text-[14px] font-semibold tracking-[-0.03em] text-white sm:text-[15px]">
         {title}
       </div>
-      <div className="mt-1.5 text-[13px] leading-5 text-neutral-400 sm:mt-2 sm:text-sm sm:leading-6">
+
+      <div className="mt-1 text-[12px] leading-5 text-neutral-400 sm:text-[13px] sm:leading-5">
         {description}
       </div>
-      <div className="mt-3 inline-flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.16em] text-blue-300/80 sm:mt-4 sm:text-[11px]">
+
+      <div className="mt-3 inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.14em] text-blue-300/80">
         Open
         <span aria-hidden="true">→</span>
       </div>
@@ -126,13 +140,13 @@ function LeaderCard({ entry }) {
 
 function LeadersPanel({ title, subtitle, entries }) {
   return (
-    <div className="mt-3.5 rounded-[20px] border border-white/10 bg-white/[0.03] p-3.5 sm:mt-4 sm:rounded-[22px] sm:p-4">
+    <div className="mt-3 rounded-[18px] border border-white/10 bg-white/[0.03] p-3 sm:mt-4 sm:rounded-[22px] sm:p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500 sm:text-[11px]">
             {title}
           </div>
-          <div className="mt-1 text-[13px] text-neutral-300 sm:text-sm">
+          <div className="mt-1 text-[12px] text-neutral-300 sm:text-sm">
             {subtitle}
           </div>
         </div>
@@ -142,7 +156,7 @@ function LeadersPanel({ title, subtitle, entries }) {
         </div>
       </div>
 
-      <div className="mt-3.5 grid gap-2.5 sm:mt-4 sm:grid-cols-3 sm:gap-3">
+      <div className="mt-3 grid gap-2.5 sm:mt-4 sm:grid-cols-3 sm:gap-3">
         {entries.map((entry) => (
           <LeaderCard key={`${entry.userId}-${entry.rank}`} entry={entry} />
         ))}
@@ -151,117 +165,222 @@ function LeadersPanel({ title, subtitle, entries }) {
   );
 }
 
-function MobileEntryStrip({ featuredRoom }) {
-  return (
-    <div className="mb-5 sm:hidden">
-      <div className="rounded-[18px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.015))] p-3.5">
-        <div className="text-[10px] uppercase tracking-[0.18em] text-blue-300/70">
-          Jump in
-        </div>
-
-        <div className="mt-2 text-[17px] font-semibold tracking-[-0.03em] text-white">
-          Choose where you want to go
-        </div>
-
-        <div className="mt-1.5 text-[13px] leading-5 text-neutral-400">
-          Go straight to the featured room or open weekly standings.
-        </div>
-
-        <div className="mt-3 flex flex-wrap gap-2">
-          {featuredRoom ? (
-            <Link
-              to={`/rooms/${featuredRoom.id}`}
-              className="inline-flex items-center gap-2 rounded-full bg-[linear-gradient(180deg,rgba(64,156,255,1)_0%,rgba(10,132,255,1)_100%)] px-4 py-2 text-[12px] font-semibold text-white"
-            >
-              Featured room
-              <span aria-hidden="true">→</span>
-            </Link>
-          ) : null}
-
-          <Link
-            to="/leaderboards?mode=combined&period=current"
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[12px] font-semibold text-white"
-          >
-            Standings
-            <span aria-hidden="true">→</span>
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function LobbyHeroCard({ user }) {
+function DashboardHero({ user, isFirstTimeUser }) {
   const displayName = user?.displayName || user?.username || "Player";
   const greeting = user?.displayName ? `Welcome, ${user.displayName}` : "Welcome";
   const providerLabel =
     user?.authProvider === "google" ? "Google sign-in" : "BTS sign-in";
 
   return (
-    <div className="mb-5 rounded-[24px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.14),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015))] p-4 shadow-[0_18px_40px_rgba(0,0,0,0.16)] sm:mb-6 sm:rounded-[28px] sm:p-5 lg:p-6">
-      <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+    <div className="mb-5 rounded-[24px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.14),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015))] p-4 shadow-[0_18px_40px_rgba(0,0,0,0.16)] sm:mb-7 sm:rounded-[30px] sm:p-5 lg:p-6">
+      <div className="flex items-start gap-3 sm:gap-4">
+        <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full border border-white/10 bg-white/[0.05] sm:h-16 sm:w-16">
+          {user?.avatarUrl ? (
+            <img
+              src={user.avatarUrl}
+              alt={displayName}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-base font-semibold text-white sm:text-lg">
+              {getInitials(displayName)}
+            </div>
+          )}
+        </div>
+
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-3">
-            <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full border border-white/10 bg-white/[0.05] sm:h-16 sm:w-16">
-              {user?.avatarUrl ? (
-                <img
-                  src={user.avatarUrl}
-                  alt={displayName}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-base font-semibold text-white sm:text-lg">
-                  {getInitials(displayName)}
-                </div>
-              )}
-            </div>
-
-            <div className="min-w-0">
-              <div className="text-[10px] uppercase tracking-[0.2em] text-blue-300/70 sm:text-[11px]">
-                BTS
-              </div>
-
-              <div className="mt-1 truncate text-sm font-medium text-neutral-400 sm:text-[15px]">
-                {displayName}
-              </div>
-
-              <div className="mt-1 inline-flex rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] text-neutral-300 sm:text-[10px]">
-                {providerLabel}
-              </div>
-            </div>
+          <div className="text-[10px] uppercase tracking-[0.2em] text-blue-300/70 sm:text-[11px]">
+            BTS dashboard
           </div>
 
-          <h1 className="mt-4 text-[28px] font-semibold tracking-[-0.04em] text-white sm:text-[38px]">
+          <div className="mt-1 truncate text-sm font-medium text-neutral-400 sm:text-[15px]">
+            {displayName}
+          </div>
+
+          <div className="mt-1 inline-flex rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] text-neutral-300 sm:text-[10px]">
+            {providerLabel}
+          </div>
+
+          <h1 className="mt-3 text-[26px] font-semibold tracking-[-0.04em] text-white sm:mt-4 sm:text-[36px]">
             {greeting}
           </h1>
 
-          <p className="mt-3 max-w-[42rem] text-[14px] leading-7 text-neutral-400 sm:text-[15px]">
-            Choose the right place to jump in: featured competition, game rooms,
-            community chat, or weekly standings.
+          <p className="mt-2 max-w-[42rem] text-[13px] leading-6 text-neutral-400 sm:mt-3 sm:text-[15px] sm:leading-7">
+            {isFirstTimeUser
+              ? "You’re all set. Start with the featured competition, explore the rooms, and build your first result."
+              : "Start with the featured competition, jump into rooms, check the weekly standings, or head straight to your profile."}
           </p>
         </div>
+      </div>
+    </div>
+  );
+}
 
-        <div className="grid gap-3 sm:grid-cols-2 lg:w-[18rem] lg:grid-cols-1">
-          <Link
-            to="/profile"
-            className="rounded-[18px] border border-blue-400/20 bg-blue-500/10 px-4 py-3 transition hover:border-blue-400/30 hover:bg-blue-500/15"
-          >
-            <div className="text-sm font-semibold text-white">Profile</div>
-            <div className="mt-1 text-[11px] text-neutral-400">
-              {user?.username || "Manage account"}
-            </div>
-          </Link>
+function PulseCard({
+  to,
+  eyebrow,
+  title,
+  description,
+  accent = "blue",
+  cta = "View",
+}) {
+  const accentClasses =
+    accent === "violet"
+      ? "border-violet-400/18 bg-violet-500/10"
+      : accent === "emerald"
+      ? "border-emerald-400/18 bg-emerald-500/10"
+      : "border-blue-400/18 bg-blue-500/10";
 
-          <Link
-            to="/leaderboards?mode=combined&period=current"
-            className="rounded-[18px] border border-white/10 bg-white/[0.035] px-4 py-3 transition hover:border-white/15 hover:bg-white/[0.05]"
-          >
-            <div className="text-sm font-semibold text-white">Standings</div>
-            <div className="mt-1 text-[11px] text-neutral-400">
-              Weekly standings
-            </div>
-          </Link>
+  return (
+    <Link
+      to={to}
+      className="rounded-[18px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.015))] p-3.5 transition hover:border-white/15 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.038),rgba(255,255,255,0.018))] sm:rounded-[20px] sm:p-4"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
+          {eyebrow}
         </div>
+        <div
+          className={`rounded-full border px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] ${accentClasses}`}
+        >
+          {cta}
+        </div>
+      </div>
+
+      <div className="mt-2.5 text-[20px] font-semibold tracking-[-0.04em] text-white sm:text-[22px]">
+        {title}
+      </div>
+
+      <div className="mt-1.5 text-[12px] leading-5 text-neutral-400 sm:text-[13px] sm:leading-6">
+        {description}
+      </div>
+    </Link>
+  );
+}
+
+function NextMoveRow({
+  step,
+  title,
+  description,
+  to,
+  actionLabel,
+  accent = "blue",
+}) {
+  const accentClasses =
+    accent === "violet"
+      ? "border-violet-400/18 bg-violet-500/10 text-violet-200"
+      : accent === "emerald"
+      ? "border-emerald-400/18 bg-emerald-500/10 text-emerald-200"
+      : "border-blue-400/18 bg-blue-500/10 text-blue-200";
+
+  return (
+    <div className="rounded-[14px] border border-white/8 bg-black/20 px-3 py-2.5 sm:rounded-[16px] sm:px-3.5 sm:py-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-[10px] uppercase tracking-[0.14em] text-neutral-500">
+            {step}
+          </div>
+          <div className="mt-1 text-[13px] font-semibold text-white sm:text-sm">
+            {title}
+          </div>
+          <div className="mt-1 text-[11px] leading-5 text-neutral-400 sm:text-[12px]">
+            {description}
+          </div>
+        </div>
+
+        <Link
+          to={to}
+          className={`shrink-0 rounded-full border px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] transition hover:opacity-90 ${accentClasses}`}
+        >
+          {actionLabel}
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function NextUpCard({ isFirstTimeUser, featuredRoom }) {
+  const featuredLink = featuredRoom ? `/rooms/${featuredRoom.id}` : "/rooms";
+
+  return (
+    <div className="rounded-[20px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.028),rgba(255,255,255,0.012))] p-3.5 sm:rounded-[24px] sm:p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
+            Next up
+          </div>
+          <div className="mt-1.5 text-[15px] font-semibold tracking-[-0.03em] text-white sm:text-[17px]">
+            {isFirstTimeUser ? "Your first 3 moves" : "Keep momentum going"}
+          </div>
+        </div>
+
+        <div className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] text-neutral-300">
+          Quick
+        </div>
+      </div>
+
+      <div className="mt-2 text-[12px] leading-5 text-neutral-400 sm:text-[13px]">
+        {isFirstTimeUser
+          ? "Start cleanly and let the app begin to populate around your activity."
+          : "Use the dashboard as a control point, then move straight into what matters."}
+      </div>
+
+      <div className="mt-3 space-y-2.5">
+        {isFirstTimeUser ? (
+          <>
+            <NextMoveRow
+              step="Step 1"
+              title="Enter the featured room"
+              description="Play your first round and start building history."
+              to={featuredLink}
+              actionLabel="Play"
+              accent="blue"
+            />
+            <NextMoveRow
+              step="Step 2"
+              title="Check live standings"
+              description="See how the weekly competition is moving."
+              to="/leaderboards?mode=combined&period=current"
+              actionLabel="View"
+              accent="violet"
+            />
+            <NextMoveRow
+              step="Step 3"
+              title="Complete your profile"
+              description="Set your display name and account details."
+              to="/profile"
+              actionLabel="Edit"
+              accent="emerald"
+            />
+          </>
+        ) : (
+          <>
+            <NextMoveRow
+              step="Play"
+              title="Jump back into competition"
+              description="Use the featured room for the fastest return to live play."
+              to={featuredLink}
+              actionLabel="Open"
+              accent="blue"
+            />
+            <NextMoveRow
+              step="Track"
+              title="Review your recent activity"
+              description="Open your activity page to check recent results."
+              to="/activity"
+              actionLabel="Review"
+              accent="violet"
+            />
+            <NextMoveRow
+              step="Compare"
+              title="Check where you stand"
+              description="See your place in the current rankings this week."
+              to="/leaderboards?mode=combined&period=current"
+              actionLabel="Compare"
+              accent="emerald"
+            />
+          </>
+        )}
       </div>
     </div>
   );
@@ -275,7 +394,9 @@ export default function LobbyPage() {
   const [sessionPodium, setSessionPodium] = useState(null);
   const [currentLeaders, setCurrentLeaders] = useState([]);
   const [wordScrambleLeaders, setWordScrambleLeaders] = useState([]);
-  const [combinedLeaders, setCombinedLeaders] = useState([]);
+  const [combinedBoardRows, setCombinedBoardRows] = useState([]);
+  const [profileOverview, setProfileOverview] = useState(null);
+  const [recentResult, setRecentResult] = useState(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -283,20 +404,15 @@ export default function LobbyPage() {
   useEffect(() => {
     let isMounted = true;
 
-    async function loadRooms() {
+    async function loadDashboard() {
       setError("");
       setIsLoading(true);
-      setFeaturedRoomStatus(null);
-      setSessionPodium(null);
-      setCurrentLeaders([]);
-      setWordScrambleLeaders([]);
-      setCombinedLeaders([]);
 
       try {
-        const data = await getRooms();
+        const roomsData = await getRooms();
         if (!isMounted) return;
 
-        const nextRooms = Array.isArray(data) ? data : [];
+        const nextRooms = Array.isArray(roomsData) ? roomsData : [];
         setRooms(nextRooms);
 
         const battleTriviaRoom =
@@ -304,7 +420,15 @@ export default function LobbyPage() {
           nextRooms.find((room) => room.roomType === "trivia") ||
           null;
 
-        const tasks = [
+        const [
+          status,
+          podium,
+          leaders,
+          scrambleBoard,
+          combinedBoard,
+          profileData,
+          historyData,
+        ] = await Promise.all([
           battleTriviaRoom
             ? getRoomSessionStatus(battleTriviaRoom.id).catch(() => null)
             : Promise.resolve(null),
@@ -313,13 +437,14 @@ export default function LobbyPage() {
           getLeaderboard("word-scramble", "current", 3).catch(() => ({
             rows: [],
           })),
-          getLeaderboard("combined", "current", 3).catch(() => ({
+          getLeaderboard("combined", "current", 100).catch(() => ({
             rows: [],
           })),
-        ];
-
-        const [status, podium, leaders, scrambleBoard, combinedBoard] =
-          await Promise.all(tasks);
+          getMyProfile().catch(() => null),
+          getMyProfileHistory(1, 1).catch(() => ({
+            items: [],
+          })),
+        ]);
 
         if (!isMounted) return;
 
@@ -329,19 +454,23 @@ export default function LobbyPage() {
         setWordScrambleLeaders(
           Array.isArray(scrambleBoard?.rows) ? scrambleBoard.rows : []
         );
-        setCombinedLeaders(
+        setCombinedBoardRows(
           Array.isArray(combinedBoard?.rows) ? combinedBoard.rows : []
+        );
+        setProfileOverview(profileData || null);
+        setRecentResult(
+          Array.isArray(historyData?.items) ? historyData.items[0] || null : null
         );
       } catch {
         if (!isMounted) return;
-        setError("Failed to load rooms.");
+        setError("Failed to load dashboard.");
       } finally {
         if (!isMounted) return;
         setIsLoading(false);
       }
     }
 
-    loadRooms();
+    loadDashboard();
 
     return () => {
       isMounted = false;
@@ -362,35 +491,6 @@ export default function LobbyPage() {
     };
   }, [rooms, featuredRoomStatus]);
 
-  const regularRooms = useMemo(() => {
-    if (!featuredRoom) return rooms;
-    return rooms.filter((room) => room.id !== featuredRoom.id);
-  }, [rooms, featuredRoom]);
-
-  const gameRooms = useMemo(
-    () =>
-      regularRooms.filter(
-        (room) =>
-          room.roomType === "game" ||
-          room.roomType === "trivia" ||
-          room.slug === "word-scramble"
-      ),
-    [regularRooms]
-  );
-
-  const communityRooms = useMemo(
-    () =>
-      regularRooms.filter(
-        (room) =>
-          !(
-            room.roomType === "game" ||
-            room.roomType === "trivia" ||
-            room.slug === "word-scramble"
-          )
-      ),
-    [regularRooms]
-  );
-
   const showPodium =
     !!sessionPodium?.hasPodium && sessionPodium?.winners?.length > 0;
   const showCurrentLeaders = !showPodium && currentLeaders.length > 0;
@@ -403,10 +503,30 @@ export default function LobbyPage() {
     ? `Latest winners · ${formatEndedAt(sessionPodium?.endedAt)}`
     : "Current week · Top 3";
 
+  const combinedLeadersPreview = useMemo(
+    () => combinedBoardRows.slice(0, 3),
+    [combinedBoardRows]
+  );
+
+  const currentStanding = useMemo(() => {
+    if (!user?.id) return null;
+    return combinedBoardRows.find((row) => row.userId === user.id) || null;
+  }, [combinedBoardRows, user?.id]);
+
+  const totalCorrectAnswers = profileOverview?.stats?.totalCorrectAnswers ?? 0;
+  const bestStreak = profileOverview?.stats?.bestStreak ?? 0;
+
+  const isFirstTimeUser =
+    !recentResult &&
+    !currentStanding &&
+    bestStreak === 0 &&
+    totalCorrectAnswers === 0;
+
   return (
     <div className="min-h-screen bg-neutral-950 text-white">
-      <div className="mx-auto w-full max-w-[76rem] px-4 py-4 sm:px-5 sm:py-7 lg:px-6 lg:py-9">
-        <LobbyHeroCard user={user} />
+      <div className="mx-auto w-full max-w-[76rem] px-4 py-4 pb-24 sm:px-5 sm:py-7 sm:pb-7 lg:px-6 lg:py-9">
+        <AppSectionNav />
+        <DashboardHero user={user} isFirstTimeUser={isFirstTimeUser} />
 
         {error ? (
           <div className="mb-5 rounded-[20px] border border-red-900/35 bg-red-950/25 px-4 py-3 text-sm text-red-300/90 sm:mb-6 sm:rounded-[22px]">
@@ -416,68 +536,105 @@ export default function LobbyPage() {
 
         {isLoading ? (
           <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-10 text-center text-sm text-neutral-500 sm:rounded-[24px] sm:py-12">
-            Loading rooms...
+            Loading dashboard...
           </div>
         ) : (
           <>
-            <MobileEntryStrip featuredRoom={featuredRoom} />
+            <section className="mb-7 sm:mb-9">
+              <SectionHeader
+                eyebrow="Personal"
+                title={isFirstTimeUser ? "Getting started" : "Your snapshot"}
+                description={
+                  isFirstTimeUser
+                    ? "A cleaner first-time experience: start playing, complete your profile, and watch your results appear here."
+                    : "A quick pulse on your recent result, streak, and current standing."
+                }
+              />
 
-            <section className="mb-6 hidden gap-4 lg:mb-8 sm:grid lg:grid-cols-[1.25fr_0.75fr]">
-              <div className="rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.14),transparent_32%),linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015))] p-5 shadow-[0_20px_48px_rgba(0,0,0,0.16)]">
-                <div className="text-[11px] uppercase tracking-[0.22em] text-blue-300/70">
-                  Live now
-                </div>
-                <h2 className="mt-3 text-[34px] font-semibold tracking-[-0.04em] text-white">
-                  The cleanest way into the action
-                </h2>
-                <p className="mt-3 max-w-[40rem] text-[15px] leading-7 text-neutral-400">
-                  Start with the featured room if you want live competition, or
-                  head straight into game and community spaces below.
-                </p>
+              <div className="grid gap-3 sm:gap-4 lg:grid-cols-3">
+                {isFirstTimeUser ? (
+                  <>
+                    <PulseCard
+                      to={featuredRoom ? `/rooms/${featuredRoom.id}` : "/rooms"}
+                      eyebrow="Step 1"
+                      title="Play your first round"
+                      description="Enter the featured room and answer a few questions to start building history."
+                      accent="blue"
+                      cta="Start"
+                    />
 
-                <div className="mt-5 flex flex-wrap gap-3">
-                  {featuredRoom ? (
-                    <Link
-                      to={`/rooms/${featuredRoom.id}`}
-                      className="inline-flex items-center gap-2 rounded-[18px] bg-[linear-gradient(180deg,rgba(64,156,255,1)_0%,rgba(10,132,255,1)_100%)] px-5 py-3 text-sm font-semibold text-white shadow-[0_14px_32px_rgba(37,99,235,0.28)]"
-                    >
-                      Enter featured room
-                      <span aria-hidden="true">→</span>
-                    </Link>
-                  ) : null}
+                    <PulseCard
+                      to="/rooms"
+                      eyebrow="Step 2"
+                      title="Explore game rooms"
+                      description="Browse the competitive spaces and find the rooms you want to return to."
+                      accent="violet"
+                      cta="Browse"
+                    />
 
-                  <Link
-                    to="/leaderboards?mode=combined&period=current"
-                    className="inline-flex items-center gap-2 rounded-[18px] border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition hover:border-white/15 hover:bg-white/[0.06]"
-                  >
-                    View standings
-                    <span aria-hidden="true">→</span>
-                  </Link>
-                </div>
-              </div>
+                    <PulseCard
+                      to="/profile"
+                      eyebrow="Step 3"
+                      title="Finish your profile"
+                      description="Update your display name and account details so the app feels more personal."
+                      accent="emerald"
+                      cta="Edit"
+                    />
+                  </>
+                ) : (
+                  <>
+                    <PulseCard
+                      to="/activity"
+                      eyebrow="Recent result"
+                      title={
+                        recentResult
+                          ? `#${recentResult.rank} · ${recentResult.score} pts`
+                          : "No result yet"
+                      }
+                      description={
+                        recentResult
+                          ? `${recentResult.title || "Battle Trivia"} · ${formatShortDate(
+                              recentResult.endedAt
+                            )}`
+                          : "Jump into the featured room to start building your history."
+                      }
+                      accent="blue"
+                    />
 
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-                <QuickLinkCard
-                  to="/profile"
-                  eyebrow="Your account"
-                  title="Profile and progress"
-                  description="Update your details, review your stats, and track achievements."
-                />
-                <QuickLinkCard
-                  to="/leaderboards?mode=combined&period=current"
-                  eyebrow="Competition"
-                  title="Weekly standings"
-                  description="Check Battle Trivia, Word Scramble, and combined rankings."
-                />
+                    <PulseCard
+                      to="/profile"
+                      eyebrow="Best streak"
+                      title={`x${bestStreak}`}
+                      description={
+                        bestStreak > 0
+                          ? "Your all-time best answer streak."
+                          : "No streak recorded yet — start a run and build momentum."
+                      }
+                      accent="violet"
+                    />
+
+                    <PulseCard
+                      to="/leaderboards?mode=combined&period=current"
+                      eyebrow="Current standing"
+                      title={currentStanding ? `#${currentStanding.rank}` : "Unranked"}
+                      description={
+                        currentStanding
+                          ? `${currentStanding.score} pts in the current combined standings.`
+                          : "You are not placed in the current combined standings yet."
+                      }
+                      accent="emerald"
+                    />
+                  </>
+                )}
               </div>
             </section>
 
             {featuredRoom ? (
-              <section className="mb-8 sm:mb-10">
+              <section className="mb-6 sm:mb-8">
                 <SectionHeader
                   eyebrow="Featured"
                   title="Main competition"
-                  description="This is the headline room and the primary destination when live play is happening."
+                  description="The headline room and fastest way into the live action."
                 />
 
                 <FeaturedTriviaCard room={featuredRoom} />
@@ -494,74 +651,46 @@ export default function LobbyPage() {
                     subtitle="Live standings for this week"
                     entries={currentLeaders}
                   />
-                ) : (
-                  <div className="mt-3.5 rounded-[20px] border border-white/10 bg-white/[0.03] p-3.5 sm:mt-4 sm:rounded-[22px] sm:p-4">
-                    <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500 sm:text-[11px]">
-                      Weekly podium
-                    </div>
-                    <div className="mt-2 text-[13px] text-neutral-400 sm:text-sm">
-                      This week’s champions will appear here when the session
-                      ends.
-                    </div>
-                  </div>
-                )}
+                ) : null}
               </section>
             ) : null}
 
-            <section className="mb-8 sm:mb-10">
+            <section className="mb-7 sm:mb-9">
               <SectionHeader
-                eyebrow="Rooms"
-                title="Game rooms"
-                description="Focused spaces for competitive play and structured game sessions."
+                eyebrow="Explore"
+                title="Go where you need to go"
+                description="Keep the dashboard short and move into dedicated sections."
               />
 
-              {gameRooms.length === 0 ? (
-                <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-10 text-center text-sm text-neutral-500 sm:rounded-[24px] sm:py-12">
-                  No game rooms available yet.
-                </div>
-              ) : (
-                <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
-                  {gameRooms.map((room) => (
-                    <RoomCard key={room.id} room={room} />
-                  ))}
-                </div>
-              )}
-            </section>
+              <div className="grid gap-3 lg:grid-cols-[1.02fr_0.98fr]">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <QuickDestinationCard
+                    to="/rooms"
+                    eyebrow="Rooms"
+                    title="Game rooms"
+                    description="Battle Trivia, Word Scramble, and other competitive spaces."
+                  />
 
-            <section className="mb-8 sm:mb-10">
-              <SectionHeader
-                eyebrow="Rooms"
-                title="Community spaces"
-                description="General hangout rooms and non-competitive spaces."
-              />
+                  <QuickDestinationCard
+                    to="/community"
+                    eyebrow="Community"
+                    title="Community spaces"
+                    description="General chat rooms and social spaces outside competition."
+                  />
+                </div>
 
-              {communityRooms.length === 0 ? (
-                <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-10 text-center text-sm text-neutral-500 sm:rounded-[24px] sm:py-12">
-                  No community rooms available yet.
-                </div>
-              ) : (
-                <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
-                  {communityRooms.map((room) => (
-                    <RoomCard key={room.id} room={room} />
-                  ))}
-                </div>
-              )}
+                <NextUpCard
+                  isFirstTimeUser={isFirstTimeUser}
+                  featuredRoom={featuredRoom}
+                />
+              </div>
             </section>
 
             <section>
               <SectionHeader
                 eyebrow="Standings"
-                title="Weekly leaderboard hub"
-                description="Competition lives here, not between room sections."
-                action={
-                  <Link
-                    to="/leaderboards?mode=combined&period=current"
-                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.035] px-3.5 py-2 text-[12px] font-medium text-white transition hover:border-white/15 hover:bg-white/[0.05] sm:rounded-[18px] sm:px-4 sm:py-2.5 sm:text-sm"
-                  >
-                    Open full page
-                    <span aria-hidden="true">→</span>
-                  </Link>
-                }
+                title="Quick leaderboard snapshot"
+                description="A lightweight preview. Open the leaderboard page for the full picture."
               />
 
               <div className="grid gap-3 sm:gap-4 lg:grid-cols-3">
@@ -570,7 +699,7 @@ export default function LobbyPage() {
                   subtitle={battleTriviaPreviewSubtitle}
                   rows={battleTriviaPreviewRows}
                   to="/leaderboards?mode=battle-trivia&period=current"
-                  accent="amber"
+                  accent="blue"
                 />
 
                 <LeaderboardPreviewCard
@@ -584,7 +713,7 @@ export default function LobbyPage() {
                 <LeaderboardPreviewCard
                   title="Combined"
                   subtitle="Trivia + Scramble · Current week"
-                  rows={combinedLeaders}
+                  rows={combinedLeadersPreview}
                   to="/leaderboards?mode=combined&period=current"
                   accent="blue"
                 />

@@ -5,10 +5,13 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import RoomPage from "./pages/RoomPage";
 import ProfilePage from "./pages/ProfilePage";
+import ActivityPage from "./pages/ActivityPage";
 import { useAuth } from "./hooks/useAuth";
 import AdminRoute from "./components/AdminRoute";
 import AdminTriviaManagementPage from "./pages/AdminTriviaManagementPage";
 import LeaderboardsPage from "./pages/LeaderboardsPage";
+import RoomsPage from "./pages/RoomsPage";
+import CommunityPage from "./pages/CommunityPage";
 
 function PublicOnlyRoute({ children }) {
   const { isAuthenticated, isInitializing } = useAuth();
@@ -59,10 +62,28 @@ export default function App() {
       />
 
       <Route
-        path="/rooms/:roomId"
+        path="/rooms"
         element={
           <ProtectedRoute>
-            <RoomPage />
+            <RoomsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/community"
+        element={
+          <ProtectedRoute>
+            <CommunityPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/leaderboards"
+        element={
+          <ProtectedRoute>
+            <LeaderboardsPage />
           </ProtectedRoute>
         }
       />
@@ -75,14 +96,24 @@ export default function App() {
           </ProtectedRoute>
         }
       />
-<Route
-  path="/leaderboards"
-  element={
-    <ProtectedRoute>
-      <LeaderboardsPage />
-    </ProtectedRoute>
-  }
-/>
+
+      <Route
+        path="/activity"
+        element={
+          <ProtectedRoute>
+            <ActivityPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/rooms/:roomId"
+        element={
+          <ProtectedRoute>
+            <RoomPage />
+          </ProtectedRoute>
+        }
+      />
 
       <Route
         path="/admin/trivia"
@@ -92,6 +123,8 @@ export default function App() {
           </AdminRoute>
         }
       />
+
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
