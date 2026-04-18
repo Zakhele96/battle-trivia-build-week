@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { register as registerRequest } from "../api/authApi";
+import { googleLogin, register as registerRequest } from "../api/authApi";
+import GoogleAuthButton from "../components/auth/GoogleAuthButton";
 import { useAuth } from "../hooks/useAuth";
 
 export default function RegisterPage() {
@@ -39,6 +40,21 @@ export default function RegisterPage() {
       navigate("/", { replace: true });
     } catch (err) {
       setError(err?.response?.data?.message || "Registration failed.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleGoogleLogin = async (credential) => {
+    setError("");
+    setIsSubmitting(true);
+
+    try {
+      const data = await googleLogin(credential);
+      login(data);
+      navigate("/", { replace: true });
+    } catch (err) {
+      setError(err?.response?.data?.message || "Google sign-up failed.");
     } finally {
       setIsSubmitting(false);
     }
@@ -110,6 +126,19 @@ export default function RegisterPage() {
             {isSubmitting ? "Creating account..." : "Create account"}
           </button>
         </form>
+
+        <div className="my-5 flex items-center gap-3">
+          <div className="h-px flex-1 bg-neutral-800" />
+          <span className="text-xs uppercase tracking-[0.18em] text-neutral-500">
+            or
+          </span>
+          <div className="h-px flex-1 bg-neutral-800" />
+        </div>
+
+        <GoogleAuthButton
+          onCredential={handleGoogleLogin}
+          disabled={isSubmitting}
+        />
 
         <p className="mt-4 text-sm text-neutral-400">
           Already have an account?{" "}

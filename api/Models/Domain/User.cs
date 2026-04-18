@@ -12,4 +12,9 @@ public sealed class User
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public bool IsAdmin { get; set; }
+
+    public string? GoogleSub { get; set; }
+    public string AuthProvider { get; set; } = "local";
+    public string? AvatarUrl { get; set; }
+    public bool EmailVerified { get; set; }
 }

@@ -8,4 +8,5 @@ public sealed class UserResponse
     public string Email { get; set; } = string.Empty;
     public string? PhoneNumber { get; set; }
     public bool IsAdmin { get; set; }
+    public string? AvatarUrl { get; set; }
 }

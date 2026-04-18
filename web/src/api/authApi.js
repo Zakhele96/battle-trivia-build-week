@@ -19,3 +19,7 @@ export async function updateProfile(payload) {
   const { data } = await api.put("/profile", payload);
   return data;
 }
+export async function googleLogin(idToken) {
+  const { data } = await api.post("/auth/google", { idToken });
+  return data;
+}

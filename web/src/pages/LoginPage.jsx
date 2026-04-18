@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { login as loginRequest } from "../api/authApi";
+import { googleLogin, login as loginRequest } from "../api/authApi";
+import GoogleAuthButton from "../components/auth/GoogleAuthButton";
 import { useAuth } from "../hooks/useAuth";
 
 export default function LoginPage() {
@@ -36,6 +37,21 @@ export default function LoginPage() {
       navigate(from, { replace: true });
     } catch (err) {
       setError(err?.response?.data?.message || "Login failed.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleGoogleLogin = async (credential) => {
+    setError("");
+    setIsSubmitting(true);
+
+    try {
+      const data = await googleLogin(credential);
+      login(data);
+      navigate(from, { replace: true });
+    } catch (err) {
+      setError(err?.response?.data?.message || "Google login failed.");
     } finally {
       setIsSubmitting(false);
     }
@@ -79,6 +95,19 @@ export default function LoginPage() {
             {isSubmitting ? "Logging in..." : "Login"}
           </button>
         </form>
+
+        <div className="my-5 flex items-center gap-3">
+          <div className="h-px flex-1 bg-neutral-800" />
+          <span className="text-xs uppercase tracking-[0.18em] text-neutral-500">
+            or
+          </span>
+          <div className="h-px flex-1 bg-neutral-800" />
+        </div>
+
+        <GoogleAuthButton
+          onCredential={handleGoogleLogin}
+          disabled={isSubmitting}
+        />
 
         <p className="mt-4 text-sm text-neutral-400">
           Don&apos;t have an account?{" "}

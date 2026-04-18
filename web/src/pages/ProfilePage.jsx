@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   changeMyPassword,
   getMyProfile,
@@ -10,6 +10,7 @@ import {
 import ProfileAchievementsCard from "../components/profile/ProfileAchievementsCard";
 import ProfileProgressCard from "../components/profile/ProfileProgressCard";
 import AppTopBar from "../components/layout/AppTopBar";
+import { useAuth } from "../hooks/useAuth";
 
 function formatFastest(ms) {
   if (typeof ms !== "number") return "—";
@@ -79,6 +80,9 @@ function IdentityCard({ profile }) {
 }
 
 export default function ProfilePage() {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+
   const [profile, setProfile] = useState(null);
   const [progression, setProgression] = useState(null);
   const [history, setHistory] = useState([]);
@@ -234,6 +238,11 @@ export default function ProfilePage() {
     }
   }
 
+  function handleLogout() {
+    logout();
+    navigate("/login", { replace: true });
+  }
+
   return (
     <div className="min-h-screen bg-neutral-950 text-white">
       <div className="mx-auto w-full max-w-[76rem] px-4 py-6 sm:px-5 sm:py-8 lg:px-6 lg:py-10">
@@ -323,13 +332,23 @@ export default function ProfilePage() {
                     />
                   </div>
 
-                  <button
-                    type="submit"
-                    disabled={isSavingProfile}
-                    className="rounded-[16px] bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:opacity-60"
-                  >
-                    {isSavingProfile ? "Saving..." : "Save profile"}
-                  </button>
+                  <div className="flex flex-wrap gap-3">
+                    <button
+                      type="submit"
+                      disabled={isSavingProfile}
+                      className="rounded-[16px] bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:opacity-60"
+                    >
+                      {isSavingProfile ? "Saving..." : "Save profile"}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="rounded-[16px] border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-200 transition hover:bg-red-500/15"
+                    >
+                      Logout
+                    </button>
+                  </div>
                 </form>
               )}
             </div>

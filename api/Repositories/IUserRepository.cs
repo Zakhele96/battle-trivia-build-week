@@ -11,4 +11,6 @@ public interface IUserRepository
     Task CreateAsync(User user);
     Task UpdateProfileAsync(Guid userId, string displayName, string? phoneNumber);
     Task UpdatePasswordHashAsync(Guid userId, string passwordHash);
+    Task<User?> GetByGoogleSubAsync(string googleSub);
+    Task LinkGoogleAsync(User user);
 }

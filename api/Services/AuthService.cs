@@ -3,6 +3,7 @@ using Bts.Api.Models.Domain;
 using Bts.Api.Models.Requests;
 using Bts.Api.Models.Responses;
 using Bts.Api.Repositories;
+using Google.Apis.Auth;
 
 namespace Bts.Api.Services;
 
@@ -10,13 +11,16 @@ public sealed class AuthService
 {
     private readonly IUserRepository _userRepository;
     private readonly JwtTokenGenerator _jwtTokenGenerator;
+    private readonly IConfiguration _configuration;
 
     public AuthService(
         IUserRepository userRepository,
-        JwtTokenGenerator jwtTokenGenerator)
+        JwtTokenGenerator jwtTokenGenerator,
+        IConfiguration configuration)
     {
         _userRepository = userRepository;
         _jwtTokenGenerator = jwtTokenGenerator;
+        _configuration = configuration;
     }
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
@@ -41,6 +45,10 @@ public sealed class AuthService
                 ? null
                 : request.PhoneNumber.Trim(),
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+            GoogleSub = null,
+            AuthProvider = "local",
+            AvatarUrl = null,
+            EmailVerified = false,
             IsActive = true,
             IsAdmin = false,
             CreatedAt = nowUtc,
@@ -64,9 +72,83 @@ public sealed class AuthService
         if (user is null || !user.IsActive)
             throw new UnauthorizedAccessException("Invalid credentials.");
 
+        if (string.IsNullOrWhiteSpace(user.PasswordHash))
+            throw new UnauthorizedAccessException("This account uses Google sign-in.");
+
         var validPassword = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
         if (!validPassword)
             throw new UnauthorizedAccessException("Invalid credentials.");
+
+        var token = _jwtTokenGenerator.Generate(user);
+
+        return new AuthResponse
+        {
+            Token = token,
+            User = MapUser(user)
+        };
+    }
+
+    public async Task<AuthResponse> LoginWithGoogleAsync(string idToken)
+    {
+        if (string.IsNullOrWhiteSpace(idToken))
+            throw new UnauthorizedAccessException("Google token is missing.");
+
+        var clientId = _configuration["GoogleAuth:ClientId"];
+        if (string.IsNullOrWhiteSpace(clientId))
+            throw new InvalidOperationException("GoogleAuth:ClientId is not configured.");
+
+        var payload = await GoogleJsonWebSignature.ValidateAsync(
+            idToken,
+            new GoogleJsonWebSignature.ValidationSettings
+            {
+                Audience = new[] { clientId }
+            });
+
+        if (string.IsNullOrWhiteSpace(payload.Email))
+            throw new UnauthorizedAccessException("Google account email is missing.");
+
+        var user = await _userRepository.GetByGoogleSubAsync(payload.Subject);
+
+        if (user is null)
+        {
+            user = await _userRepository.GetByEmailAsync(payload.Email);
+
+            if (user is null)
+            {
+                var nowUtc = DateTime.UtcNow;
+
+                user = new User
+                {
+                    Id = Guid.NewGuid(),
+                    Username = await BuildUniqueUsernameAsync(payload.Email, payload.Name),
+                    DisplayName = string.IsNullOrWhiteSpace(payload.Name)
+                        ? payload.Email
+                        : payload.Name.Trim(),
+                    Email = payload.Email.Trim(),
+                    PhoneNumber = null,
+                    PasswordHash = null,
+                    GoogleSub = payload.Subject,
+                    AuthProvider = "google",
+                    AvatarUrl = payload.Picture,
+                    EmailVerified = payload.EmailVerified,
+                    IsActive = true,
+                    IsAdmin = false,
+                    CreatedAt = nowUtc,
+                    UpdatedAt = nowUtc
+                };
+
+                await _userRepository.CreateAsync(user);
+            }
+            else
+            {
+                user.GoogleSub = payload.Subject;
+                user.AuthProvider = "google";
+                user.AvatarUrl = payload.Picture;
+                user.EmailVerified = payload.EmailVerified;
+
+                await _userRepository.LinkGoogleAsync(user);
+            }
+        }
 
         var token = _jwtTokenGenerator.Generate(user);
 
@@ -86,6 +168,43 @@ public sealed class AuthService
         return MapUser(user);
     }
 
+    private async Task<string> BuildUniqueUsernameAsync(string email, string? name)
+    {
+        static string Slugify(string value)
+        {
+            var chars = value
+                .Trim()
+                .ToLowerInvariant()
+                .Select(ch => char.IsLetterOrDigit(ch) ? ch : '-')
+                .ToArray();
+
+            var result = new string(chars);
+            while (result.Contains("--"))
+                result = result.Replace("--", "-");
+
+            return result.Trim('-');
+        }
+
+        var seed =
+            !string.IsNullOrWhiteSpace(name)
+                ? Slugify(name)
+                : Slugify(email.Split('@')[0]);
+
+        if (string.IsNullOrWhiteSpace(seed))
+            seed = "player";
+
+        var candidate = seed;
+        var suffix = 1;
+
+        while (await _userRepository.GetByUsernameAsync(candidate) is not null)
+        {
+            candidate = $"{seed}{suffix}";
+            suffix++;
+        }
+
+        return candidate;
+    }
+
     private static UserResponse MapUser(User user) => new()
     {
         Id = user.Id,
@@ -93,6 +212,7 @@ public sealed class AuthService
         DisplayName = user.DisplayName,
         Email = user.Email,
         PhoneNumber = user.PhoneNumber,
+        AvatarUrl = user.AvatarUrl,
         IsAdmin = user.IsAdmin
     };
 }
