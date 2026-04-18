@@ -213,6 +213,8 @@ public sealed class AuthService
         Email = user.Email,
         PhoneNumber = user.PhoneNumber,
         AvatarUrl = user.AvatarUrl,
+        AuthProvider = string.IsNullOrWhiteSpace(user.AuthProvider) ? "local" : user.AuthProvider,
+        HasPassword = !string.IsNullOrWhiteSpace(user.PasswordHash),
         IsAdmin = user.IsAdmin
     };
 }

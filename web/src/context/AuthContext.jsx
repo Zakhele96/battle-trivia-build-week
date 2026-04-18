@@ -12,6 +12,9 @@ function normalizeUser(user) {
   return {
     ...user,
     isAdmin: Boolean(user.isAdmin),
+    authProvider: user.authProvider || "local",
+    hasPassword:
+      typeof user.hasPassword === "boolean" ? user.hasPassword : true,
   };
 }
 
@@ -44,8 +47,18 @@ export function AuthProvider({ children }) {
   }, []);
 
   const logout = useCallback(() => {
+    try {
+      if (window.google?.accounts?.id) {
+        window.google.accounts.id.disableAutoSelect();
+        window.google.accounts.id.cancel();
+      }
+    } catch {
+      // ignore GIS cleanup errors
+    }
+
     setToken("");
     setUser(null);
+
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
   }, []);

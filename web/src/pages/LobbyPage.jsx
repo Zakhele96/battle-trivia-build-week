@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import FeaturedTriviaCard from "../components/lobby/FeaturedTriviaCard";
 import LeaderboardPreviewCard from "../components/lobby/LeaderboardPreviewCard";
 import RoomCard from "../components/lobby/RoomCard";
-import AppTopBar from "../components/layout/AppTopBar";
 import {
   getBattleTriviaSessionPodium,
   getCurrentBattleTriviaLeaderboard,
@@ -25,6 +24,15 @@ function formatEndedAt(value) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
+}
+
+function getInitials(value) {
+  if (!value) return "P";
+
+  const parts = String(value).trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+
+  return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
 }
 
 function SectionHeader({ eyebrow, title, description, action }) {
@@ -183,6 +191,82 @@ function MobileEntryStrip({ featuredRoom }) {
   );
 }
 
+function LobbyHeroCard({ user }) {
+  const displayName = user?.displayName || user?.username || "Player";
+  const greeting = user?.displayName ? `Welcome, ${user.displayName}` : "Welcome";
+  const providerLabel =
+    user?.authProvider === "google" ? "Google sign-in" : "BTS sign-in";
+
+  return (
+    <div className="mb-5 rounded-[24px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.14),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015))] p-4 shadow-[0_18px_40px_rgba(0,0,0,0.16)] sm:mb-6 sm:rounded-[28px] sm:p-5 lg:p-6">
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-3">
+            <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full border border-white/10 bg-white/[0.05] sm:h-16 sm:w-16">
+              {user?.avatarUrl ? (
+                <img
+                  src={user.avatarUrl}
+                  alt={displayName}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-base font-semibold text-white sm:text-lg">
+                  {getInitials(displayName)}
+                </div>
+              )}
+            </div>
+
+            <div className="min-w-0">
+              <div className="text-[10px] uppercase tracking-[0.2em] text-blue-300/70 sm:text-[11px]">
+                BTS
+              </div>
+
+              <div className="mt-1 truncate text-sm font-medium text-neutral-400 sm:text-[15px]">
+                {displayName}
+              </div>
+
+              <div className="mt-1 inline-flex rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] text-neutral-300 sm:text-[10px]">
+                {providerLabel}
+              </div>
+            </div>
+          </div>
+
+          <h1 className="mt-4 text-[28px] font-semibold tracking-[-0.04em] text-white sm:text-[38px]">
+            {greeting}
+          </h1>
+
+          <p className="mt-3 max-w-[42rem] text-[14px] leading-7 text-neutral-400 sm:text-[15px]">
+            Choose the right place to jump in: featured competition, game rooms,
+            community chat, or weekly standings.
+          </p>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2 lg:w-[18rem] lg:grid-cols-1">
+          <Link
+            to="/profile"
+            className="rounded-[18px] border border-blue-400/20 bg-blue-500/10 px-4 py-3 transition hover:border-blue-400/30 hover:bg-blue-500/15"
+          >
+            <div className="text-sm font-semibold text-white">Profile</div>
+            <div className="mt-1 text-[11px] text-neutral-400">
+              {user?.username || "Manage account"}
+            </div>
+          </Link>
+
+          <Link
+            to="/leaderboards?mode=combined&period=current"
+            className="rounded-[18px] border border-white/10 bg-white/[0.035] px-4 py-3 transition hover:border-white/15 hover:bg-white/[0.05]"
+          >
+            <div className="text-sm font-semibold text-white">Standings</div>
+            <div className="mt-1 text-[11px] text-neutral-400">
+              Weekly standings
+            </div>
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function LobbyPage() {
   const { user } = useAuth();
 
@@ -322,24 +406,7 @@ export default function LobbyPage() {
   return (
     <div className="min-h-screen bg-neutral-950 text-white">
       <div className="mx-auto w-full max-w-[76rem] px-4 py-4 sm:px-5 sm:py-7 lg:px-6 lg:py-9">
-        <AppTopBar
-          eyebrow="BTS"
-          title={`Welcome${user?.displayName ? `, ${user.displayName}` : ""}`}
-          description="Choose the right place to jump in: featured competition, game rooms, community chat, or weekly standings."
-          showBackToLobby={false}
-          actions={[
-            {
-              to: "/profile",
-              label: "Profile",
-              sublabel: user?.username || "Manage account",
-            },
-            {
-              to: "/leaderboards?mode=combined&period=current",
-              label: "Standings",
-              sublabel: "Weekly standings",
-            },
-          ]}
-        />
+        <LobbyHeroCard user={user} />
 
         {error ? (
           <div className="mb-5 rounded-[20px] border border-red-900/35 bg-red-950/25 px-4 py-3 text-sm text-red-300/90 sm:mb-6 sm:rounded-[22px]">

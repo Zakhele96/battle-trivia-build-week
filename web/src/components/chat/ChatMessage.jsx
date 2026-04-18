@@ -21,9 +21,11 @@ function getSystemTone(text) {
   if (value.includes("correct answer") || value.includes("answer revealed")) {
     return {
       dot: "bg-emerald-300/80",
-      text: "text-emerald-200/70",
+      text: "text-emerald-200/75",
       line: "bg-emerald-400/10",
-      badge: "text-emerald-200/55",
+      badge: "text-emerald-200/60",
+      shell:
+        "border-emerald-400/10 bg-[linear-gradient(180deg,rgba(16,185,129,0.08),rgba(16,185,129,0.03))]",
     };
   }
 
@@ -34,27 +36,33 @@ function getSystemTone(text) {
   ) {
     return {
       dot: "bg-violet-300/80",
-      text: "text-violet-200/70",
+      text: "text-violet-200/75",
       line: "bg-violet-400/10",
-      badge: "text-violet-200/55",
+      badge: "text-violet-200/60",
+      shell:
+        "border-violet-400/10 bg-[linear-gradient(180deg,rgba(168,85,247,0.08),rgba(168,85,247,0.03))]",
     };
   }
 
   if (value.includes("started")) {
     return {
       dot: "bg-blue-300/80",
-      text: "text-blue-200/70",
+      text: "text-blue-200/75",
       line: "bg-blue-400/10",
-      badge: "text-blue-200/55",
+      badge: "text-blue-200/60",
+      shell:
+        "border-blue-400/10 bg-[linear-gradient(180deg,rgba(59,130,246,0.08),rgba(59,130,246,0.03))]",
     };
   }
 
   if (value.includes("ended")) {
     return {
       dot: "bg-amber-300/80",
-      text: "text-amber-200/70",
+      text: "text-amber-200/75",
       line: "bg-amber-400/10",
-      badge: "text-amber-200/55",
+      badge: "text-amber-200/60",
+      shell:
+        "border-amber-400/10 bg-[linear-gradient(180deg,rgba(245,158,11,0.08),rgba(245,158,11,0.03))]",
     };
   }
 
@@ -63,6 +71,8 @@ function getSystemTone(text) {
     text: "text-neutral-400",
     line: "bg-white/8",
     badge: "text-neutral-500",
+    shell:
+      "border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.015))]",
   };
 }
 
@@ -141,18 +151,22 @@ export default function ChatMessage({
     const label = getSystemLabel(message.messageText);
 
     return (
-      <div className="my-3 flex items-center justify-center px-3">
-        <div className="flex w-full max-w-[34rem] items-center gap-2.5">
+      <div className="my-3 flex items-center justify-center px-1 sm:my-4">
+        <div className="flex w-full max-w-[38rem] items-center gap-2.5 sm:gap-3">
           <div className={`h-px flex-1 ${tone.line}`} />
 
-          <div className="flex min-w-0 items-center gap-2 rounded-full border border-white/6 bg-white/[0.02] px-2.5 py-1 backdrop-blur-sm">
+          <div
+            className={`flex min-w-0 items-center gap-2 rounded-full border px-2.5 py-1.5 backdrop-blur-sm ${tone.shell}`}
+          >
             <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${tone.dot}`} />
+
             <span
               className={`shrink-0 text-[9px] font-medium uppercase tracking-[0.16em] ${tone.badge}`}
             >
               {label}
             </span>
-            <span className={`truncate text-[10px] ${tone.text}`}>
+
+            <span className={`truncate text-[10px] sm:text-[11px] ${tone.text}`}>
               {message.messageText}
             </span>
           </div>
@@ -167,7 +181,7 @@ export default function ChatMessage({
     isAdmin && message.messageType === "user" && !!message.userId && !isMine;
 
   const bubbleBase =
-    "inline-flex min-w-[10rem] max-w-[88%] sm:max-w-[80%] lg:max-w-[44rem] flex-col px-3.5 py-2.5 shadow-[0_6px_16px_rgba(0,0,0,0.14)] transition-all duration-200";
+    "inline-flex min-w-[9rem] max-w-[88%] sm:max-w-[80%] lg:max-w-[44rem] flex-col px-3.5 py-2.5 shadow-[0_8px_20px_rgba(0,0,0,0.14)] transition-all duration-200";
 
   const mineStyles = isMessageFromModerator
     ? "bg-[linear-gradient(180deg,rgba(88,101,242,1)_0%,rgba(64,78,237,1)_100%)] text-white ring-1 ring-violet-300/25"
@@ -175,7 +189,7 @@ export default function ChatMessage({
 
   const theirsStyles = isMessageFromModerator
     ? "border border-violet-400/15 bg-[linear-gradient(180deg,rgba(58,49,94,0.92)_0%,rgba(41,35,68,0.96)_100%)] text-violet-50"
-    : "border border-white/[0.04] bg-[#2c2c2e] text-neutral-100";
+    : "border border-white/[0.05] bg-[linear-gradient(180deg,rgba(46,46,49,0.98),rgba(34,34,37,0.98))] text-neutral-100";
 
   const roundedClass = isMine
     ? groupedWithPrevious && groupedWithNext
@@ -219,7 +233,7 @@ export default function ChatMessage({
 
   return (
     <div
-      className={`${groupedWithPrevious ? "mt-1" : "mt-3"} flex ${
+      className={`${groupedWithPrevious ? "mt-1" : "mt-3.5 sm:mt-4"} flex ${
         isMine ? "justify-end" : "justify-start"
       }`}
     >
@@ -277,11 +291,13 @@ export default function ChatMessage({
           }`}
         >
           {!groupedWithPrevious ? (
-            <div className="mb-1 flex items-center gap-2">
+            <div className="mb-1.5 flex items-center gap-2">
               {!isMine ? (
                 <div
                   className={`text-[10px] font-medium tracking-[0.01em] ${
-                    isMessageFromModerator ? "text-violet-200/85" : "text-neutral-400"
+                    isMessageFromModerator
+                      ? "text-violet-200/85"
+                      : "text-neutral-400"
                   }`}
                 >
                   {message.displayName || message.username || "Unknown"}
@@ -296,13 +312,13 @@ export default function ChatMessage({
             </div>
           ) : null}
 
-          <div className="break-words whitespace-pre-wrap text-[14px] leading-[1.45]">
+          <div className="break-words whitespace-pre-wrap text-[14px] leading-[1.5]">
             {message.messageText}
           </div>
 
           {!groupedWithNext ? (
             <div
-              className={`mt-1 text-[10px] ${
+              className={`mt-1.5 text-[10px] ${
                 isMessageFromModerator
                   ? isMine
                     ? "text-violet-100/75"

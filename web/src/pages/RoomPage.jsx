@@ -60,7 +60,7 @@ function formatMutedUntil(value) {
 
 function getViewportState() {
   if (typeof window === "undefined") {
-    return { height: 0, offsetTop: 0 };
+    return { height: 0, offsetTop: 0, layoutHeight: 0, width: 0 };
   }
 
   const vv = window.visualViewport;
@@ -68,6 +68,8 @@ function getViewportState() {
   return {
     height: Math.round(vv?.height || window.innerHeight || 0),
     offsetTop: Math.round(vv?.offsetTop || 0),
+    layoutHeight: Math.round(window.innerHeight || 0),
+    width: Math.round(vv?.width || window.innerWidth || 0),
   };
 }
 
@@ -217,13 +219,21 @@ function WeeklyWinnersCard({ data }) {
   );
 }
 
-function MobileFloatingRoomNav() {
+function MobileFloatingRoomNav({ compact = false }) {
   return (
     <div className="pointer-events-none fixed inset-x-0 top-0 z-[60] sm:hidden">
-      <div className="flex items-start justify-between px-3 pt-[calc(env(safe-area-inset-top)+0.55rem)]">
+      <div
+        className={`flex items-start justify-between px-3 ${
+          compact
+            ? "pt-[calc(env(safe-area-inset-top)+0.35rem)]"
+            : "pt-[calc(env(safe-area-inset-top)+0.55rem)]"
+        }`}
+      >
         <Link
           to="/"
-          className="pointer-events-auto inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-neutral-950/78 px-3 py-1.5 text-[11px] font-medium text-white shadow-[0_10px_24px_rgba(0,0,0,0.22)] backdrop-blur-xl transition hover:border-white/15 hover:bg-neutral-900/85"
+          className={`pointer-events-auto inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-neutral-950/78 font-medium text-white shadow-[0_10px_24px_rgba(0,0,0,0.22)] backdrop-blur-xl transition hover:border-white/15 hover:bg-neutral-900/85 ${
+            compact ? "px-2.5 py-1.5 text-[10px]" : "px-3 py-1.5 text-[11px]"
+          }`}
         >
           <span aria-hidden="true">←</span>
           Lobby
@@ -231,10 +241,52 @@ function MobileFloatingRoomNav() {
 
         <Link
           to="/profile"
-          className="pointer-events-auto inline-flex items-center rounded-full border border-white/10 bg-neutral-950/78 px-3 py-1.5 text-[11px] font-medium text-white shadow-[0_10px_24px_rgba(0,0,0,0.22)] backdrop-blur-xl transition hover:border-white/15 hover:bg-neutral-900/85"
+          className={`pointer-events-auto inline-flex items-center rounded-full border border-white/10 bg-neutral-950/78 font-medium text-white shadow-[0_10px_24px_rgba(0,0,0,0.22)] backdrop-blur-xl transition hover:border-white/15 hover:bg-neutral-900/85 ${
+            compact ? "px-2.5 py-1.5 text-[10px]" : "px-3 py-1.5 text-[11px]"
+          }`}
         >
           Profile
         </Link>
+      </div>
+    </div>
+  );
+}
+
+function MobileRoomMetaBar({
+  room,
+  user,
+  sessionLabel,
+  isBattleTrivia,
+  isWordScramble,
+}) {
+  const meta = getRoomModeMeta(room, isBattleTrivia, isWordScramble);
+
+  return (
+    <div className="mb-2.5 rounded-[16px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.015))] px-3 py-2.5 sm:hidden">
+      <div className="flex flex-wrap items-center gap-2">
+        <span
+          className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] ${meta.badgeClass}`}
+        >
+          {meta.badgeLabel}
+        </span>
+
+        {sessionLabel ? (
+          <span className="inline-flex rounded-full border border-white/10 bg-white/[0.035] px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] text-neutral-300">
+            {sessionLabel}
+          </span>
+        ) : null}
+      </div>
+
+      <div className="mt-2.5">
+        <div className="truncate text-[15px] font-semibold tracking-[-0.03em] text-white">
+          {room?.name || "Room"}
+        </div>
+
+        {(user?.displayName || user?.username) && (
+          <div className="mt-1 text-[11px] text-neutral-500">
+            {user.displayName || user.username}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -329,6 +381,14 @@ export default function RoomPage() {
 
   const isAdmin = user?.isAdmin === true || user?.isAdmin === "true";
   const canModerateChat = !!room && !showGameSidebar && isAdmin;
+
+  const isMobileViewport = viewportState.width > 0 && viewportState.width < 640;
+  const keyboardInset = Math.max(
+    0,
+    viewportState.layoutHeight - viewportState.height - viewportState.offsetTop
+  );
+  const isKeyboardOpen = isMobileViewport && keyboardInset > 140;
+  const shouldCompactMobileChrome = isMobileViewport && isKeyboardOpen;
 
   const scramblePlayerRank = useMemo(() => {
     const myEntry = (wordScrambleState?.leaderboard || []).find(
@@ -744,7 +804,13 @@ export default function RoomPage() {
 
   const topContent = (
     <div className="shrink-0 border-b border-white/5 bg-neutral-950/95 backdrop-blur-xl [padding-top:env(safe-area-inset-top)]">
-      <div className="mx-auto w-full max-w-[68rem] px-3 pt-11 pb-2.5 sm:px-4 sm:py-3 lg:px-5">
+      <div
+        className={`mx-auto w-full max-w-[68rem] ${
+          shouldCompactMobileChrome
+            ? "px-2 pt-2 pb-1.5"
+            : "px-2.5 pt-8 pb-2 sm:px-4 sm:py-3 lg:px-5"
+        }`}
+      >
         <div className="hidden sm:block">
           <RoomUtilityBar
             room={room}
@@ -755,9 +821,21 @@ export default function RoomPage() {
           />
         </div>
 
-        {isBattleTrivia ? <WeeklyWinnersCard data={weeklyWinners} /> : null}
+        {!showGameSidebar ? (
+          <MobileRoomMetaBar
+            room={room}
+            user={user}
+            sessionLabel={effectiveSessionLabel}
+            isBattleTrivia={isBattleTrivia}
+            isWordScramble={isWordScramble}
+          />
+        ) : null}
 
-        {roomStateBanner}
+        {isBattleTrivia && !shouldCompactMobileChrome ? (
+          <WeeklyWinnersCard data={weeklyWinners} />
+        ) : null}
+
+        {!shouldCompactMobileChrome ? roomStateBanner : null}
 
         {isBattleTrivia ? (
           <TriviaHeroCard
@@ -889,7 +967,7 @@ export default function RoomPage() {
           : "100dvh",
       }}
     >
-      <MobileFloatingRoomNav />
+      <MobileFloatingRoomNav compact={shouldCompactMobileChrome} />
 
       <RoomShell
         sidebar={sidebar}

@@ -9,4 +9,6 @@ public sealed class UserResponse
     public string? PhoneNumber { get; set; }
     public bool IsAdmin { get; set; }
     public string? AvatarUrl { get; set; }
+    public string AuthProvider { get; set; } = "local";
+    public bool HasPassword { get; set; }
 }

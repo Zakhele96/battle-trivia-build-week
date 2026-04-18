@@ -32,6 +32,15 @@ function formatDate(value) {
   }).format(date);
 }
 
+function getInitials(value) {
+  if (!value) return "P";
+
+  const parts = String(value).trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+
+  return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
+}
+
 function StatCard({ label, value }) {
   return (
     <div className="rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-3">
@@ -43,19 +52,47 @@ function StatCard({ label, value }) {
   );
 }
 
-function IdentityCard({ profile }) {
+function IdentityCard({ profile, authUser }) {
+  const displayName =
+    profile?.displayName || authUser?.displayName || profile?.username || authUser?.username || "Player";
+
+  const username = profile?.username || authUser?.username || "username";
+  const avatarUrl = authUser?.avatarUrl || null;
+  const providerLabel =
+    authUser?.authProvider === "google" ? "Google account" : "BTS account";
+
   return (
     <div className="rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015))] p-5">
-      <div className="text-[11px] uppercase tracking-[0.18em] text-neutral-500">
-        Account identity
-      </div>
+      <div className="flex items-start gap-4">
+        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full border border-white/10 bg-white/[0.05]">
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt={displayName}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-lg font-semibold text-white">
+              {getInitials(displayName)}
+            </div>
+          )}
+        </div>
 
-      <div className="mt-3 text-[24px] font-semibold tracking-[-0.03em] text-white">
-        {profile?.displayName || profile?.username || "Player"}
-      </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-[11px] uppercase tracking-[0.18em] text-neutral-500">
+            Account identity
+          </div>
 
-      <div className="mt-2 text-sm text-neutral-400">
-        @{profile?.username || "username"}
+          <div className="mt-2 text-[24px] font-semibold tracking-[-0.03em] text-white">
+            {displayName}
+          </div>
+
+          <div className="mt-1 text-sm text-neutral-400">@{username}</div>
+
+          <div className="mt-3 inline-flex rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-neutral-300">
+            {providerLabel}
+          </div>
+        </div>
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -63,7 +100,7 @@ function IdentityCard({ profile }) {
           <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
             Email
           </div>
-          <div className="mt-1 text-sm text-white">{profile?.email || "—"}</div>
+          <div className="mt-1 text-sm text-white">{profile?.email || authUser?.email || "—"}</div>
         </div>
 
         <div className="rounded-[18px] border border-white/8 bg-black/20 px-4 py-3">
@@ -71,8 +108,34 @@ function IdentityCard({ profile }) {
             Phone
           </div>
           <div className="mt-1 text-sm text-white">
-            {profile?.phoneNumber || "Not added"}
+            {profile?.phoneNumber || authUser?.phoneNumber || "Not added"}
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SignInMethodCard({ isGoogleAccount }) {
+  return (
+    <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5">
+      <div className="mb-4 text-sm font-semibold text-white">
+        Sign-in method
+      </div>
+
+      <div className="rounded-[18px] border border-white/8 bg-black/20 px-4 py-4">
+        <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
+          Provider
+        </div>
+
+        <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-sm font-medium text-white">
+          {isGoogleAccount ? "Google" : "BTS"}
+        </div>
+
+        <div className="mt-3 text-sm text-neutral-400">
+          {isGoogleAccount
+            ? "This account signs in with Google, so password changes are not needed here."
+            : "This account uses your BTS password for sign-in."}
         </div>
       </div>
     </div>
@@ -81,7 +144,7 @@ function IdentityCard({ profile }) {
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, user: authUser } = useAuth();
 
   const [profile, setProfile] = useState(null);
   const [progression, setProgression] = useState(null);
@@ -191,6 +254,9 @@ export default function ProfilePage() {
 
   const stats = useMemo(() => profile?.stats || {}, [profile]);
 
+  const isGoogleAccount =
+    authUser?.authProvider === "google" && authUser?.hasPassword === false;
+
   async function handleSaveProfile(e) {
     e.preventDefault();
     setError("");
@@ -272,7 +338,7 @@ export default function ProfilePage() {
         ) : null}
 
         <div className="mb-6">
-          <IdentityCard profile={profile} />
+          <IdentityCard profile={profile} authUser={authUser} />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
@@ -293,7 +359,7 @@ export default function ProfilePage() {
                       Username
                     </label>
                     <input
-                      value={profile?.username || ""}
+                      value={profile?.username || authUser?.username || ""}
                       disabled
                       className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-neutral-400 outline-none"
                     />
@@ -304,7 +370,7 @@ export default function ProfilePage() {
                       Email
                     </label>
                     <input
-                      value={profile?.email || ""}
+                      value={profile?.email || authUser?.email || ""}
                       disabled
                       className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-neutral-400 outline-none"
                     />
@@ -353,45 +419,49 @@ export default function ProfilePage() {
               )}
             </div>
 
-            <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5">
-              <div className="mb-4 text-sm font-semibold text-white">
-                Change password
+            {!isGoogleAccount ? (
+              <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5">
+                <div className="mb-4 text-sm font-semibold text-white">
+                  Change password
+                </div>
+
+                <form onSubmit={handleChangePassword} className="space-y-4">
+                  <input
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="Current password"
+                    className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none focus:border-blue-400/20"
+                  />
+
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="New password"
+                    className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none focus:border-blue-400/20"
+                  />
+
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Confirm new password"
+                    className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none focus:border-blue-400/20"
+                  />
+
+                  <button
+                    type="submit"
+                    disabled={isSavingPassword}
+                    className="rounded-[16px] bg-white/[0.08] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.12] disabled:opacity-60"
+                  >
+                    {isSavingPassword ? "Updating..." : "Update password"}
+                  </button>
+                </form>
               </div>
-
-              <form onSubmit={handleChangePassword} className="space-y-4">
-                <input
-                  type="password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  placeholder="Current password"
-                  className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none focus:border-blue-400/20"
-                />
-
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="New password"
-                  className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none focus:border-blue-400/20"
-                />
-
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm new password"
-                  className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none focus:border-blue-400/20"
-                />
-
-                <button
-                  type="submit"
-                  disabled={isSavingPassword}
-                  className="rounded-[16px] bg-white/[0.08] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.12] disabled:opacity-60"
-                >
-                  {isSavingPassword ? "Updating..." : "Update password"}
-                </button>
-              </form>
-            </div>
+            ) : (
+              <SignInMethodCard isGoogleAccount={isGoogleAccount} />
+            )}
           </div>
 
           <div className="space-y-6">
