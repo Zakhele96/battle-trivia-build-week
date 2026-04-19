@@ -389,7 +389,7 @@ const {
           });
         }
     },
-    [appendMessage, user?.id, user?.username, roomId, isChatRoom]
+    [appendMessage, user?.id, user?.username]
   );
 
   const handleMessageDeleted = useCallback(

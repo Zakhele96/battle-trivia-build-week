@@ -108,7 +108,12 @@ function ProfileIcon() {
 const DESKTOP_ITEMS = [
   { to: "/", label: "Dashboard", exact: true, icon: DashboardIcon },
   { to: "/rooms", label: "Rooms", icon: RoomsIcon },
-  { to: "/community", label: "Community", icon: CommunityIcon, showMentionBadge: true },
+  {
+    to: "/community",
+    label: "Community",
+    icon: CommunityIcon,
+    showMentionBadge: true,
+  },
   {
     to: "/leaderboards?mode=combined&period=current",
     pathMatch: "/leaderboards",
@@ -122,7 +127,12 @@ const DESKTOP_ITEMS = [
 const MOBILE_ITEMS = [
   { to: "/", label: "Dashboard", exact: true, icon: DashboardIcon },
   { to: "/rooms", label: "Rooms", icon: RoomsIcon },
-  { to: "/community", label: "Community", icon: CommunityIcon, showMentionBadge: true },
+  {
+    to: "/community",
+    label: "Community",
+    icon: CommunityIcon,
+    showMentionBadge: true,
+  },
   {
     to: "/leaderboards?mode=combined&period=current",
     pathMatch: "/leaderboards",
@@ -190,35 +200,39 @@ export default function AppSectionNav() {
         </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-neutral-950/95 px-2 py-2 backdrop-blur-xl sm:hidden">
-        <div className="grid grid-cols-5 gap-1">
-          {MOBILE_ITEMS.map((item) => {
-            const Icon = item.icon;
-            const active = isItemActive(item, location.pathname);
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 sm:hidden [backface-visibility:hidden] [transform:translateZ(0)] [will-change:transform]">
+        <div className="pointer-events-auto border-t border-white/10 bg-neutral-950/96 px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-14px_34px_rgba(0,0,0,0.3)] backdrop-blur-xl supports-[backdrop-filter]:bg-neutral-950/88">
+          <div className="mx-auto max-w-[38rem]">
+            <div className="grid grid-cols-5 gap-1">
+              {MOBILE_ITEMS.map((item) => {
+                const Icon = item.icon;
+                const active = isItemActive(item, location.pathname);
 
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.exact}
-                className={`relative flex min-h-[4rem] flex-col items-center justify-center gap-1 rounded-[16px] px-2 py-2 text-[10px] font-medium transition ${
-                  active
-                    ? "bg-blue-500/10 text-white"
-                    : "text-neutral-400 hover:bg-white/[0.04] hover:text-white"
-                }`}
-              >
-                <div className="relative">
-                  <Icon />
-                  {item.showMentionBadge ? (
-                    <div className="absolute -right-3 -top-2">
-                      <MentionBadge count={totalUnreadMentions} mobile />
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end={item.exact}
+                    className={`relative flex min-h-[4rem] touch-manipulation flex-col items-center justify-center gap-1 rounded-[16px] px-2 py-2 text-[10px] font-medium transition ${
+                      active
+                        ? "bg-blue-500/10 text-white"
+                        : "text-neutral-400 hover:bg-white/[0.04] hover:text-white"
+                    }`}
+                  >
+                    <div className="relative">
+                      <Icon />
+                      {item.showMentionBadge ? (
+                        <div className="absolute -right-3 -top-2">
+                          <MentionBadge count={totalUnreadMentions} mobile />
+                        </div>
+                      ) : null}
                     </div>
-                  ) : null}
-                </div>
-                <span>{item.label}</span>
-              </NavLink>
-            );
-          })}
+                    <span>{item.label}</span>
+                  </NavLink>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
     </>

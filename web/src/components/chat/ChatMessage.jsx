@@ -104,17 +104,11 @@ function getSystemLabel(text) {
   return "Update";
 }
 
-function ReplyPreview({
-  message,
-  isMine,
-  onJumpToMessage,
-}) {
+function ReplyPreview({ message, isMine, onJumpToMessage }) {
   if (!message?.replyToMessageId) return null;
 
   const previewAuthor =
-    message.replyToDisplayName ||
-    message.replyToUsername ||
-    "Message";
+    message.replyToDisplayName || message.replyToUsername || "Message";
 
   const previewText =
     message.replyToPreviewText || "Tap to view replied message.";
@@ -144,6 +138,7 @@ function ReactionBar({
   onToggleReaction,
   onOpenPicker,
   busyAction,
+  isMine,
 }) {
   const safeReactions = Array.isArray(reactions) ? reactions : [];
   const hasReactions = safeReactions.length > 0;
@@ -151,14 +146,18 @@ function ReactionBar({
   if (!hasReactions && !onToggleReaction) return null;
 
   return (
-    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+    <div
+      className={`mt-1.5 flex w-full flex-wrap items-center gap-1.5 ${
+        isMine ? "justify-end" : "justify-start"
+      }`}
+    >
       {safeReactions.map((reaction) => (
         <button
           key={`${reaction.emoji}-${reaction.count}`}
           type="button"
           disabled={!!busyAction}
           onClick={() => onToggleReaction?.(reaction.emoji)}
-          className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] transition ${
+          className={`inline-flex h-7 items-center gap-1 rounded-full border px-2.5 text-[10px] transition sm:h-auto sm:px-2 sm:py-1 sm:text-[11px] ${
             reaction.reactedByMe
               ? "border-blue-400/20 bg-blue-500/12 text-blue-100"
               : "border-white/10 bg-white/[0.04] text-neutral-300 hover:bg-white/[0.06]"
@@ -174,10 +173,10 @@ function ReactionBar({
           type="button"
           disabled={!!busyAction}
           onClick={onOpenPicker}
-          className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] px-2 py-1 text-[11px] text-neutral-400 transition hover:bg-white/[0.06] disabled:opacity-50"
+          className="inline-flex h-7 items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] px-2.5 text-[10px] text-neutral-400 transition hover:bg-white/[0.06] disabled:opacity-50 sm:h-auto sm:px-2 sm:py-1 sm:text-[11px]"
         >
           <span>+</span>
-          <span>React</span>
+          <span className="hidden sm:inline">React</span>
         </button>
       ) : null}
     </div>
@@ -337,7 +336,7 @@ export default function ChatMessage({
   const canUnpinMessage = isAdmin && typeof onUnpinMessage === "function";
 
   const bubbleBase =
-    "inline-flex min-w-[9rem] max-w-[88%] sm:max-w-[80%] lg:max-w-[44rem] flex-col px-3.5 py-2.5 shadow-[0_8px_20px_rgba(0,0,0,0.14)] transition-all duration-200";
+    "inline-flex min-w-[8.5rem] max-w-[88%] sm:max-w-[80%] lg:max-w-[44rem] flex-col px-3 py-2.5 shadow-[0_8px_20px_rgba(0,0,0,0.14)] transition-all duration-200";
 
   const mineStyles = isMessageFromModerator
     ? "bg-[linear-gradient(180deg,rgba(88,101,242,1)_0%,rgba(64,78,237,1)_100%)] text-white ring-1 ring-violet-300/25"
@@ -449,14 +448,19 @@ export default function ChatMessage({
         isMine ? "justify-end" : "justify-start"
       }`}
     >
-      <div className="group relative max-w-full" ref={menuRef}>
+      <div
+        className={`group relative flex max-w-full flex-col ${
+          isMine ? "items-end" : "items-start"
+        }`}
+        ref={menuRef}
+      >
         <button
           type="button"
           onClick={() => {
             setMenuOpen((prev) => !prev);
             setPickerOpen(false);
           }}
-          className={`absolute -top-2 z-10 rounded-full border border-white/10 bg-black/55 px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-neutral-400 opacity-0 backdrop-blur-sm transition hover:bg-black/75 hover:text-neutral-200 group-hover:opacity-100 focus:opacity-100 ${
+          className={`absolute -top-2 z-10 rounded-full border border-white/10 bg-black/55 px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-neutral-400 opacity-100 backdrop-blur-sm transition hover:bg-black/75 hover:text-neutral-200 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100 ${
             isMine ? "-left-2" : "-right-2"
           }`}
         >
@@ -464,7 +468,11 @@ export default function ChatMessage({
         </button>
 
         {menuOpen ? (
-          <div className="absolute right-0 top-3 z-20 mt-2 w-44 rounded-2xl border border-white/10 bg-neutral-900 p-1.5 shadow-xl shadow-black/30">
+          <div
+            className={`absolute top-3 z-20 mt-2 w-44 rounded-2xl border border-white/10 bg-neutral-900 p-1.5 shadow-xl shadow-black/30 ${
+              isMine ? "left-0 sm:left-auto sm:right-0" : "right-0"
+            }`}
+          >
             <button
               type="button"
               onClick={() => {
@@ -548,7 +556,13 @@ export default function ChatMessage({
         ) : null}
 
         {pickerOpen ? (
-          <div className="absolute bottom-[-2.5rem] left-0 z-20 flex gap-1 rounded-full border border-white/10 bg-neutral-900 px-2 py-1.5 shadow-xl shadow-black/30">
+          <div
+            className={`absolute z-20 mt-2 flex gap-1 rounded-full border border-white/10 bg-neutral-900 px-2 py-1.5 shadow-xl shadow-black/30 ${
+              isMine
+                ? "right-0 top-full"
+                : "left-0 top-full"
+            }`}
+          >
             {REACTION_OPTIONS.map((emoji) => (
               <button
                 key={emoji}
@@ -661,6 +675,7 @@ export default function ChatMessage({
           <ReactionBar
             reactions={message.reactions}
             busyAction={busyAction}
+            isMine={isMine}
             onOpenPicker={() => {
               setPickerOpen((prev) => !prev);
               setMenuOpen(false);

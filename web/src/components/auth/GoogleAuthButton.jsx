@@ -70,6 +70,19 @@ export default function GoogleAuthButton({
 
     let cancelled = false;
     let resizeObserver = null;
+    let resizeTimeout = null;
+
+    const getButtonWidth = () => {
+      const shellWidth = shellRef.current?.getBoundingClientRect?.().width || 0;
+      const viewportWidth =
+        typeof window !== "undefined" ? window.innerWidth || 0 : 0;
+
+      const fallbackWidth = Math.max(180, viewportWidth - 64);
+      const availableWidth =
+        shellWidth > 0 ? Math.floor(shellWidth - 20) : fallbackWidth;
+
+      return Math.max(180, Math.min(availableWidth, 380));
+    };
 
     const renderFallbackButton = () => {
       if (!buttonHostRef.current) return;
@@ -102,13 +115,6 @@ export default function GoogleAuthButton({
       };
     };
 
-    const getButtonWidth = () => {
-      const shellWidth = shellRef.current?.clientWidth || 0;
-      if (!shellWidth) return 320;
-
-      return Math.max(220, Math.min(shellWidth, 380));
-    };
-
     const renderGoogleButton = async () => {
       try {
         await loadGoogleScript();
@@ -129,7 +135,6 @@ export default function GoogleAuthButton({
             callback: (response) => {
               const credential = response?.credential;
               if (!credential) return;
-
               activeCredentialHandler?.(credential);
             },
             auto_select: false,
@@ -156,18 +161,40 @@ export default function GoogleAuthButton({
       }
     };
 
-    renderGoogleButton();
+    const scheduleRender = () => {
+      if (resizeTimeout) {
+        clearTimeout(resizeTimeout);
+      }
+
+      resizeTimeout = setTimeout(() => {
+        if (!cancelled) {
+          renderGoogleButton();
+        }
+      }, 60);
+    };
+
+    requestAnimationFrame(() => {
+      renderGoogleButton();
+    });
 
     if (typeof ResizeObserver !== "undefined" && shellRef.current) {
       resizeObserver = new ResizeObserver(() => {
-        renderGoogleButton();
+        scheduleRender();
       });
 
       resizeObserver.observe(shellRef.current);
     }
 
+    window.addEventListener("resize", scheduleRender);
+
     return () => {
       cancelled = true;
+
+      if (resizeTimeout) {
+        clearTimeout(resizeTimeout);
+      }
+
+      window.removeEventListener("resize", scheduleRender);
 
       if (resizeObserver) {
         resizeObserver.disconnect();
@@ -184,14 +211,14 @@ export default function GoogleAuthButton({
   }, [onCredential, disabled, label]);
 
   return (
-    <div className="space-y-3">
+    <div className="w-full min-w-0 max-w-full space-y-3 overflow-hidden">
       <div
         ref={shellRef}
-        className="rounded-[20px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.02))] p-2.5 shadow-[0_14px_34px_rgba(0,0,0,0.18)]"
+        className="w-full min-w-0 max-w-full overflow-hidden rounded-[20px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.02))] p-2.5 shadow-[0_14px_34px_rgba(0,0,0,0.18)]"
       >
         <div
           ref={buttonHostRef}
-          className="google-auth-button-shell flex justify-center"
+          className="google-auth-button-shell flex min-w-0 max-w-full justify-center overflow-hidden"
         />
       </div>
 
@@ -199,6 +226,9 @@ export default function GoogleAuthButton({
         .google-auth-button-shell,
         .google-auth-button-shell > div {
           width: 100%;
+          min-width: 0;
+          max-width: 100%;
+          overflow: hidden;
         }
 
         .google-auth-button-shell > div {
@@ -206,13 +236,17 @@ export default function GoogleAuthButton({
           justify-content: center;
         }
 
-        .google-auth-button-shell iframe {
+        .google-auth-button-shell iframe,
+        .google-auth-button-shell > div > div,
+        .google-auth-button-shell > div > iframe {
           max-width: 100% !important;
         }
 
         .bts-google-fallback-btn {
           width: 100%;
-          max-width: 380px;
+          max-width: 100%;
+          min-width: 0;
+          box-sizing: border-box;
           display: inline-flex;
           align-items: center;
           justify-content: center;
@@ -240,6 +274,7 @@ export default function GoogleAuthButton({
           justify-content: center;
           width: 20px;
           height: 20px;
+          flex: 0 0 auto;
         }
       `}</style>
     </div>
