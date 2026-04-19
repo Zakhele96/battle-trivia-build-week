@@ -504,6 +504,151 @@ public sealed class MessageRepository : IMessageRepository
         return row is null ? null : MapRow(row);
     }
 
+    public async Task<IEnumerable<ChatMessageResponse>> GetContextByMessageIdAsync(
+    Guid roomId,
+    Guid messageId,
+    Guid currentUserId,
+    int before,
+    int after)
+{
+    const string sql = """
+        WITH target AS (
+            SELECT sent_at
+            FROM chat_messages
+            WHERE id = @MessageId
+              AND room_id = @RoomId
+            LIMIT 1
+        ),
+        older AS (
+            SELECT
+                m.id,
+                m.room_id AS RoomId,
+                m.user_id AS UserId,
+                u.username AS Username,
+                u.display_name AS DisplayName,
+                COALESCE(u.is_admin, FALSE) AS IsAdmin,
+                m.message_text AS MessageText,
+                m.message_type AS MessageType,
+                m.sent_at AS SentAt,
+                m.reply_to_message_id AS ReplyToMessageId,
+                rm.user_id AS ReplyToUserId,
+                ru.username AS ReplyToUsername,
+                ru.display_name AS ReplyToDisplayName,
+                rm.message_text AS ReplyToPreviewText,
+                m.edited_at AS EditedAt,
+                (m.edited_at IS NOT NULL) AS IsEdited,
+                m.is_pinned AS IsPinned,
+                m.pinned_at AS PinnedAt,
+                m.pinned_by_user_id AS PinnedByUserId
+            FROM chat_messages m
+            LEFT JOIN users u
+                ON u.id = m.user_id
+            LEFT JOIN chat_messages rm
+                ON rm.id = m.reply_to_message_id
+            LEFT JOIN users ru
+                ON ru.id = rm.user_id
+            CROSS JOIN target t
+            WHERE m.room_id = @RoomId
+              AND m.sent_at < t.sent_at
+            ORDER BY m.sent_at DESC
+            LIMIT @Before
+        ),
+        target_message AS (
+            SELECT
+                m.id,
+                m.room_id AS RoomId,
+                m.user_id AS UserId,
+                u.username AS Username,
+                u.display_name AS DisplayName,
+                COALESCE(u.is_admin, FALSE) AS IsAdmin,
+                m.message_text AS MessageText,
+                m.message_type AS MessageType,
+                m.sent_at AS SentAt,
+                m.reply_to_message_id AS ReplyToMessageId,
+                rm.user_id AS ReplyToUserId,
+                ru.username AS ReplyToUsername,
+                ru.display_name AS ReplyToDisplayName,
+                rm.message_text AS ReplyToPreviewText,
+                m.edited_at AS EditedAt,
+                (m.edited_at IS NOT NULL) AS IsEdited,
+                m.is_pinned AS IsPinned,
+                m.pinned_at AS PinnedAt,
+                m.pinned_by_user_id AS PinnedByUserId
+            FROM chat_messages m
+            LEFT JOIN users u
+                ON u.id = m.user_id
+            LEFT JOIN chat_messages rm
+                ON rm.id = m.reply_to_message_id
+            LEFT JOIN users ru
+                ON ru.id = rm.user_id
+            WHERE m.room_id = @RoomId
+              AND m.id = @MessageId
+            LIMIT 1
+        ),
+        newer AS (
+            SELECT
+                m.id,
+                m.room_id AS RoomId,
+                m.user_id AS UserId,
+                u.username AS Username,
+                u.display_name AS DisplayName,
+                COALESCE(u.is_admin, FALSE) AS IsAdmin,
+                m.message_text AS MessageText,
+                m.message_type AS MessageType,
+                m.sent_at AS SentAt,
+                m.reply_to_message_id AS ReplyToMessageId,
+                rm.user_id AS ReplyToUserId,
+                ru.username AS ReplyToUsername,
+                ru.display_name AS ReplyToDisplayName,
+                rm.message_text AS ReplyToPreviewText,
+                m.edited_at AS EditedAt,
+                (m.edited_at IS NOT NULL) AS IsEdited,
+                m.is_pinned AS IsPinned,
+                m.pinned_at AS PinnedAt,
+                m.pinned_by_user_id AS PinnedByUserId
+            FROM chat_messages m
+            LEFT JOIN users u
+                ON u.id = m.user_id
+            LEFT JOIN chat_messages rm
+                ON rm.id = m.reply_to_message_id
+            LEFT JOIN users ru
+                ON ru.id = rm.user_id
+            CROSS JOIN target t
+            WHERE m.room_id = @RoomId
+              AND m.sent_at > t.sent_at
+            ORDER BY m.sent_at ASC
+            LIMIT @After
+        )
+        SELECT *
+        FROM (
+            SELECT * FROM older
+            UNION ALL
+            SELECT * FROM target_message
+            UNION ALL
+            SELECT * FROM newer
+        ) x
+        ORDER BY x.SentAt ASC;
+        """;
+
+    using var connection = _context.CreateConnection();
+
+    var messages = (await connection.QueryAsync<ChatMessageResponse>(sql, new
+    {
+        RoomId = roomId,
+        MessageId = messageId,
+        CurrentUserId = currentUserId,
+        Before = before,
+        After = after
+    })).ToList();
+
+    foreach (var message in messages)
+    {
+        message.Reactions = (await GetReactionsAsync(message.Id, currentUserId)).ToList();
+    }
+
+    return messages;
+}
+
     private static ChatMessageResponse MapRow(MessageRow row)
     {
         return new ChatMessageResponse

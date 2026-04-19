@@ -17,6 +17,34 @@ export async function getRoomMessages(roomId, take = 50) {
   return data;
 }
 
+export async function getRoomMessageContext(
+  roomId,
+  messageId,
+  before = 25,
+  after = 25
+) {
+  const { data } = await api.get(`/rooms/${roomId}/messages/${messageId}/context`, {
+    params: { before, after },
+  });
+  return data;
+}
+
+export async function getUnreadMentions(take = 20) {
+  const { data } = await api.get("/rooms/mentions/unread", {
+    params: { take },
+  });
+  return data;
+}
+
+export async function markMessageMentionRead(messageId) {
+  const { data } = await api.post(`/rooms/messages/${messageId}/mention-read`);
+  return data;
+}
+
+export async function markRoomMentionsRead(roomId) {
+  await api.post(`/rooms/${roomId}/mentions/read`);
+}
+
 export async function getRoomSessionStatus(roomId) {
   const { data } = await api.get(`/rooms/${roomId}/session-status`);
   return data;

@@ -8,4 +8,5 @@ public sealed class RoomResponse
     public string? Description { get; set; }
     public string RoomType { get; set; } = string.Empty;
     public int SlowModeSeconds { get; set; }
+    public int UnreadMentionCount { get; set; }
 }

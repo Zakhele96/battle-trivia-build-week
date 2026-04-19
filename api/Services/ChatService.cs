@@ -14,17 +14,20 @@ public sealed class ChatService
     private readonly IUserRepository _userRepository;
     private readonly IRoomRepository _roomRepository;
     private readonly ChatModerationService _chatModerationService;
+    private readonly MentionNotificationService _mentionNotificationService;
 
     public ChatService(
         IMessageRepository messageRepository,
         IUserRepository userRepository,
         IRoomRepository roomRepository,
-        ChatModerationService chatModerationService)
+        ChatModerationService chatModerationService,
+        MentionNotificationService mentionNotificationService)
     {
         _messageRepository = messageRepository;
         _userRepository = userRepository;
         _roomRepository = roomRepository;
         _chatModerationService = chatModerationService;
+        _mentionNotificationService = mentionNotificationService;
     }
 
     public async Task<IEnumerable<ChatMessageResponse>> GetRecentMessagesAsync(
@@ -37,6 +40,29 @@ public sealed class ChatService
             throw new KeyNotFoundException("Room not found.");
 
         return await _messageRepository.GetRecentByRoomAsync(roomId, currentUserId, take);
+    }
+
+    public async Task<IEnumerable<ChatMessageResponse>> GetMessageContextAsync(
+        Guid roomId,
+        Guid messageId,
+        Guid currentUserId,
+        int before,
+        int after)
+    {
+        var room = await _roomRepository.GetByIdAsync(roomId);
+        if (room is null)
+            throw new KeyNotFoundException("Room not found.");
+
+        var exists = await _messageRepository.MessageExistsInRoomAsync(roomId, messageId);
+        if (!exists)
+            throw new KeyNotFoundException("Target message not found in this room.");
+
+        return await _messageRepository.GetContextByMessageIdAsync(
+            roomId,
+            messageId,
+            currentUserId,
+            before,
+            after);
     }
 
     public async Task<ChatMessageResponse> CreateUserMessageAsync(
@@ -84,6 +110,14 @@ public sealed class ChatService
             trimmed,
             "user",
             replyToMessageId);
+
+        await _mentionNotificationService.CreateMentionsForMessageAsync(
+            roomId,
+            userId,
+            user.DisplayName,
+            user.Username,
+            id,
+            trimmed);
 
         return await _messageRepository.GetByIdAsync(id, userId)
             ?? throw new InvalidOperationException("Failed to load created message.");

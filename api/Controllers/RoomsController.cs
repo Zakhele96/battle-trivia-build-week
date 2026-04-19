@@ -37,17 +37,84 @@ public sealed class RoomsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetRooms()
     {
-        var rooms = await _roomService.GetAllAsync();
+        var userIdValue =
+            User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+            User.FindFirstValue("sub");
+
+        if (!Guid.TryParse(userIdValue, out var userId))
+            return Unauthorized();
+
+        var rooms = await _roomService.GetAllAsync(userId);
         return Ok(rooms);
+    }
+
+    [HttpGet("mentions/unread")]
+    public async Task<IActionResult> GetUnreadMentions([FromQuery] int take = 20)
+    {
+        take = Math.Clamp(take, 1, 50);
+
+        var userIdValue =
+            User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+            User.FindFirstValue("sub");
+
+        if (!Guid.TryParse(userIdValue, out var userId))
+            return Unauthorized();
+
+        var mentions = await _roomService.GetUnreadMentionsAsync(userId, take);
+        return Ok(mentions);
+    }
+
+    [HttpPost("messages/{messageId:guid}/mention-read")]
+    public async Task<IActionResult> MarkMessageMentionRead(Guid messageId)
+    {
+        var userIdValue =
+            User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+            User.FindFirstValue("sub");
+
+        if (!Guid.TryParse(userIdValue, out var userId))
+            return Unauthorized();
+
+        await _roomService.MarkMessageMentionReadAsync(messageId, userId);
+
+        return Ok(new
+        {
+            messageId
+        });
     }
 
     [HttpGet("{roomId:guid}")]
     public async Task<IActionResult> GetRoom(Guid roomId)
     {
-        var room = await _roomService.GetByIdAsync(roomId);
+        var userIdValue =
+            User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+            User.FindFirstValue("sub");
+
+        if (!Guid.TryParse(userIdValue, out var userId))
+            return Unauthorized();
+
+        var room = await _roomService.GetByIdAsync(roomId, userId);
         if (room is null) return NotFound();
 
         return Ok(room);
+    }
+
+    [HttpPost("{roomId:guid}/mentions/read")]
+    public async Task<IActionResult> MarkMentionsRead(Guid roomId)
+    {
+        var userIdValue =
+            User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+            User.FindFirstValue("sub");
+
+        if (!Guid.TryParse(userIdValue, out var userId))
+            return Unauthorized();
+
+        await _roomService.MarkRoomMentionsReadAsync(roomId, userId);
+
+        return Ok(new
+        {
+            roomId,
+            unreadMentionCount = 0
+        });
     }
 
     [HttpGet("{roomId:guid}/messages")]
@@ -65,6 +132,40 @@ public sealed class RoomsController : ControllerBase
         try
         {
             var messages = await _chatService.GetRecentMessagesAsync(roomId, userId, take);
+            return Ok(messages);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("{roomId:guid}/messages/{messageId:guid}/context")]
+    public async Task<IActionResult> GetMessageContext(
+        Guid roomId,
+        Guid messageId,
+        [FromQuery] int before = 25,
+        [FromQuery] int after = 25)
+    {
+        before = Math.Clamp(before, 1, 100);
+        after = Math.Clamp(after, 1, 100);
+
+        var userIdValue =
+            User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+            User.FindFirstValue("sub");
+
+        if (!Guid.TryParse(userIdValue, out var userId))
+            return Unauthorized();
+
+        try
+        {
+            var messages = await _chatService.GetMessageContextAsync(
+                roomId,
+                messageId,
+                userId,
+                before,
+                after);
+
             return Ok(messages);
         }
         catch (KeyNotFoundException ex)

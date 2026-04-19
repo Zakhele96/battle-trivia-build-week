@@ -12,6 +12,9 @@ import {
 import { getLeaderboard } from "../api/leaderboardsApi";
 import { getMyProfile, getMyProfileHistory } from "../api/profileApi";
 import { useAuth } from "../hooks/useAuth";
+import { useMentions } from "../context/MentionContext";
+import MentionInboxCard from "../components/mentions/MentionInboxCard";
+import { getUnreadMentions } from "../api/roomsApi";
 
 function formatEndedAt(value) {
   if (!value) return "Latest completed week";
@@ -46,6 +49,10 @@ function getInitials(value) {
   if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
 
   return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
+}
+
+function formatMentionCount(count) {
+  return `${count} mention${count === 1 ? "" : "s"}`;
 }
 
 function SectionHeader({ eyebrow, title, description }) {
@@ -386,10 +393,72 @@ function NextUpCard({ isFirstTimeUser, featuredRoom }) {
   );
 }
 
+// function MentionSummaryCard({ roomsWithUnreadMentions, totalUnreadMentions }) {
+//   if (totalUnreadMentions <= 0) return null;
+
+//   const priorityRoom = roomsWithUnreadMentions[0] || null;
+
+//   return (
+//     <div className="mb-5 rounded-[20px] border border-amber-400/18 bg-[radial-gradient(circle_at_top_right,rgba(245,158,11,0.12),transparent_38%),linear-gradient(180deg,rgba(245,158,11,0.1),rgba(245,158,11,0.04))] p-4 shadow-[0_14px_30px_rgba(0,0,0,0.12)] sm:mb-6 sm:rounded-[24px] sm:p-5">
+//       <div className="flex flex-wrap items-center justify-between gap-3">
+//         <div>
+//           <div className="text-[10px] uppercase tracking-[0.18em] text-amber-200/80 sm:text-[11px]">
+//             Mentions waiting
+//           </div>
+//           <div className="mt-1 text-[16px] font-semibold tracking-[-0.03em] text-white sm:text-[18px]">
+//             You have {formatMentionCount(totalUnreadMentions)} waiting across{" "}
+//             {roomsWithUnreadMentions.length} room
+//             {roomsWithUnreadMentions.length === 1 ? "" : "s"}.
+//           </div>
+//           <div className="mt-1.5 text-[12px] leading-5 text-amber-50/80 sm:text-[13px]">
+//             Open a room to clear its unread mentions.
+//           </div>
+//         </div>
+
+//         <div className="flex flex-wrap gap-2">
+//           {priorityRoom ? (
+//             <Link
+//               to={`/rooms/${priorityRoom.id}`}
+//               className="inline-flex items-center gap-2 rounded-full border border-amber-300/18 bg-amber-300/10 px-3 py-1.5 text-[11px] font-medium text-white transition hover:bg-amber-300/14 sm:px-4 sm:py-2 sm:text-sm"
+//             >
+//               Open latest mention
+//               <span aria-hidden="true">→</span>
+//             </Link>
+//           ) : null}
+
+//           <Link
+//             to="/rooms"
+//             className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[11px] font-medium text-white transition hover:border-white/15 hover:bg-white/[0.06] sm:px-4 sm:py-2 sm:text-sm"
+//           >
+//             View rooms
+//             <span aria-hidden="true">→</span>
+//           </Link>
+//         </div>
+//       </div>
+
+//       <div className="mt-3 flex flex-wrap gap-2">
+//         {roomsWithUnreadMentions.slice(0, 3).map((room) => (
+//           <Link
+//             key={room.id}
+//             to={`/rooms/${room.id}`}
+//             className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-[11px] text-white transition hover:bg-black/30"
+//           >
+//             <span className="truncate">{room.name}</span>
+//             <span className="rounded-full border border-amber-300/18 bg-amber-300/10 px-2 py-0.5 text-[10px] font-medium text-amber-100">
+//               {room.unreadMentionCount}
+//             </span>
+//           </Link>
+//         ))}
+//       </div>
+//     </div>
+//   );
+// }
+
 export default function LobbyPage() {
   const { user } = useAuth();
+  const { syncRoomsFromPayload, mergeRooms } = useMentions();
 
-  const [rooms, setRooms] = useState([]);
+  const [rawRooms, setRawRooms] = useState([]);
   const [featuredRoomStatus, setFeaturedRoomStatus] = useState(null);
   const [sessionPodium, setSessionPodium] = useState(null);
   const [currentLeaders, setCurrentLeaders] = useState([]);
@@ -400,6 +469,7 @@ export default function LobbyPage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [unreadMentions, setUnreadMentions] = useState([]);
 
   useEffect(() => {
     let isMounted = true;
@@ -409,11 +479,19 @@ export default function LobbyPage() {
       setIsLoading(true);
 
       try {
-        const roomsData = await getRooms();
+        const [roomsData, mentionsData] = await Promise.all([
+          getRooms(),
+          getUnreadMentions(8).catch(() => []),
+        ]);
         if (!isMounted) return;
 
+
+
         const nextRooms = Array.isArray(roomsData) ? roomsData : [];
-        setRooms(nextRooms);
+        setRawRooms(nextRooms);
+        syncRoomsFromPayload(nextRooms);
+
+        setUnreadMentions(Array.isArray(mentionsData) ? mentionsData : []);
 
         const battleTriviaRoom =
           nextRooms.find((room) => room.slug === "battle-trivia") ||
@@ -475,7 +553,9 @@ export default function LobbyPage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [syncRoomsFromPayload]);
+
+  const rooms = useMemo(() => mergeRooms(rawRooms), [rawRooms, mergeRooms]);
 
   const featuredRoom = useMemo(() => {
     const baseRoom =
@@ -490,6 +570,23 @@ export default function LobbyPage() {
       sessionStatus: featuredRoomStatus,
     };
   }, [rooms, featuredRoomStatus]);
+
+  const roomsWithUnreadMentions = useMemo(() => {
+    return [...rooms]
+      .filter((room) => (Number(room?.unreadMentionCount) || 0) > 0)
+      .sort(
+        (a, b) =>
+          (Number(b?.unreadMentionCount) || 0) -
+          (Number(a?.unreadMentionCount) || 0)
+      );
+  }, [rooms]);
+
+  const totalUnreadMentions = useMemo(() => {
+    return roomsWithUnreadMentions.reduce(
+      (sum, room) => sum + (Number(room?.unreadMentionCount) || 0),
+      0
+    );
+  }, [roomsWithUnreadMentions]);
 
   const showPodium =
     !!sessionPodium?.hasPodium && sessionPodium?.winners?.length > 0;
@@ -527,6 +624,16 @@ export default function LobbyPage() {
       <div className="mx-auto w-full max-w-[76rem] px-4 py-4 pb-24 sm:px-5 sm:py-7 sm:pb-7 lg:px-6 lg:py-9">
         <AppSectionNav />
         <DashboardHero user={user} isFirstTimeUser={isFirstTimeUser} />
+
+        <MentionInboxCard
+          title="Unread mentions"
+          description="Open a mention and jump into the exact message instead of just clearing a room badge."
+          items={unreadMentions}
+        />
+        {/* <MentionSummaryCard
+          roomsWithUnreadMentions={roomsWithUnreadMentions}
+          totalUnreadMentions={totalUnreadMentions}
+        /> */}
 
         {error ? (
           <div className="mb-5 rounded-[20px] border border-red-900/35 bg-red-950/25 px-4 py-3 text-sm text-red-300/90 sm:mb-6 sm:rounded-[22px]">

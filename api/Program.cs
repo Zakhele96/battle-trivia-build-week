@@ -63,6 +63,7 @@ builder.Services.AddSingleton<DapperContext>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 builder.Services.AddScoped<IMessageRepository, MessageRepository>();
+builder.Services.AddScoped<IMentionNotificationRepository, MentionNotificationRepository>();
 builder.Services.AddScoped<ITriviaQuestionRepository, TriviaQuestionRepository>();
 builder.Services.AddScoped<ITriviaSessionRepository, TriviaSessionRepository>();
 builder.Services.AddScoped<ITriviaRoundRepository, TriviaRoundRepository>();
@@ -79,7 +80,6 @@ builder.Services.AddSingleton<IProfanityFilterService, BasicProfanityFilterServi
 builder.Services.AddScoped<IAchievementRepository, AchievementRepository>();
 builder.Services.AddScoped<IProfileProgressionRepository, ProfileProgressionRepository>();
 
-
 builder.Services.AddScoped<IWordScrambleSessionRepository, WordScrambleSessionRepository>();
 builder.Services.AddScoped<IWordScrambleRoundRepository, WordScrambleRoundRepository>();
 builder.Services.AddScoped<IWordScrambleAnswerRepository, WordScrambleAnswerRepository>();
@@ -94,9 +94,6 @@ builder.Services.AddScoped<WordScrambleAnswerService>();
 
 builder.Services.AddScoped<WordScrambleStateService>();
 builder.Services.AddScoped<WordScrambleSessionStatusService>();
-
-
-
 
 builder.Services.AddScoped<ProgressionService>();
 builder.Services.AddScoped<MessageModerationService>();
@@ -120,12 +117,10 @@ builder.Services.AddScoped<RoomModerationStateService>();
 builder.Services.AddScoped<ProfileService>();
 builder.Services.AddScoped<ProgressionRealtimeService>();
 builder.Services.AddScoped<GameLeaderboardService>();
-
+builder.Services.AddScoped<MentionNotificationService>();
 
 builder.Services.AddHostedService<BattleTriviaHostedService>();
 builder.Services.AddHostedService<WordScrambleHostedService>();
-
-
 
 builder.Services.AddCors(options =>
 {
@@ -185,8 +180,6 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-
-
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -198,11 +191,8 @@ app.UseCors("Frontend");
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-
-
 app.UseAuthentication();
 app.UseAuthorization();
-
 
 app.MapControllers();
 app.MapHub<Bts.Api.Hubs.ChatHub>("/hubs/chat");

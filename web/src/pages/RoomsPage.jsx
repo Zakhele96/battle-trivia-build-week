@@ -5,6 +5,7 @@ import RoomCard from "../components/lobby/RoomCard";
 import AppTopBar from "../components/layout/AppTopBar";
 import AppSectionNav from "../components/layout/AppSectionNav";
 import { getRoomSessionStatus, getRooms } from "../api/roomsApi";
+import { useMentions } from "../context/MentionContext";
 
 function SectionHeader({ eyebrow, title, description, action }) {
   return (
@@ -28,11 +29,17 @@ function SectionHeader({ eyebrow, title, description, action }) {
   );
 }
 
+function formatMentionCount(count) {
+  return `${count} mention${count === 1 ? "" : "s"}`;
+}
+
 export default function RoomsPage() {
-  const [rooms, setRooms] = useState([]);
+  const [rawRooms, setRawRooms] = useState([]);
   const [featuredRoomStatus, setFeaturedRoomStatus] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const { syncRoomsFromPayload, mergeRooms } = useMentions();
 
   useEffect(() => {
     let isMounted = true;
@@ -46,7 +53,8 @@ export default function RoomsPage() {
         if (!isMounted) return;
 
         const nextRooms = Array.isArray(data) ? data : [];
-        setRooms(nextRooms);
+        setRawRooms(nextRooms);
+        syncRoomsFromPayload(nextRooms);
 
         const battleTriviaRoom =
           nextRooms.find((room) => room.slug === "battle-trivia") ||
@@ -77,7 +85,9 @@ export default function RoomsPage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [syncRoomsFromPayload]);
+
+  const rooms = useMemo(() => mergeRooms(rawRooms), [rawRooms, mergeRooms]);
 
   const featuredRoom = useMemo(() => {
     const baseRoom =
@@ -107,6 +117,33 @@ export default function RoomsPage() {
     });
   }, [rooms, featuredRoom]);
 
+  const sortedGameRooms = useMemo(() => {
+    return [...gameRooms].sort((a, b) => {
+      const mentionDelta =
+        (Number(b?.unreadMentionCount) || 0) -
+        (Number(a?.unreadMentionCount) || 0);
+
+      if (mentionDelta !== 0) return mentionDelta;
+
+      return String(a?.name || "").localeCompare(String(b?.name || ""));
+    });
+  }, [gameRooms]);
+
+  const roomsWithUnreadMentions = useMemo(() => {
+    return sortedGameRooms.filter(
+      (room) => (Number(room?.unreadMentionCount) || 0) > 0
+    );
+  }, [sortedGameRooms]);
+
+  const totalUnreadMentions = useMemo(() => {
+    return roomsWithUnreadMentions.reduce(
+      (sum, room) => sum + (Number(room?.unreadMentionCount) || 0),
+      0
+    );
+  }, [roomsWithUnreadMentions]);
+
+  const priorityRoom = roomsWithUnreadMentions[0] || null;
+
   return (
     <div className="min-h-screen bg-neutral-950 text-white">
       <div className="mx-auto w-full max-w-[76rem] px-4 py-4 pb-24 sm:px-5 sm:py-7 sm:pb-7 lg:px-6 lg:py-9">
@@ -118,6 +155,36 @@ export default function RoomsPage() {
           description="Competitive spaces and structured sessions live here."
           actions={[]}
         />
+
+        {totalUnreadMentions > 0 ? (
+          <div className="mb-5 rounded-[20px] border border-amber-400/18 bg-[radial-gradient(circle_at_top_right,rgba(245,158,11,0.12),transparent_36%),linear-gradient(180deg,rgba(245,158,11,0.1),rgba(245,158,11,0.04))] px-4 py-4 shadow-[0_14px_30px_rgba(0,0,0,0.12)] sm:mb-6 sm:rounded-[22px]">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <div className="text-[10px] uppercase tracking-[0.18em] text-amber-200/80 sm:text-[11px]">
+                  Mentions waiting
+                </div>
+                <div className="mt-1 text-[15px] font-semibold text-white sm:text-[17px]">
+                  You have {formatMentionCount(totalUnreadMentions)} across{" "}
+                  {roomsWithUnreadMentions.length} room
+                  {roomsWithUnreadMentions.length === 1 ? "" : "s"}.
+                </div>
+                <div className="mt-1.5 text-[12px] leading-5 text-amber-50/80 sm:text-[13px]">
+                  Open the highlighted room cards below to clear them.
+                </div>
+              </div>
+
+              {priorityRoom ? (
+                <Link
+                  to={`/rooms/${priorityRoom.id}`}
+                  className="inline-flex items-center gap-2 rounded-full border border-amber-300/18 bg-amber-300/10 px-3 py-1.5 text-[11px] font-medium text-white transition hover:bg-amber-300/14 sm:px-4 sm:py-2 sm:text-sm"
+                >
+                  Open latest mention
+                  <span aria-hidden="true">→</span>
+                </Link>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
 
         {error ? (
           <div className="mb-5 rounded-[20px] border border-red-900/35 bg-red-950/25 px-4 py-3 text-sm text-red-300/90 sm:mb-6 sm:rounded-[22px]">
@@ -159,13 +226,13 @@ export default function RoomsPage() {
                 description="Every competitive room in one place."
               />
 
-              {gameRooms.length === 0 ? (
+              {sortedGameRooms.length === 0 ? (
                 <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-10 text-center text-sm text-neutral-500 sm:rounded-[24px] sm:py-12">
                   No game rooms available yet.
                 </div>
               ) : (
                 <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
-                  {gameRooms.map((room) => (
+                  {sortedGameRooms.map((room) => (
                     <RoomCard key={room.id} room={room} />
                   ))}
                 </div>

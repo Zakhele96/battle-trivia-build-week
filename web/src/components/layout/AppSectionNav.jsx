@@ -1,4 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
+import { useMentions } from "../../context/MentionContext";
 
 function DashboardIcon() {
   return (
@@ -107,7 +108,7 @@ function ProfileIcon() {
 const DESKTOP_ITEMS = [
   { to: "/", label: "Dashboard", exact: true, icon: DashboardIcon },
   { to: "/rooms", label: "Rooms", icon: RoomsIcon },
-  { to: "/community", label: "Community", icon: CommunityIcon },
+  { to: "/community", label: "Community", icon: CommunityIcon, showMentionBadge: true },
   {
     to: "/leaderboards?mode=combined&period=current",
     pathMatch: "/leaderboards",
@@ -121,7 +122,7 @@ const DESKTOP_ITEMS = [
 const MOBILE_ITEMS = [
   { to: "/", label: "Dashboard", exact: true, icon: DashboardIcon },
   { to: "/rooms", label: "Rooms", icon: RoomsIcon },
-  { to: "/community", label: "Community", icon: CommunityIcon },
+  { to: "/community", label: "Community", icon: CommunityIcon, showMentionBadge: true },
   {
     to: "/leaderboards?mode=combined&period=current",
     pathMatch: "/leaderboards",
@@ -137,8 +138,25 @@ function isItemActive(item, pathname) {
   return pathname.startsWith(item.to);
 }
 
+function MentionBadge({ count, mobile = false }) {
+  if (!count || count <= 0) return null;
+
+  return (
+    <span
+      className={`inline-flex items-center justify-center rounded-full border border-amber-300/18 bg-amber-300/12 font-medium text-amber-100 ${
+        mobile
+          ? "min-w-[1.1rem] px-1 py-0.5 text-[9px]"
+          : "min-w-[1.2rem] px-1.5 py-0.5 text-[10px]"
+      }`}
+    >
+      {count > 99 ? "99+" : count}
+    </span>
+  );
+}
+
 export default function AppSectionNav() {
   const location = useLocation();
+  const { totalUnreadMentions } = useMentions();
 
   return (
     <>
@@ -157,11 +175,14 @@ export default function AppSectionNav() {
                   className={`inline-flex shrink-0 items-center gap-2 rounded-[16px] px-3.5 py-2.5 text-[12px] font-medium transition sm:px-4 sm:text-sm ${
                     active
                       ? "border border-blue-400/20 bg-blue-500/10 text-white shadow-[0_8px_24px_rgba(37,99,235,0.14)]"
-                      : "border border-transparent bg-white/[0.03] text-neutral-300 hover:border-white/10 hover:bg-white/[0.05] hover:text-white"
+                      : "border border-transparent bg-white/[0.03] text-neutral-300 hover:border-white/10 hover:bg-white/[0.05]"
                   }`}
                 >
                   <Icon />
                   <span>{item.label}</span>
+                  {item.showMentionBadge ? (
+                    <MentionBadge count={totalUnreadMentions} />
+                  ) : null}
                 </NavLink>
               );
             })}
@@ -169,8 +190,8 @@ export default function AppSectionNav() {
         </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/8 bg-[linear-gradient(180deg,rgba(10,10,11,0.75),rgba(18,18,20,0.96))] backdrop-blur-2xl sm:hidden">
-        <div className="grid grid-cols-5 gap-1 px-2 pb-[max(0.55rem,env(safe-area-inset-bottom))] pt-2">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-neutral-950/95 px-2 py-2 backdrop-blur-xl sm:hidden">
+        <div className="grid grid-cols-5 gap-1">
           {MOBILE_ITEMS.map((item) => {
             const Icon = item.icon;
             const active = isItemActive(item, location.pathname);
@@ -180,20 +201,21 @@ export default function AppSectionNav() {
                 key={item.to}
                 to={item.to}
                 end={item.exact}
-                className={`flex min-w-0 flex-col items-center justify-center gap-1 rounded-[16px] px-1 py-2 text-[10px] font-medium transition ${
+                className={`relative flex min-h-[4rem] flex-col items-center justify-center gap-1 rounded-[16px] px-2 py-2 text-[10px] font-medium transition ${
                   active
-                    ? "bg-blue-500/12 text-white"
+                    ? "bg-blue-500/10 text-white"
                     : "text-neutral-400 hover:bg-white/[0.04] hover:text-white"
                 }`}
               >
-                <span
-                  className={`inline-flex h-8 w-8 items-center justify-center rounded-full ${
-                    active ? "bg-blue-500/18" : "bg-white/[0.03]"
-                  }`}
-                >
+                <div className="relative">
                   <Icon />
-                </span>
-                <span className="truncate">{item.label}</span>
+                  {item.showMentionBadge ? (
+                    <div className="absolute -right-3 -top-2">
+                      <MentionBadge count={totalUnreadMentions} mobile />
+                    </div>
+                  ) : null}
+                </div>
+                <span>{item.label}</span>
               </NavLink>
             );
           })}

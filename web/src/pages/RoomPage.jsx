@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import ChatInput from "../components/ChatInput";
 import ChatStream from "../components/chat/ChatStream";
+import MentionToastStack from "../components/chat/MentionToastStack";
 import AchievementToastStack from "../components/profile/AchievementToastStack";
 import RoomFooterBar from "../components/room/RoomFooterBar";
 import RoomModerationControlCard from "../components/room/RoomModerationControlCard";
@@ -11,13 +12,15 @@ import TriviaHeroCard from "../components/trivia/TriviaHeroCard";
 import TriviaWhisperStatus from "../components/trivia/TriviaWhisperStatus";
 import BattleTriviaProfileCard from "../components/trivia/BattleTriviaProfileCard";
 import BattleTriviaSessionSummaryCard from "../components/trivia/BattleTriviaSessionSummaryCard";
+import { getSessionLabel } from "../components/trivia/triviaUtils";
 import WordScrambleHeroCard from "../components/wordScramble/WordScrambleHeroCard";
 import WordScrambleWhisperStatus from "../components/wordScramble/WordScrambleWhisperStatus";
-import { getSessionLabel } from "../components/trivia/triviaUtils";
 import {
   getMyBattleTriviaProfileStats,
   getMyBattleTriviaSessionSummary,
   getMyRoomModerationState,
+  getRoomMessageContext,
+  markMessageMentionRead,
 } from "../api/roomsApi";
 import {
   deleteRoomMessage,
@@ -28,7 +31,7 @@ import {
 import { useAuth } from "../hooks/useAuth";
 import useRoomBootstrap from "../hooks/useRoomBootstrap";
 import useRoomLiveState from "../hooks/useRoomLiveState";
-import MentionToastStack from "../components/chat/MentionToastStack";
+import { useMentions } from "../context/MentionContext";
 
 function getApiErrorMessage(error, fallback) {
   return (
@@ -275,7 +278,6 @@ function MobileRoomMetaBar({
   );
 }
 
-
 function escapeRegExp(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -294,6 +296,8 @@ function messageMentionsUsername(messageText, username) {
 export default function RoomPage() {
   const { roomId } = useParams();
   const { user, token } = useAuth();
+  const location = useLocation();
+  const { refreshMentionCounts } = useMentions();
 
   const [localError, setLocalError] = useState("");
   const [profileStats, setProfileStats] = useState(null);
@@ -301,9 +305,11 @@ export default function RoomPage() {
   const [sessionSummary, setSessionSummary] = useState(null);
   const [isSessionSummaryLoading, setIsSessionSummaryLoading] = useState(false);
   const [moderationState, setModerationState] = useState(null);
-  const [isModerationStateLoading, setIsModerationStateLoading] = useState(false);
+  const [isModerationStateLoading, setIsModerationStateLoading] =
+    useState(false);
   const [moderationActions, setModerationActions] = useState([]);
-  const [isModerationActionsLoading, setIsModerationActionsLoading] = useState(false);
+  const [isModerationActionsLoading, setIsModerationActionsLoading] =
+    useState(false);
   const [viewportState, setViewportState] = useState(getViewportState);
   const [replyTarget, setReplyTarget] = useState(null);
   const [mentionToasts, setMentionToasts] = useState([]);
@@ -311,7 +317,7 @@ export default function RoomPage() {
   const messagesContainerRef = useRef(null);
   const shouldAutoScrollRef = useRef(true);
 
-  const {
+ const {
     room,
     messages,
     isLoadingRoom,
@@ -321,41 +327,67 @@ export default function RoomPage() {
     updateMessage,
     updateMessageReactions,
     setPinnedMessage,
+    setMessages,
   } = useRoomBootstrap(roomId);
 
+  const isBattleTrivia = useMemo(() => {
+    if (!room) return false;
+    return room.slug === "battle-trivia" || room.roomType === "trivia";
+  }, [room]);
+
+  const isWordScramble = useMemo(() => {
+    if (!room) return false;
+    return room.slug === "word-scramble";
+  }, [room]);
+
+  const showGameSidebar = isBattleTrivia || isWordScramble;
+  const isChatRoom = room?.roomType === "chat";
+
+  const isAdmin = user?.isAdmin === true || user?.isAdmin === "true";
+  const canModerateChat = !!room && !showGameSidebar && isAdmin;
+
+  const isMobileViewport =
+    viewportState.width > 0 && viewportState.width < 640;
+  const keyboardInset = Math.max(
+    0,
+    viewportState.layoutHeight - viewportState.height - viewportState.offsetTop
+  );
+  const isKeyboardOpen = isMobileViewport && keyboardInset > 140;
+  const shouldCompactMobileChrome = isMobileViewport && isKeyboardOpen;
+
   const handleReceiveMessage = useCallback(
-  (message) => {
-    appendMessage(message);
+    async (message) => {
+      appendMessage(message);
 
-    const isChatUserMessage =
-      message?.messageType === "user" && !!message?.messageText;
+      const isChatUserMessage =
+        message?.messageType === "user" && !!message?.messageText;
 
-    const isMine = message?.userId && message.userId === user?.id;
-    const isMention =
-      isChatUserMessage &&
-      !isMine &&
-      messageMentionsUsername(message.messageText, user?.username);
+      const isMine = message?.userId && message.userId === user?.id;
+      const isMention =
+        isChatUserMessage &&
+        !isMine &&
+        messageMentionsUsername(message.messageText, user?.username);
 
-    if (isMention) {
-      setMentionToasts((prev) => {
-        const exists = prev.some((item) => item.id === message.id);
-        if (exists) return prev;
+        if (isMention) {
+          setMentionToasts((prev) => {
+            const exists = prev.some((item) => item.id === message.id);
+            if (exists) return prev;
 
-        return [
-          ...prev,
-          {
-            id: message.id,
-            userId: message.userId,
-            username: message.username,
-            displayName: message.displayName,
-            messageText: message.messageText,
-          },
-        ];
-      });
-    }
-  },
-  [appendMessage, user?.id, user?.username]
-);
+            return [
+              ...prev,
+              {
+                id: message.id,
+                userId: message.userId,
+                username: message.username,
+                displayName: message.displayName,
+                messageText: message.messageText,
+              },
+            ];
+          });
+        }
+    },
+    [appendMessage, user?.id, user?.username, roomId, isChatRoom]
+  );
 
   const handleMessageDeleted = useCallback(
     (messageId) => {
@@ -390,86 +422,72 @@ export default function RoomPage() {
   }, [setPinnedMessage]);
 
   const dismissMentionToast = useCallback((messageId) => {
-  setMentionToasts((prev) => prev.filter((item) => item.id !== messageId));
-}, []);
+    setMentionToasts((prev) => prev.filter((item) => item.id !== messageId));
+  }, []);
 
-const handleJumpToMentionMessage = useCallback((messageId) => {
-  dismissMentionToast(messageId);
+  const handleJumpToMentionMessage = useCallback(
+    async (messageId) => {
+      dismissMentionToast(messageId);
 
-  requestAnimationFrame(() => {
-    const node = document.getElementById(`message-${messageId}`);
-    if (!node) return;
+      requestAnimationFrame(() => {
+        const node = document.getElementById(`message-${messageId}`);
+        if (!node) return;
 
-    node.scrollIntoView({
-      behavior: "smooth",
-      block: "center",
-    });
-  });
-}, [dismissMentionToast]);
+        node.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      });
 
+      try {
+        await markMessageMentionRead(messageId);
+        await refreshMentionCounts();
+      } catch {
+        // ignore mention read sync errors
+      }
+    },
+    [dismissMentionToast, refreshMentionCounts]
+  );
 
   const {
-  status,
-  connectionError,
-  currentQuestion,
-  currentRoundId,
-  currentRoundNumber,
-  timeLeft,
-  correctAnswer,
-  roundWinners,
-  weeklyWinners,
-  leaderboard,
-  answerFeedback,
-  sessionStatus,
-  playerRank,
-  lastRoundPlacement,
-  liveStreak,
-  attemptsInfo,
-  isQuestionFresh,
-  isRoundReveal,
-  achievementUnlocks,
-  wordScrambleState,
-  wordScrambleStatus,
-  wordScrambleGuessFeedback,
-  sendRoomPayload,
-  editRoomMessage,
-  toggleRoomMessageReaction,
-  pinRoomMessage,
-  unpinRoomMessage,
-} = useRoomLiveState({
-  roomId,
-  token,
-  room,
-  onReceiveMessage: handleReceiveMessage,
-  onMessageDeleted: handleMessageDeleted,
-  onMessageUpdated: handleMessageUpdated,
-  onMessageReactionUpdated: handleMessageReactionUpdated,
-  onMessagePinned: handleMessagePinned,
-  onMessageUnpinned: handleMessageUnpinned,
-});
-
-  const isBattleTrivia = useMemo(() => {
-    if (!room) return false;
-    return room.slug === "battle-trivia" || room.roomType === "trivia";
-  }, [room]);
-
-  const isWordScramble = useMemo(() => {
-    if (!room) return false;
-    return room.slug === "word-scramble";
-  }, [room]);
-
-  const showGameSidebar = isBattleTrivia || isWordScramble;
-
-  const isAdmin = user?.isAdmin === true || user?.isAdmin === "true";
-  const canModerateChat = !!room && !showGameSidebar && isAdmin;
-
-  const isMobileViewport = viewportState.width > 0 && viewportState.width < 640;
-  const keyboardInset = Math.max(
-    0,
-    viewportState.layoutHeight - viewportState.height - viewportState.offsetTop
-  );
-  const isKeyboardOpen = isMobileViewport && keyboardInset > 140;
-  const shouldCompactMobileChrome = isMobileViewport && isKeyboardOpen;
+    status,
+    connectionError,
+    currentQuestion,
+    currentRoundId,
+    currentRoundNumber,
+    timeLeft,
+    correctAnswer,
+    roundWinners,
+    weeklyWinners,
+    leaderboard,
+    answerFeedback,
+    sessionStatus,
+    playerRank,
+    lastRoundPlacement,
+    liveStreak,
+    attemptsInfo,
+    isQuestionFresh,
+    isRoundReveal,
+    achievementUnlocks,
+    wordScrambleState,
+    wordScrambleStatus,
+    wordScrambleGuessFeedback,
+    sendRoomPayload,
+    editRoomMessage,
+    toggleRoomMessageReaction,
+    pinRoomMessage,
+    unpinRoomMessage,
+  } = useRoomLiveState({
+    roomId,
+    token,
+    room,
+    onReceiveMessage: handleReceiveMessage,
+    onMessageDeleted: handleMessageDeleted,
+    onMessageUpdated: handleMessageUpdated,
+    onMessageReactionUpdated: handleMessageReactionUpdated,
+    onMessagePinned: handleMessagePinned,
+    onMessageUnpinned: handleMessageUnpinned,
+  });
 
   const scramblePlayerRank = useMemo(() => {
     const myEntry = (wordScrambleState?.leaderboard || []).find(
@@ -579,6 +597,56 @@ const handleJumpToMentionMessage = useCallback((messageId) => {
       vv?.removeEventListener("scroll", updateViewportState);
     };
   }, []);
+
+    useEffect(() => {
+      const targetMessageId = location.state?.targetMessageId;
+
+      if (!roomId || !room || !isChatRoom || !targetMessageId) return;
+
+      let isMounted = true;
+
+      async function loadTargetMentionContext() {
+        try {
+          const contextMessages = await getRoomMessageContext(
+            roomId,
+            targetMessageId,
+            25,
+            25
+          );
+
+          if (!isMounted) return;
+
+          if (Array.isArray(contextMessages) && contextMessages.length > 0) {
+            setMessages(contextMessages);
+
+            requestAnimationFrame(async () => {
+              const node = document.getElementById(`message-${targetMessageId}`);
+              if (node) {
+                node.scrollIntoView({
+                  behavior: "smooth",
+                  block: "center",
+                });
+              }
+
+              try {
+                await markMessageMentionRead(targetMessageId);
+                await refreshMentionCounts();
+              } catch {
+                // ignore mention read sync errors
+              }
+            });
+          }
+        } catch {
+          // ignore context loading errors
+        }
+      }
+
+      loadTargetMentionContext();
+
+      return () => {
+        isMounted = false;
+      };
+    }, [roomId, room, isChatRoom, location.state, setMessages, refreshMentionCounts]);
 
   useEffect(() => {
     let meta = document.querySelector('meta[name="theme-color"]');
@@ -705,10 +773,10 @@ const handleJumpToMentionMessage = useCallback((messageId) => {
   }, [roomId]);
 
   useEffect(() => {
-  setMentionToasts((prev) =>
-    prev.filter((item) => messages.some((message) => message.id === item.id))
-  );
-}, [messages]);
+    setMentionToasts((prev) =>
+      prev.filter((item) => messages.some((message) => message.id === item.id))
+    );
+  }, [messages]);
 
   useEffect(() => {
     if (!isBattleTrivia || !user?.id) {
@@ -779,7 +847,7 @@ const handleJumpToMentionMessage = useCallback((messageId) => {
   }, [roomId, isLoadingRoom]);
 
   useEffect(() => {
-  setReplyTarget(null);
+    setReplyTarget(null);
   }, [roomId]);
 
   useEffect(() => {
@@ -936,56 +1004,54 @@ const handleJumpToMentionMessage = useCallback((messageId) => {
     }
   };
 
-
-
-const sidebar = (
-  <aside className="hidden xl:flex xl:w-[17.25rem] xl:shrink-0 xl:flex-col xl:border-r xl:border-white/5 xl:bg-neutral-900/95">
-    <div className="min-h-0 flex-1 overflow-y-auto px-2.5 py-2.5">
-      <div className="space-y-2.5">
-        <div className="overflow-hidden rounded-[18px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01))]">
-          <DesktopTriviaSidebar
-            room={room}
-            status={status}
-            sessionStatus={effectiveSessionStatus}
-            sessionLabel={effectiveSessionLabel}
-            isBattleTrivia={showGameSidebar}
-            leaderboard={effectiveLeaderboard}
-            playerRank={effectivePlayerRank}
-            currentUserId={user?.id}
-            compact
-          />
-        </div>
-
-        {isBattleTrivia ? (
-          <>
-            <BattleTriviaProfileCard
-              stats={profileStats}
-              liveStreak={liveStreak}
-              playerRank={playerRank}
-              loading={isProfileStatsLoading}
+  const sidebar = (
+    <aside className="hidden xl:flex xl:w-[17.25rem] xl:shrink-0 xl:flex-col xl:border-r xl:border-white/5 xl:bg-neutral-900/95">
+      <div className="min-h-0 flex-1 overflow-y-auto px-2.5 py-2.5">
+        <div className="space-y-2.5">
+          <div className="overflow-hidden rounded-[18px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01))]">
+            <DesktopTriviaSidebar
+              room={room}
+              status={status}
+              sessionStatus={effectiveSessionStatus}
+              sessionLabel={effectiveSessionLabel}
+              isBattleTrivia={showGameSidebar}
+              leaderboard={effectiveLeaderboard}
+              playerRank={effectivePlayerRank}
+              currentUserId={user?.id}
               compact
             />
+          </div>
 
-            <div className="overflow-hidden rounded-[18px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01))]">
-              <BattleTriviaSessionSummaryCard
-                summary={sessionSummary}
-                loading={isSessionSummaryLoading}
+          {isBattleTrivia ? (
+            <>
+              <BattleTriviaProfileCard
+                stats={profileStats}
+                liveStreak={liveStreak}
+                playerRank={playerRank}
+                loading={isProfileStatsLoading}
+                compact
               />
-            </div>
-          </>
-        ) : canModerateChat ? (
-          <RoomModerationControlCard
-            roomName={room?.name}
-            slowModeSeconds={moderationState?.slowModeSeconds ?? 0}
-            onUpdateSlowMode={handleUpdateSlowMode}
-            moderationActions={moderationActions}
-            isLoadingActions={isModerationActionsLoading}
-          />
-        ) : null}
+
+              <div className="overflow-hidden rounded-[18px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01))]">
+                <BattleTriviaSessionSummaryCard
+                  summary={sessionSummary}
+                  loading={isSessionSummaryLoading}
+                />
+              </div>
+            </>
+          ) : canModerateChat ? (
+            <RoomModerationControlCard
+              roomName={room?.name}
+              slowModeSeconds={moderationState?.slowModeSeconds ?? 0}
+              onUpdateSlowMode={handleUpdateSlowMode}
+              moderationActions={moderationActions}
+              isLoadingActions={isModerationActionsLoading}
+            />
+          ) : null}
+        </div>
       </div>
-    </div>
-  </aside>
-);
+    </aside>
+  );
 
   const roomStateBanner =
     status === "reconnecting" ? (
@@ -1002,9 +1068,9 @@ const sidebar = (
     <div className="shrink-0 border-b border-white/5 bg-neutral-950/95 backdrop-blur-xl [padding-top:env(safe-area-inset-top)]">
       <div
         className={`mx-auto w-full max-w-[68rem] ${
-shouldCompactMobileChrome
-  ? "px-2 pt-2 pb-1.5"
-  : "px-2.5 pt-6 pb-2 sm:px-4 sm:py-3 lg:px-5"
+          shouldCompactMobileChrome
+            ? "px-2 pt-2 pb-1.5"
+            : "px-2.5 pt-6 pb-2 sm:px-4 sm:py-3 lg:px-5"
         }`}
       >
         <div className="hidden sm:block">
@@ -1077,8 +1143,12 @@ shouldCompactMobileChrome
       onReplyMessage={!showGameSidebar ? handleReplyMessage : undefined}
       onEditMessage={!showGameSidebar ? handleEditMessage : undefined}
       onToggleReaction={!showGameSidebar ? handleToggleReaction : undefined}
-      onPinMessage={!showGameSidebar && canModerateChat ? handlePinMessage : undefined}
-      onUnpinMessage={!showGameSidebar && canModerateChat ? handleUnpinMessage : undefined}
+      onPinMessage={
+        !showGameSidebar && canModerateChat ? handlePinMessage : undefined
+      }
+      onUnpinMessage={
+        !showGameSidebar && canModerateChat ? handleUnpinMessage : undefined
+      }
     />
   );
 
@@ -1107,7 +1177,7 @@ shouldCompactMobileChrome
         ) : null
       }
       composer={
-       <ChatInput
+        <ChatInput
           onSend={handleSend}
           replyTarget={!showGameSidebar ? replyTarget : null}
           onCancelReply={!showGameSidebar ? handleCancelReply : undefined}
@@ -1187,6 +1257,7 @@ shouldCompactMobileChrome
         stream={stream}
         footer={footer}
       />
+
       <MentionToastStack
         items={mentionToasts}
         onDismiss={handleJumpToMentionMessage}

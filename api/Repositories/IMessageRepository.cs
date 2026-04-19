@@ -27,4 +27,11 @@ public interface IMessageRepository
     Task PinMessageAsync(Guid roomId, Guid messageId, Guid pinnedByUserId, DateTime pinnedAtUtc);
     Task UnpinRoomAsync(Guid roomId);
     Task<ChatMessageResponse?> GetPinnedByRoomAsync(Guid roomId, Guid currentUserId);
+    
+    Task<IEnumerable<ChatMessageResponse>> GetContextByMessageIdAsync(
+    Guid roomId,
+    Guid messageId,
+    Guid currentUserId,
+    int before,
+    int after);
 }
