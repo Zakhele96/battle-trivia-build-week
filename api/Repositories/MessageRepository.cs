@@ -678,6 +678,103 @@ public sealed class MessageRepository : IMessageRepository
         };
     }
 
+    public async Task<IEnumerable<ChatMessageResponse>> GetOlderByRoomAsync(
+    Guid roomId,
+    Guid beforeMessageId,
+    Guid currentUserId,
+    int take)
+{
+    const string sql = """
+        WITH cursor_message AS
+        (
+            SELECT
+                id,
+                sent_at
+            FROM chat_messages
+            WHERE id = @BeforeMessageId
+              AND room_id = @RoomId
+            LIMIT 1
+        ),
+        older_messages AS
+        (
+            SELECT
+                cm.id,
+                cm.room_id AS RoomId,
+                cm.user_id AS UserId,
+                cm.message_text AS MessageText,
+                cm.message_type AS MessageType,
+                cm.sent_at AS SentAt,
+                cm.reply_to_message_id AS ReplyToMessageId,
+                cm.edited_at AS EditedAt,
+                cm.is_pinned AS IsPinned,
+                cm.pinned_at AS PinnedAt,
+                cm.pinned_by_user_id AS PinnedByUserId,
+                u.username AS Username,
+                u.display_name AS DisplayName,
+                COALESCE(u.is_admin, FALSE) AS IsAdmin,
+                ru.username AS ReplyToUsername,
+                ru.display_name AS ReplyToDisplayName,
+                LEFT(rcm.message_text, 120) AS ReplyToPreviewText
+            FROM chat_messages cm
+            LEFT JOIN users u
+                ON u.id = cm.user_id
+            LEFT JOIN chat_messages rcm
+                ON rcm.id = cm.reply_to_message_id
+            LEFT JOIN users ru
+                ON ru.id = rcm.user_id
+            CROSS JOIN cursor_message cur
+            WHERE cm.room_id = @RoomId
+              AND (
+                    cm.sent_at < cur.sent_at
+                    OR (cm.sent_at = cur.sent_at AND cm.id < cur.id)
+                  )
+            ORDER BY cm.sent_at DESC, cm.id DESC
+            LIMIT @Take
+        )
+        SELECT
+            om.*,
+            COALESCE(rj.reactions_json, '[]') AS ReactionsJson
+        FROM older_messages om
+        LEFT JOIN LATERAL
+        (
+            SELECT COALESCE(
+                json_agg(
+                    json_build_object(
+                        'emoji', x.emoji,
+                        'count', x.reaction_count,
+                        'reactedByMe', x.reacted_by_me
+                    )
+                    ORDER BY x.emoji
+                )::text,
+                '[]'
+            ) AS reactions_json
+            FROM
+            (
+                SELECT
+                    r.emoji,
+                    COUNT(*)::INT AS reaction_count,
+                    BOOL_OR(r.user_id = @CurrentUserId) AS reacted_by_me
+                FROM chat_message_reactions r
+                WHERE r.chat_message_id = om.id
+                GROUP BY r.emoji
+            ) x
+        ) rj ON TRUE
+        ORDER BY om.SentAt ASC, om.Id ASC;
+        """;
+
+    using var connection = _context.CreateConnection();
+
+    var rows = await connection.QueryAsync<MessageRow>(sql, new
+    {
+        RoomId = roomId,
+        BeforeMessageId = beforeMessageId,
+        CurrentUserId = currentUserId,
+        Take = take
+    });
+
+    return rows.Select(MapRow).ToList();
+}
+
     private sealed class MessageRow
     {
         public Guid Id { get; set; }

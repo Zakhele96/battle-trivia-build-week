@@ -208,4 +208,36 @@ public sealed class RoomsController : ControllerBase
         var state = await _wordScrambleStateService.GetRoomStateAsync(roomId);
         return Ok(state);
     }
+
+    [HttpGet("{roomId:guid}/messages/older")]
+    public async Task<IActionResult> GetOlderMessages(
+        Guid roomId,
+        [FromQuery] Guid beforeMessageId,
+        [FromQuery] int take = 50)
+        {
+            take = Math.Clamp(take, 1, 100);
+
+            var userIdValue =
+                User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+                User.FindFirstValue("sub");
+
+            if (!Guid.TryParse(userIdValue, out var userId))
+                return Unauthorized();
+
+            try
+            {
+                var messages = await _chatService.GetOlderMessagesAsync(
+                    roomId,
+                    beforeMessageId,
+                    userId,
+                    take);
+
+                return Ok(messages);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
 }

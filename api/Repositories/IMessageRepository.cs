@@ -34,4 +34,10 @@ public interface IMessageRepository
     Guid currentUserId,
     int before,
     int after);
+
+    Task<IEnumerable<ChatMessageResponse>> GetOlderByRoomAsync(
+    Guid roomId,
+    Guid beforeMessageId,
+    Guid currentUserId,
+    int take);
 }

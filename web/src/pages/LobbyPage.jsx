@@ -571,22 +571,22 @@ export default function LobbyPage() {
     };
   }, [rooms, featuredRoomStatus]);
 
-  const roomsWithUnreadMentions = useMemo(() => {
-    return [...rooms]
-      .filter((room) => (Number(room?.unreadMentionCount) || 0) > 0)
-      .sort(
-        (a, b) =>
-          (Number(b?.unreadMentionCount) || 0) -
-          (Number(a?.unreadMentionCount) || 0)
-      );
-  }, [rooms]);
+  // const roomsWithUnreadMentions = useMemo(() => {
+  //   return [...rooms]
+  //     .filter((room) => (Number(room?.unreadMentionCount) || 0) > 0)
+  //     .sort(
+  //       (a, b) =>
+  //         (Number(b?.unreadMentionCount) || 0) -
+  //         (Number(a?.unreadMentionCount) || 0)
+  //     );
+  // }, [rooms]);
 
-  const totalUnreadMentions = useMemo(() => {
-    return roomsWithUnreadMentions.reduce(
-      (sum, room) => sum + (Number(room?.unreadMentionCount) || 0),
-      0
-    );
-  }, [roomsWithUnreadMentions]);
+  // const totalUnreadMentions = useMemo(() => {
+  //   return roomsWithUnreadMentions.reduce(
+  //     (sum, room) => sum + (Number(room?.unreadMentionCount) || 0),
+  //     0
+  //   );
+  // }, [roomsWithUnreadMentions]);
 
   const showPodium =
     !!sessionPodium?.hasPodium && sessionPodium?.winners?.length > 0;

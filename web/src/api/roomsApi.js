@@ -93,3 +93,10 @@ export async function getWordScrambleState(roomId) {
   const { data } = await api.get(`/rooms/${roomId}/word-scramble-state`);
   return data;
 }
+
+export async function getOlderRoomMessages(roomId, beforeMessageId, take = 50) {
+  const { data } = await api.get(`/rooms/${roomId}/messages/older`, {
+    params: { beforeMessageId, take },
+  });
+  return data;
+}

@@ -25,24 +25,6 @@ function StreamLoadingState() {
       <div className="flex justify-center">
         <StreamStatusPill>Connecting stream</StreamStatusPill>
       </div>
-
-      <div className="mt-6 space-y-3">
-        <div className="w-[74%] rounded-[18px] border border-white/6 bg-white/[0.035] px-4 py-4">
-          <div className="h-3 w-24 rounded bg-white/10" />
-          <div className="mt-3 h-3 w-[82%] rounded bg-white/8" />
-          <div className="mt-2 h-3 w-[58%] rounded bg-white/8" />
-        </div>
-
-        <div className="ml-auto w-[68%] rounded-[18px] border border-white/6 bg-blue-500/[0.07] px-4 py-4">
-          <div className="ml-auto h-3 w-20 rounded bg-white/10" />
-          <div className="mt-3 ml-auto h-3 w-[76%] rounded bg-white/8" />
-        </div>
-
-        <div className="w-[60%] rounded-[18px] border border-white/6 bg-white/[0.03] px-4 py-4">
-          <div className="h-3 w-16 rounded bg-white/10" />
-          <div className="mt-3 h-3 w-[72%] rounded bg-white/8" />
-        </div>
-      </div>
     </div>
   );
 }
@@ -79,6 +61,30 @@ function StreamHeader({ count }) {
           {count > 0 ? <span>{count}</span> : null}
         </div>
       </div>
+    </div>
+  );
+}
+
+function StreamHistoryLoader({
+  hasOlderMessages,
+  loadingOlder,
+  onLoadOlder,
+}) {
+  if (!hasOlderMessages && !loadingOlder) return null;
+
+  return (
+    <div className="mb-3 flex justify-center">
+      {loadingOlder ? (
+        <StreamStatusPill>Loading older messages</StreamStatusPill>
+      ) : (
+        <button
+          type="button"
+          onClick={onLoadOlder}
+          className="inline-flex items-center justify-center rounded-full border border-white/8 bg-white/[0.03] px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] text-neutral-400 transition hover:border-white/12 hover:bg-white/[0.05] hover:text-white"
+        >
+          Load older messages
+        </button>
+      )}
     </div>
   );
 }
@@ -135,6 +141,9 @@ export default function ChatStream({
   onToggleReaction,
   onPinMessage,
   onUnpinMessage,
+  onLoadOlder,
+  hasOlderMessages = false,
+  loadingOlder = false,
 }) {
   const messageCount = Array.isArray(messages) ? messages.length : 0;
   const messageRefs = useRef(new Map());
@@ -181,6 +190,12 @@ export default function ChatStream({
           <StreamEmptyState />
         ) : (
           <>
+            <StreamHistoryLoader
+              hasOlderMessages={hasOlderMessages}
+              loadingOlder={loadingOlder}
+              onLoadOlder={onLoadOlder}
+            />
+
             <PinnedMessageBar
               message={pinnedMessage}
               onJumpToMessage={jumpToMessage}

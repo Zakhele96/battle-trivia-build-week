@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { getRoom, getRoomMessages } from "../api/roomsApi";
+import { getOlderRoomMessages, getRoom, getRoomMessages } from "../api/roomsApi";
+
+const PAGE_SIZE = 50;
 
 function normalizeMessages(data) {
   return Array.isArray(data) ? data : [];
@@ -27,10 +29,29 @@ function mergeMessage(existing, incoming) {
   };
 }
 
+function mergeUniqueById(messages) {
+  const map = new Map();
+
+  for (const message of messages) {
+    if (!message?.id) continue;
+    map.set(message.id, message);
+  }
+
+  return Array.from(map.values()).sort((a, b) => {
+    const aTime = new Date(a.sentAt).getTime();
+    const bTime = new Date(b.sentAt).getTime();
+
+    if (aTime !== bTime) return aTime - bTime;
+    return String(a.id).localeCompare(String(b.id));
+  });
+}
+
 export default function useRoomBootstrap(roomId) {
   const [room, setRoom] = useState(null);
   const [messages, setMessages] = useState([]);
   const [isLoadingRoom, setIsLoadingRoom] = useState(true);
+  const [isLoadingOlder, setIsLoadingOlder] = useState(false);
+  const [hasOlderMessages, setHasOlderMessages] = useState(true);
   const [bootstrapError, setBootstrapError] = useState("");
 
   useEffect(() => {
@@ -39,19 +60,24 @@ export default function useRoomBootstrap(roomId) {
     async function loadInitial() {
       setBootstrapError("");
       setIsLoadingRoom(true);
+      setIsLoadingOlder(false);
+      setHasOlderMessages(true);
       setRoom(null);
       setMessages([]);
 
       try {
         const [roomData, messageData] = await Promise.all([
           getRoom(roomId),
-          getRoomMessages(roomId),
+          getRoomMessages(roomId, PAGE_SIZE),
         ]);
 
         if (!isMounted) return;
 
+        const normalized = normalizeMessages(messageData);
+
         setRoom(roomData);
-        setMessages(normalizeMessages(messageData));
+        setMessages(normalized);
+        setHasOlderMessages(normalized.length >= PAGE_SIZE);
       } catch {
         if (!isMounted) return;
         setBootstrapError("Failed to load room.");
@@ -70,13 +96,45 @@ export default function useRoomBootstrap(roomId) {
     };
   }, [roomId]);
 
+  const loadOlderMessages = useCallback(async () => {
+    if (!roomId || isLoadingOlder || !hasOlderMessages || messages.length === 0) {
+      return;
+    }
+
+    const oldestMessage = messages[0];
+    if (!oldestMessage?.id) return;
+
+    setIsLoadingOlder(true);
+
+    try {
+      const olderData = await getOlderRoomMessages(
+        roomId,
+        oldestMessage.id,
+        PAGE_SIZE
+      );
+
+      const olderMessages = normalizeMessages(olderData);
+
+      setMessages((prev) => mergeUniqueById([...olderMessages, ...prev]));
+      setHasOlderMessages(olderMessages.length >= PAGE_SIZE);
+    } finally {
+      setIsLoadingOlder(false);
+    }
+  }, [roomId, isLoadingOlder, hasOlderMessages, messages]);
+
+  const replaceMessages = useCallback((nextMessages) => {
+    const normalized = normalizeMessages(nextMessages);
+    setMessages(normalized);
+    setHasOlderMessages(normalized.length >= PAGE_SIZE);
+  }, []);
+
   const appendMessage = useCallback((message) => {
     if (!message?.id) return;
 
     setMessages((prev) => {
       const exists = prev.some((m) => m.id === message.id);
       if (exists) return prev;
-      return [...prev, message];
+      return mergeUniqueById([...prev, message]);
     });
   }, []);
 
@@ -98,16 +156,13 @@ export default function useRoomBootstrap(roomId) {
         return mergeMessage(message, incoming);
       });
 
-      return found ? next : [...next, incoming];
+      return found ? next : mergeUniqueById([...next, incoming]);
     });
   }, []);
 
   const updateMessageReactions = useCallback((payload) => {
     const messageId = payload?.messageId || payload?.id || payload?.message?.id;
-    const reactions =
-      payload?.reactions ??
-      payload?.message?.reactions ??
-      [];
+    const reactions = payload?.reactions ?? payload?.message?.reactions ?? [];
 
     if (!messageId) return;
 
@@ -162,7 +217,7 @@ export default function useRoomBootstrap(roomId) {
 
       if (found) return next;
 
-      return [
+      return mergeUniqueById([
         ...next.map((message) =>
           message.isPinned
             ? {
@@ -175,7 +230,7 @@ export default function useRoomBootstrap(roomId) {
           ...pinnedMessage,
           isPinned: true,
         },
-      ];
+      ]);
     });
   }, []);
 
@@ -183,13 +238,16 @@ export default function useRoomBootstrap(roomId) {
     room,
     messages,
     isLoadingRoom,
+    isLoadingOlder,
+    hasOlderMessages,
     bootstrapError,
     setBootstrapError,
-    setMessages,
+    setMessages: replaceMessages,
     appendMessage,
     removeMessage,
     updateMessage,
     updateMessageReactions,
     setPinnedMessage,
+    loadOlderMessages,
   };
 }

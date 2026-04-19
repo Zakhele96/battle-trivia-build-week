@@ -219,4 +219,25 @@ public sealed class ChatService
     {
         await _messageRepository.UnpinRoomAsync(roomId);
     }
+
+    public async Task<IEnumerable<ChatMessageResponse>> GetOlderMessagesAsync(
+        Guid roomId,
+        Guid beforeMessageId,
+        Guid currentUserId,
+        int take)
+    {
+        var room = await _roomRepository.GetByIdAsync(roomId);
+        if (room is null)
+            throw new KeyNotFoundException("Room not found.");
+
+        var exists = await _messageRepository.MessageExistsInRoomAsync(roomId, beforeMessageId);
+        if (!exists)
+            throw new KeyNotFoundException("Cursor message not found in this room.");
+
+        return await _messageRepository.GetOlderByRoomAsync(
+            roomId,
+            beforeMessageId,
+            currentUserId,
+            take);
+    }
 }

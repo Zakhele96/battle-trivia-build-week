@@ -317,18 +317,21 @@ export default function RoomPage() {
   const messagesContainerRef = useRef(null);
   const shouldAutoScrollRef = useRef(true);
 
- const {
-    room,
-    messages,
-    isLoadingRoom,
-    bootstrapError,
-    appendMessage,
-    removeMessage,
-    updateMessage,
-    updateMessageReactions,
-    setPinnedMessage,
-    setMessages,
-  } = useRoomBootstrap(roomId);
+const {
+  room,
+  messages,
+  isLoadingRoom,
+  isLoadingOlder,
+  hasOlderMessages,
+  bootstrapError,
+  appendMessage,
+  removeMessage,
+  updateMessage,
+  updateMessageReactions,
+  setPinnedMessage,
+  setMessages,
+  loadOlderMessages,
+} = useRoomBootstrap(roomId);
 
   const isBattleTrivia = useMemo(() => {
     if (!room) return false;
@@ -448,6 +451,28 @@ export default function RoomPage() {
     },
     [dismissMentionToast, refreshMentionCounts]
   );
+
+  const handleLoadOlderMessages = useCallback(async () => {
+  const el = messagesContainerRef.current;
+
+  if (!el) {
+    await loadOlderMessages();
+    return;
+  }
+
+  const previousScrollHeight = el.scrollHeight;
+  const previousScrollTop = el.scrollTop;
+
+  await loadOlderMessages();
+
+  requestAnimationFrame(() => {
+    const nextScrollHeight = el.scrollHeight;
+    const addedHeight = nextScrollHeight - previousScrollHeight;
+
+    el.scrollTop = previousScrollTop + addedHeight;
+  });
+}, [loadOlderMessages]);
+
 
   const {
     status,
@@ -1129,12 +1154,15 @@ export default function RoomPage() {
   );
 
   const stream = (
-    <ChatStream
+   <ChatStream
       messages={messages}
       currentUserId={user?.id}
       currentUsername={user?.username}
       error={displayError}
       isLoading={isLoadingRoom}
+      loadingOlder={isChatRoom ? isLoadingOlder : false}
+      hasOlderMessages={isChatRoom ? hasOlderMessages : false}
+      onLoadOlder={isChatRoom ? handleLoadOlderMessages : undefined}
       containerRef={messagesContainerRef}
       onScroll={updateAutoScrollState}
       isAdmin={canModerateChat}
