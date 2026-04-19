@@ -1,3 +1,4 @@
+import { useCallback, useMemo, useRef } from "react";
 import ChatMessage from "./ChatMessage";
 
 function StreamStatusPill({ children }) {
@@ -74,11 +75,45 @@ function StreamHeader({ count }) {
         <div className="inline-flex items-center gap-2 rounded-full border border-white/8 bg-white/[0.03] px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-neutral-500 shadow-[0_8px_24px_rgba(0,0,0,0.12)]">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]" />
           Live stream
-          {count > 0 ? (
-            <span className="text-neutral-600">•</span>
-          ) : null}
+          {count > 0 ? <span className="text-neutral-600">•</span> : null}
           {count > 0 ? <span>{count}</span> : null}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function PinnedMessageBar({ message, onJumpToMessage, onUnpinMessage, isAdmin }) {
+  if (!message) return null;
+
+  return (
+    <div className="sticky top-0 z-[3] mb-3 rounded-[18px] border border-amber-400/15 bg-[linear-gradient(180deg,rgba(245,158,11,0.08),rgba(245,158,11,0.03))] px-4 py-3 shadow-[0_12px_28px_rgba(0,0,0,0.12)] backdrop-blur-md">
+      <div className="flex items-start justify-between gap-3">
+        <button
+          type="button"
+          onClick={() => onJumpToMessage?.(message.id)}
+          className="min-w-0 text-left"
+        >
+          <div className="text-[10px] font-medium uppercase tracking-[0.16em] text-amber-200/80">
+            Pinned message
+          </div>
+          <div className="mt-1 text-sm font-medium text-white">
+            {message.displayName || message.username || "Unknown"}
+          </div>
+          <div className="mt-1 truncate text-[12px] text-amber-100/75">
+            {message.messageText}
+          </div>
+        </button>
+
+        {isAdmin && typeof onUnpinMessage === "function" ? (
+          <button
+            type="button"
+            onClick={() => onUnpinMessage(message.id)}
+            className="shrink-0 rounded-full border border-amber-300/18 bg-amber-300/10 px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] text-amber-100 transition hover:bg-amber-300/14"
+          >
+            Unpin
+          </button>
+        ) : null}
       </div>
     </div>
   );
@@ -87,6 +122,7 @@ function StreamHeader({ count }) {
 export default function ChatStream({
   messages,
   currentUserId,
+  currentUsername,
   error,
   isLoading,
   containerRef,
@@ -94,8 +130,41 @@ export default function ChatStream({
   isAdmin = false,
   onDeleteMessage,
   onMuteUser,
+  onReplyMessage,
+  onEditMessage,
+  onToggleReaction,
+  onPinMessage,
+  onUnpinMessage,
 }) {
   const messageCount = Array.isArray(messages) ? messages.length : 0;
+  const messageRefs = useRef(new Map());
+
+  const pinnedMessage = useMemo(
+    () => (Array.isArray(messages) ? messages.find((m) => m.isPinned) || null : null),
+    [messages]
+  );
+
+  const setMessageNodeRef = useCallback((messageId, node) => {
+    if (!messageId) return;
+
+    if (node) {
+      messageRefs.current.set(messageId, node);
+    } else {
+      messageRefs.current.delete(messageId);
+    }
+  }, []);
+
+  const jumpToMessage = useCallback((messageId) => {
+    if (!messageId) return;
+
+    const node = messageRefs.current.get(messageId);
+    if (!node) return;
+
+    node.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, []);
 
   return (
     <div
@@ -112,6 +181,13 @@ export default function ChatStream({
           <StreamEmptyState />
         ) : (
           <>
+            <PinnedMessageBar
+              message={pinnedMessage}
+              onJumpToMessage={jumpToMessage}
+              onUnpinMessage={onUnpinMessage}
+              isAdmin={isAdmin}
+            />
+
             <StreamHeader count={messageCount} />
 
             <div className="rounded-[24px] border border-white/6 bg-[linear-gradient(180deg,rgba(255,255,255,0.018),rgba(255,255,255,0.008))] px-2 py-2 shadow-[0_18px_40px_rgba(0,0,0,0.14)] sm:px-3 sm:py-3">
@@ -121,6 +197,7 @@ export default function ChatStream({
                     key={message.id}
                     message={message}
                     currentUserId={currentUserId}
+                    currentUsername={currentUsername}
                     previousMessage={index > 0 ? messages[index - 1] : null}
                     nextMessage={
                       index < messages.length - 1 ? messages[index + 1] : null
@@ -128,6 +205,13 @@ export default function ChatStream({
                     isAdmin={isAdmin}
                     onDeleteMessage={onDeleteMessage}
                     onMuteUser={onMuteUser}
+                    onReplyMessage={onReplyMessage}
+                    onEditMessage={onEditMessage}
+                    onToggleReaction={onToggleReaction}
+                    onPinMessage={onPinMessage}
+                    onUnpinMessage={onUnpinMessage}
+                    onJumpToMessage={jumpToMessage}
+                    messageNodeRef={(node) => setMessageNodeRef(message.id, node)}
                   />
                 ))}
               </div>

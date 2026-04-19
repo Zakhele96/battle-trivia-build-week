@@ -11,4 +11,18 @@ public sealed class ChatMessageResponse
     public string MessageText { get; set; } = string.Empty;
     public string MessageType { get; set; } = string.Empty;
     public DateTime SentAt { get; set; }
+
+    public Guid? ReplyToMessageId { get; set; }
+    public string? ReplyToUsername { get; set; }
+    public string? ReplyToDisplayName { get; set; }
+    public string? ReplyToPreviewText { get; set; }
+
+    public bool IsEdited { get; set; }
+    public DateTime? EditedAt { get; set; }
+
+    public bool IsPinned { get; set; }
+    public DateTime? PinnedAt { get; set; }
+    public Guid? PinnedByUserId { get; set; }
+
+    public List<ChatMessageReactionResponse> Reactions { get; set; } = new();
 }

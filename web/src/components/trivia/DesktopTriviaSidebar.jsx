@@ -1,6 +1,38 @@
-import { Link } from "react-router-dom";
 import LeaderboardCard from "./LeaderboardCard";
 import PlayerStandingCard from "./PlayerStandingCard";
+
+function getStatusDotClass(status) {
+  if (status === "connected") {
+    return "bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.45)]";
+  }
+
+  if (status === "reconnecting") {
+    return "bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.35)]";
+  }
+
+  return "bg-neutral-500";
+}
+
+function getStatusLabel(status) {
+  if (status === "connected") return "Connected";
+  if (status === "reconnecting") return "Reconnecting";
+  if (status === "connecting") return "Connecting";
+  return "Standby";
+}
+
+function getRoomDescription(room) {
+  if (room?.description?.trim()) return room.description.trim();
+
+  if (room?.slug === "battle-trivia" || room?.roomType === "trivia") {
+    return "Fast-paced live trivia with weekly standings.";
+  }
+
+  if (room?.slug === "word-scramble") {
+    return "Solve the word fast and climb the rankings.";
+  }
+
+  return "Live room";
+}
 
 export default function DesktopTriviaSidebar({
   room,
@@ -11,25 +43,28 @@ export default function DesktopTriviaSidebar({
   leaderboard,
   playerRank,
   currentUserId,
+  compact = false,
 }) {
-  return (
-    <div className="space-y-3 p-3">
-      <Link
-        to="/"
-        className="inline-flex text-sm text-blue-400 transition-colors hover:text-blue-300"
-      >
-        ← Back to lobby
-      </Link>
+  const isLiveNow = !!sessionStatus?.isLiveNow;
+  const runModeLabel =
+    sessionStatus?.runMode === "scheduled" ? "Scheduled" : "Continuous";
+  const description = getRoomDescription(room);
 
-      <div className="rounded-[24px] border border-white/10 bg-neutral-950/80 p-4">
+  return (
+    <div className={`space-y-2.5 ${compact ? "p-2.5" : "p-3"}`}>
+      <div className="rounded-[18px] border border-white/10 bg-neutral-950/70 p-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="truncate text-base font-semibold text-white">
+            <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
+              Room
+            </div>
+
+            <h2 className="mt-1 truncate text-[15px] font-semibold tracking-[-0.03em] text-white">
               {room?.name || "Room"}
             </h2>
 
             <p
-              className="mt-1.5 text-sm leading-5 text-neutral-400"
+              className="mt-1.5 text-[12px] leading-5 text-neutral-400"
               style={{
                 display: "-webkit-box",
                 WebkitLineClamp: 2,
@@ -37,55 +72,47 @@ export default function DesktopTriviaSidebar({
                 overflow: "hidden",
               }}
             >
-              {room?.description || "Loading room..."}
+              {description}
             </p>
           </div>
 
-          <span
-            className={`mt-1 inline-flex h-2.5 w-2.5 shrink-0 rounded-full ${
-              status === "connected"
-                ? "bg-emerald-400"
-                : status === "reconnecting"
-                ? "bg-amber-400"
-                : "bg-neutral-500"
-            }`}
-          />
+          <div className="mt-0.5 flex items-center gap-2">
+            <span className="text-[9px] uppercase tracking-[0.14em] text-neutral-500">
+              {getStatusLabel(status)}
+            </span>
+            <span
+              className={`h-2.5 w-2.5 shrink-0 rounded-full ${getStatusDotClass(
+                status
+              )}`}
+            />
+          </div>
         </div>
 
-        {isBattleTrivia ? (
-          <div className="mt-3 space-y-2.5">
-            <div className="flex flex-wrap gap-2">
-              <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-neutral-300">
-                {sessionStatus?.runMode === "scheduled"
-                  ? "Scheduled"
-                  : "Continuous"}
-              </span>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <span className="rounded-full border border-white/10 bg-white/[0.045] px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] text-neutral-300">
+            {runModeLabel}
+          </span>
 
-              <span
-                className={`rounded-full px-3 py-1 text-[10px] font-medium uppercase tracking-[0.14em] ${
-                  sessionStatus?.isLiveNow
-                    ? "bg-emerald-500/15 text-emerald-300"
-                    : "bg-amber-500/15 text-amber-300"
-                }`}
-              >
-                {sessionStatus?.isLiveNow ? "Live now" : "Standby"}
-              </span>
-            </div>
+          <span
+            className={`rounded-full px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] ${
+              isLiveNow
+                ? "border border-emerald-400/18 bg-emerald-500/10 text-emerald-300"
+                : "border border-amber-400/18 bg-amber-500/10 text-amber-300"
+            }`}
+          >
+            {isLiveNow ? "Live now" : "Standby"}
+          </span>
 
-            <div className="rounded-[18px] border border-white/6 bg-white/[0.03] px-3 py-2.5">
-              <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500">
-                Session
-              </div>
-              <div className="mt-1 text-sm font-medium text-neutral-200">
-                {sessionLabel}
-              </div>
-            </div>
-          </div>
-        ) : null}
+          {sessionLabel ? (
+            <span className="rounded-full border border-white/10 bg-white/[0.045] px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] text-neutral-300">
+              {sessionLabel}
+            </span>
+          ) : null}
+        </div>
       </div>
 
       {isBattleTrivia ? (
-        <div className="space-y-3">
+        <>
           <LeaderboardCard
             title="Leaderboard"
             badgeText="Top 5"
@@ -100,7 +127,7 @@ export default function DesktopTriviaSidebar({
             compact
             showAttempts={false}
           />
-        </div>
+        </>
       ) : null}
     </div>
   );

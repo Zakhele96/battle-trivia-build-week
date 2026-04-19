@@ -6,15 +6,15 @@ import { getRooms } from "../api/roomsApi";
 
 function SectionHeader({ eyebrow, title, description }) {
   return (
-    <div className="mb-4 sm:mb-5">
-      <div className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 sm:text-[11px]">
+    <div className="mb-3 sm:mb-4">
+      <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500 sm:text-[11px]">
         {eyebrow}
       </div>
-      <div className="mt-1 text-[17px] font-semibold tracking-[-0.03em] text-white sm:text-xl">
+      <div className="mt-1 text-[16px] font-semibold tracking-[-0.03em] text-white sm:text-[19px]">
         {title}
       </div>
       {description ? (
-        <div className="mt-1.5 text-[13px] text-neutral-400 sm:mt-2 sm:text-sm">
+        <div className="mt-1 text-[12px] leading-5 text-neutral-400 sm:mt-1.5 sm:text-[13px]">
           {description}
         </div>
       ) : null}
@@ -70,22 +70,12 @@ export default function CommunityPage() {
     <div className="min-h-screen bg-neutral-950 text-white">
       <div className="mx-auto w-full max-w-[76rem] px-4 py-4 pb-24 sm:px-5 sm:py-7 sm:pb-7 lg:px-6 lg:py-9">
         <AppSectionNav />
+
         <AppTopBar
           eyebrow="Community"
           title="Community spaces"
-          description="These are the lighter, social spaces outside competitive play. Use them for general conversation and room-based community activity."
-          actions={[
-            {
-              to: "/rooms",
-              label: "Game rooms",
-              sublabel: "Competitive spaces",
-            },
-            {
-              to: "/profile",
-              label: "Profile",
-              sublabel: "Your account",
-            },
-          ]}
+          description="Lighter social spaces outside competitive play."
+          actions={[]}
         />
 
         {error ? (

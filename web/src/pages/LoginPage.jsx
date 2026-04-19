@@ -107,7 +107,7 @@ export default function LoginPage() {
         password: form.password,
       });
 
-      login(data);
+      login(data, "local");
       navigate(from, { replace: true });
     } catch (err) {
       setError(err?.response?.data?.message || "Login failed.");
@@ -122,7 +122,7 @@ export default function LoginPage() {
 
     try {
       const data = await googleLogin(credential);
-      login(data);
+      login(data, "google");
       navigate(from, { replace: true });
     } catch (err) {
       setError(err?.response?.data?.message || "Google login failed.");

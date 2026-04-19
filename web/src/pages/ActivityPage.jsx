@@ -32,23 +32,59 @@ function formatDateTime(value) {
   }).format(date);
 }
 
-function StatCard({ label, value }) {
+function SectionHeader({ eyebrow, title, description, action }) {
   return (
-    <div className="rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-3">
-      <div className="text-[10px] uppercase tracking-[0.14em] text-neutral-500">
-        {label}
+    <div className="mb-3 flex flex-wrap items-end justify-between gap-2.5 sm:mb-4">
+      <div>
+        <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500 sm:text-[11px]">
+          {eyebrow}
+        </div>
+        <div className="mt-1 text-[16px] font-semibold tracking-[-0.03em] text-white sm:text-[19px]">
+          {title}
+        </div>
+        {description ? (
+          <div className="mt-1 text-[12px] leading-5 text-neutral-400 sm:mt-1.5 sm:text-[13px]">
+            {description}
+          </div>
+        ) : null}
       </div>
-      <div className="mt-1 text-lg font-semibold text-white">{value}</div>
+
+      {action ? action : null}
     </div>
   );
 }
 
-function RecentResultCard({ item }) {
+function StatCard({ label, value }) {
   return (
-    <div className="rounded-[18px] border border-white/6 bg-white/[0.03] px-4 py-3">
+    <div className="rounded-[18px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] px-3.5 py-3 sm:rounded-[20px] sm:px-4">
+      <div className="text-[10px] uppercase tracking-[0.14em] text-neutral-500">
+        {label}
+      </div>
+      <div className="mt-1 text-[18px] font-semibold tracking-[-0.03em] text-white sm:text-lg">
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function EmptyBlock({ message }) {
+  return (
+    <div className="rounded-[18px] border border-white/8 bg-white/[0.03] px-4 py-6 text-sm text-neutral-500">
+      {message}
+    </div>
+  );
+}
+
+function RecentResultCard({ item, compact = false }) {
+  return (
+    <div className="rounded-[16px] border border-white/8 bg-black/20 px-3.5 py-3 sm:rounded-[18px] sm:px-4">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <div className="truncate text-sm font-medium text-white">
+          <div
+            className={`truncate font-medium text-white ${
+              compact ? "text-[13px]" : "text-sm"
+            }`}
+          >
             {item.title || "Battle Trivia session"}
           </div>
           <div className="mt-1 text-[11px] text-neutral-500">
@@ -56,14 +92,41 @@ function RecentResultCard({ item }) {
           </div>
         </div>
 
-        <div className="text-right">
+        <div className="shrink-0 text-right">
           <div className="text-sm font-semibold text-blue-300">
             {item.score} pts
           </div>
-          <div className="mt-1 text-[11px] text-neutral-500">
-            #{item.rank}
+          <div className="mt-1 text-[11px] text-neutral-500">#{item.rank}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NextMoveCard({ title, description, to, actionLabel, accent = "blue" }) {
+  const accentClass =
+    accent === "violet"
+      ? "border-violet-400/18 bg-violet-500/10 text-violet-200"
+      : accent === "emerald"
+      ? "border-emerald-400/18 bg-emerald-500/10 text-emerald-200"
+      : "border-blue-400/18 bg-blue-500/10 text-blue-200";
+
+  return (
+    <div className="rounded-[18px] border border-white/8 bg-black/20 px-4 py-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-sm font-semibold text-white">{title}</div>
+          <div className="mt-1.5 text-[12px] leading-5 text-neutral-400">
+            {description}
           </div>
         </div>
+
+        <Link
+          to={to}
+          className={`shrink-0 rounded-full border px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] transition hover:opacity-90 ${accentClass}`}
+        >
+          {actionLabel}
+        </Link>
       </div>
     </div>
   );
@@ -75,7 +138,7 @@ export default function ActivityPage() {
   const [history, setHistory] = useState([]);
 
   const [page, setPage] = useState(1);
-  const pageSize = 12;
+  const pageSize = 10;
   const [totalPages, setTotalPages] = useState(1);
 
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
@@ -168,24 +231,14 @@ export default function ActivityPage() {
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white">
-      <div className="mx-auto w-full max-w-[76rem] px-4 py-6 pb-24 sm:px-5 sm:py-8 sm:pb-8 lg:px-6 lg:py-10">
+      <div className="mx-auto w-full max-w-[76rem] px-4 py-4 pb-24 sm:px-5 sm:py-7 sm:pb-7 lg:px-6 lg:py-9">
         <AppSectionNav />
+
         <AppTopBar
           eyebrow="Activity"
           title="Your activity"
-          description="A dedicated view for your recent results, progression, and performance over time without bloating the dashboard."
-          actions={[
-            {
-              to: "/profile",
-              label: "Profile",
-              sublabel: "Account and settings",
-            },
-            {
-              to: "/leaderboards?mode=combined&period=current",
-              label: "Standings",
-              sublabel: "Weekly rankings",
-            },
-          ]}
+          description="Recent results, progression, and performance over time."
+          actions={[]}
         />
 
         {error ? (
@@ -194,171 +247,173 @@ export default function ActivityPage() {
           </div>
         ) : null}
 
-        <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {isLoadingProfile ? (
-            <div className="rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-6 text-sm text-neutral-500 sm:col-span-2 xl:col-span-4">
-              Loading activity overview...
-            </div>
-          ) : (
-            <>
-              <StatCard
-                label="Correct answers"
-                value={stats.totalCorrectAnswers ?? 0}
-              />
-              <StatCard label="Best streak" value={`x${stats.bestStreak ?? 0}`} />
-              <StatCard label="Weekly wins" value={stats.weeklyWins ?? 0} />
-              <StatCard
-                label="Fastest correct"
-                value={formatFastest(stats.fastestCorrectAnswerMs)}
-              />
-            </>
-          )}
-        </div>
-
-        <div className="mb-6 grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-          <ProfileProgressCard
-            progression={progression}
-            loading={isLoadingProgression}
+        <section className="mb-6 sm:mb-7">
+          <SectionHeader
+            eyebrow="Overview"
+            title="Performance snapshot"
+            description="A quick read on your all-time pace and momentum."
           />
 
-          <ProfileAchievementsCard
-            progression={progression}
-            loading={isLoadingProgression}
-          />
-        </div>
-
-        <div className="mb-6 grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-          <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div className="text-sm font-semibold text-white">
-                Recent highlights
-              </div>
-
-              <Link
-                to="/leaderboards?mode=combined&period=current"
-                className="text-[11px] font-medium uppercase tracking-[0.16em] text-blue-300/80"
-              >
-                View standings
-              </Link>
-            </div>
-
-            {isLoadingHistory ? (
-              <div className="rounded-[18px] border border-white/6 bg-white/[0.03] px-4 py-6 text-sm text-neutral-500">
-                Loading recent highlights...
-              </div>
-            ) : recentHighlights.length === 0 ? (
-              <div className="rounded-[18px] border border-white/6 bg-white/[0.03] px-4 py-6 text-sm text-neutral-500">
-                No recent activity yet.
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {isLoadingProfile ? (
+              <div className="rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-6 text-sm text-neutral-500 sm:col-span-2 xl:col-span-4">
+                Loading activity overview...
               </div>
             ) : (
-              <div className="space-y-3">
-                {recentHighlights.map((item) => (
+              <>
+                <StatCard
+                  label="Correct answers"
+                  value={stats.totalCorrectAnswers ?? 0}
+                />
+                <StatCard label="Best streak" value={`x${stats.bestStreak ?? 0}`} />
+                <StatCard label="Weekly wins" value={stats.weeklyWins ?? 0} />
+                <StatCard
+                  label="Fastest correct"
+                  value={formatFastest(stats.fastestCorrectAnswerMs)}
+                />
+              </>
+            )}
+          </div>
+        </section>
+
+        <section className="mb-6 sm:mb-7">
+          <SectionHeader
+            eyebrow="Progress"
+            title="Progression and achievements"
+            description="Track how your account is developing over time."
+          />
+
+          <div className="grid gap-4 lg:grid-cols-[1.02fr_0.98fr] lg:gap-5">
+            <ProfileProgressCard
+              progression={progression}
+              loading={isLoadingProgression}
+            />
+
+            <ProfileAchievementsCard
+              progression={progression}
+              loading={isLoadingProgression}
+            />
+          </div>
+        </section>
+
+        <section className="mb-6 sm:mb-7">
+          <SectionHeader
+            eyebrow="Recent"
+            title="Highlights"
+            description="Your latest notable results and the best next move."
+            action={
+              <Link
+                to="/leaderboards?mode=combined&period=current"
+                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.035] px-3 py-1.5 text-[11px] font-medium text-white transition hover:border-white/15 hover:bg-white/[0.05] sm:rounded-[18px] sm:px-4 sm:py-2 sm:text-sm"
+              >
+                View standings
+                <span aria-hidden="true">→</span>
+              </Link>
+            }
+          />
+
+          <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr] lg:gap-5">
+            <div className="rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-3.5 sm:rounded-[24px] sm:p-4">
+              {isLoadingHistory ? (
+                <EmptyBlock message="Loading recent highlights..." />
+              ) : recentHighlights.length === 0 ? (
+                <EmptyBlock message="No recent activity yet." />
+              ) : (
+                <div className="space-y-2.5">
+                  {recentHighlights.map((item) => (
+                    <RecentResultCard key={item.id} item={item} compact />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-3.5 sm:rounded-[24px] sm:p-4">
+              <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
+                Next up
+              </div>
+              <div className="mt-1.5 text-[15px] font-semibold tracking-[-0.03em] text-white sm:text-[17px]">
+                Keep momentum going
+              </div>
+              <div className="mt-2 text-[12px] leading-5 text-neutral-400 sm:text-[13px]">
+                Use this page to review your recent results, then move into the
+                next section that helps most.
+              </div>
+
+              <div className="mt-3 space-y-2.5">
+                <NextMoveCard
+                  title="Compare your latest results"
+                  description="Open the weekly standings and see how your recent sessions stack up."
+                  to="/leaderboards?mode=combined&period=current"
+                  actionLabel="Compare"
+                  accent="blue"
+                />
+                <NextMoveCard
+                  title="Jump back into competition"
+                  description="Go straight into the game rooms and keep building your history."
+                  to="/rooms"
+                  actionLabel="Play"
+                  accent="violet"
+                />
+                <NextMoveCard
+                  title="Review your profile"
+                  description="Update your details and check your broader account stats."
+                  to="/profile"
+                  actionLabel="Open"
+                  accent="emerald"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <SectionHeader
+            eyebrow="History"
+            title="Full battle history"
+            description="All recorded results, paged for easier browsing."
+            action={
+              <div className="text-[11px] uppercase tracking-[0.16em] text-neutral-500">
+                Page {page} of {totalPages}
+              </div>
+            }
+          />
+
+          <div className="rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-3.5 sm:rounded-[24px] sm:p-4">
+            {isLoadingHistory ? (
+              <EmptyBlock message="Loading history..." />
+            ) : history.length === 0 ? (
+              <EmptyBlock message="No history yet." />
+            ) : (
+              <div className="space-y-2.5">
+                {history.map((item) => (
                   <RecentResultCard key={item.id} item={item} />
                 ))}
+
+                <div className="flex items-center justify-between pt-2">
+                  <button
+                    type="button"
+                    disabled={page <= 1}
+                    onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                    className="rounded-[14px] border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white transition hover:bg-white/[0.06] disabled:opacity-50"
+                  >
+                    Previous
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={page >= totalPages}
+                    onClick={() =>
+                      setPage((prev) => Math.min(totalPages, prev + 1))
+                    }
+                    className="rounded-[14px] border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white transition hover:bg-white/[0.06] disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
             )}
           </div>
-
-          <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5">
-            <div className="mb-4 text-sm font-semibold text-white">
-              Activity notes
-            </div>
-
-            <div className="space-y-3">
-              <div className="rounded-[18px] border border-white/8 bg-black/20 px-4 py-3">
-                <div className="text-[10px] uppercase tracking-[0.14em] text-neutral-500">
-                  Use this page for
-                </div>
-                <div className="mt-2 text-sm text-white">
-                  Reviewing your recent sessions without going deep into profile settings.
-                </div>
-              </div>
-
-              <div className="rounded-[18px] border border-white/8 bg-black/20 px-4 py-3">
-                <div className="text-[10px] uppercase tracking-[0.14em] text-neutral-500">
-                  Best next step
-                </div>
-                <div className="mt-2 text-sm text-white">
-                  Compare your latest results against the weekly standings, then jump back into the featured room.
-                </div>
-              </div>
-
-              <div className="rounded-[18px] border border-white/8 bg-black/20 px-4 py-3">
-                <div className="text-[10px] uppercase tracking-[0.14em] text-neutral-500">
-                  Quick links
-                </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Link
-                    to="/"
-                    className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[11px] font-medium text-white transition hover:border-white/15 hover:bg-white/[0.06]"
-                  >
-                    Dashboard
-                  </Link>
-                  <Link
-                    to="/rooms"
-                    className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[11px] font-medium text-white transition hover:border-white/15 hover:bg-white/[0.06]"
-                  >
-                    Game rooms
-                  </Link>
-                  <Link
-                    to="/leaderboards?mode=combined&period=current"
-                    className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[11px] font-medium text-white transition hover:border-white/15 hover:bg-white/[0.06]"
-                  >
-                    Standings
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div className="text-sm font-semibold text-white">
-              Full battle history
-            </div>
-
-            <div className="text-[11px] uppercase tracking-[0.16em] text-neutral-500">
-              Page {page} of {totalPages}
-            </div>
-          </div>
-
-          {isLoadingHistory ? (
-            <div className="rounded-[18px] border border-white/6 bg-white/[0.03] px-4 py-6 text-sm text-neutral-500">
-              Loading history...
-            </div>
-          ) : history.length === 0 ? (
-            <div className="rounded-[18px] border border-white/6 bg-white/[0.03] px-4 py-6 text-sm text-neutral-500">
-              No history yet.
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {history.map((item) => (
-                <RecentResultCard key={item.id} item={item} />
-              ))}
-
-              <div className="flex items-center justify-between pt-2">
-                <button
-                  type="button"
-                  disabled={page <= 1}
-                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                  className="rounded-[14px] border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white transition hover:bg-white/[0.06] disabled:opacity-50"
-                >
-                  Previous
-                </button>
-
-                <button
-                  type="button"
-                  disabled={page >= totalPages}
-                  onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-                  className="rounded-[14px] border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white transition hover:bg-white/[0.06] disabled:opacity-50"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+        </section>
       </div>
     </div>
   );

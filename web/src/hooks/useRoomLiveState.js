@@ -30,6 +30,10 @@ export default function useRoomLiveState({
   room,
   onReceiveMessage,
   onMessageDeleted,
+  onMessageUpdated,
+  onMessageReactionUpdated,
+  onMessagePinned,
+  onMessageUnpinned,
 }) {
   const [status, setStatus] = useState("connecting");
   const [connectionError, setConnectionError] = useState("");
@@ -69,13 +73,18 @@ export default function useRoomLiveState({
 
   const connectionRef = useRef(null);
   const onReceiveMessageRef = useRef(onReceiveMessage);
+  const onMessageDeletedRef = useRef(onMessageDeleted);
+  const onMessageUpdatedRef = useRef(onMessageUpdated);
+  const onMessageReactionUpdatedRef = useRef(onMessageReactionUpdated);
+  const onMessagePinnedRef = useRef(onMessagePinned);
+  const onMessageUnpinnedRef = useRef(onMessageUnpinned);
+
   const currentRoundIdRef = useRef(null);
   const lastRoundPlacementRef = useRef(null);
   const liveStreakRef = useRef({
     current: 0,
     best: 0,
   });
-  const onMessageDeletedRef = useRef(onMessageDeleted);
 
   const isBattleTriviaRoom =
     room?.slug === "battle-trivia" || room?.roomType === "trivia";
@@ -122,12 +131,28 @@ export default function useRoomLiveState({
   );
 
   useEffect(() => {
+    onReceiveMessageRef.current = onReceiveMessage;
+  }, [onReceiveMessage]);
+
+  useEffect(() => {
     onMessageDeletedRef.current = onMessageDeleted;
   }, [onMessageDeleted]);
 
   useEffect(() => {
-    onReceiveMessageRef.current = onReceiveMessage;
-  }, [onReceiveMessage]);
+    onMessageUpdatedRef.current = onMessageUpdated;
+  }, [onMessageUpdated]);
+
+  useEffect(() => {
+    onMessageReactionUpdatedRef.current = onMessageReactionUpdated;
+  }, [onMessageReactionUpdated]);
+
+  useEffect(() => {
+    onMessagePinnedRef.current = onMessagePinned;
+  }, [onMessagePinned]);
+
+  useEffect(() => {
+    onMessageUnpinnedRef.current = onMessageUnpinned;
+  }, [onMessageUnpinned]);
 
   useEffect(() => {
     currentRoundIdRef.current = currentRoundId;
@@ -288,8 +313,27 @@ export default function useRoomLiveState({
     connection.on("MessageDeleted", (payload) => {
       if (isCancelled) return;
       if (!payload?.messageId) return;
-
       onMessageDeletedRef.current?.(payload.messageId);
+    });
+
+    connection.on("MessageUpdated", (payload) => {
+      if (isCancelled) return;
+      onMessageUpdatedRef.current?.(payload);
+    });
+
+    connection.on("MessageReactionUpdated", (payload) => {
+      if (isCancelled) return;
+      onMessageReactionUpdatedRef.current?.(payload);
+    });
+
+    connection.on("MessagePinned", (payload) => {
+      if (isCancelled) return;
+      onMessagePinnedRef.current?.(payload);
+    });
+
+    connection.on("MessageUnpinned", (payload) => {
+      if (isCancelled) return;
+      onMessageUnpinnedRef.current?.(payload);
     });
 
     connection.on("AchievementsUnlocked", (payload) => {
@@ -623,13 +667,19 @@ export default function useRoomLiveState({
     };
   }, [roomId, room, status, isBattleTriviaRoom, isWordScrambleRoom]);
 
-  const sendRoomPayload = useCallback(
-    async (text, mode) => {
-      const connection = connectionRef.current;
+  const ensureConnected = useCallback(() => {
+    const connection = connectionRef.current;
 
-      if (!connection || status !== "connected") {
-        throw new Error("Chat is not connected.");
-      }
+    if (!connection || status !== "connected") {
+      throw new Error("Chat is not connected.");
+    }
+
+    return connection;
+  }, [status]);
+
+  const sendRoomPayload = useCallback(
+    async (text, mode, options = {}) => {
+      const connection = ensureConnected();
 
       if (mode === "battle-trivia") {
         await connection.invoke("SubmitAnswer", roomId, text);
@@ -650,10 +700,51 @@ export default function useRoomLiveState({
         return result ?? true;
       }
 
-      await connection.invoke("SendMessage", roomId, text);
+      await connection.invoke(
+        "SendMessage",
+        roomId,
+        text,
+        options?.replyToMessageId ?? null
+      );
       return true;
     },
-    [roomId, status, applyWordScrambleGuessPayload]
+    [roomId, ensureConnected, applyWordScrambleGuessPayload]
+  );
+
+  const editRoomMessage = useCallback(
+    async (messageId, text) => {
+      const connection = ensureConnected();
+      await connection.invoke("EditMessage", roomId, messageId, text);
+      return true;
+    },
+    [roomId, ensureConnected]
+  );
+
+  const toggleRoomMessageReaction = useCallback(
+    async (messageId, emoji) => {
+      const connection = ensureConnected();
+      await connection.invoke("ToggleMessageReaction", roomId, messageId, emoji);
+      return true;
+    },
+    [roomId, ensureConnected]
+  );
+
+  const pinRoomMessage = useCallback(
+    async (messageId) => {
+      const connection = ensureConnected();
+      await connection.invoke("PinMessage", roomId, messageId);
+      return true;
+    },
+    [roomId, ensureConnected]
+  );
+
+  const unpinRoomMessage = useCallback(
+    async () => {
+      const connection = ensureConnected();
+      await connection.invoke("UnpinMessage", roomId);
+      return true;
+    },
+    [roomId, ensureConnected]
   );
 
   return {
@@ -676,6 +767,10 @@ export default function useRoomLiveState({
     isQuestionFresh,
     isRoundReveal,
     sendRoomPayload,
+    editRoomMessage,
+    toggleRoomMessageReaction,
+    pinRoomMessage,
+    unpinRoomMessage,
     achievementUnlocks,
     wordScrambleState,
     wordScrambleStatus,

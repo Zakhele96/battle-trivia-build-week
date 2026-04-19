@@ -8,4 +8,10 @@ public sealed class ChatMessage
     public string MessageText { get; set; } = string.Empty;
     public string MessageType { get; set; } = "user";
     public DateTime SentAt { get; set; }
+
+    public Guid? ReplyToMessageId { get; set; }
+    public DateTime? EditedAt { get; set; }
+    public bool IsPinned { get; set; }
+    public DateTime? PinnedAt { get; set; }
+    public Guid? PinnedByUserId { get; set; }
 }

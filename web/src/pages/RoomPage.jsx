@@ -28,6 +28,7 @@ import {
 import { useAuth } from "../hooks/useAuth";
 import useRoomBootstrap from "../hooks/useRoomBootstrap";
 import useRoomLiveState from "../hooks/useRoomLiveState";
+import MentionToastStack from "../components/chat/MentionToastStack";
 
 function getApiErrorMessage(error, fallback) {
   return (
@@ -115,62 +116,44 @@ function RoomUtilityBar({
   const meta = getRoomModeMeta(room, isBattleTrivia, isWordScramble);
 
   return (
-    <div className="mb-3 rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015))] px-3 py-3 shadow-[0_14px_34px_rgba(0,0,0,0.14)] sm:px-4">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <Link
-              to="/"
-              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.035] px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.16em] text-neutral-300 transition hover:border-white/15 hover:bg-white/[0.05]"
-            >
-              <span aria-hidden="true">←</span>
-              Back to lobby
-            </Link>
+    <div className="mb-2.5 rounded-[18px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] px-3 py-2.5 shadow-[0_12px_28px_rgba(0,0,0,0.12)] sm:px-3.5">
+      <div className="flex flex-wrap items-center gap-2">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.035] px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.14em] text-neutral-300 transition hover:border-white/15 hover:bg-white/[0.05]"
+        >
+          <span aria-hidden="true">←</span>
+          Lobby
+        </Link>
 
-            <span
-              className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-medium uppercase tracking-[0.16em] ${meta.badgeClass}`}
-            >
-              {meta.badgeLabel}
-            </span>
+        <span
+          className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] ${meta.badgeClass}`}
+        >
+          {meta.badgeLabel}
+        </span>
 
-            {sessionLabel ? (
-              <span className="inline-flex rounded-full border border-white/10 bg-white/[0.035] px-3 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-neutral-300">
-                {sessionLabel}
-              </span>
-            ) : null}
-          </div>
+        {sessionLabel ? (
+          <span className="inline-flex rounded-full border border-white/10 bg-white/[0.035] px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] text-neutral-300">
+            {sessionLabel}
+          </span>
+        ) : null}
+      </div>
 
-          <div className="mt-3 text-[11px] uppercase tracking-[0.2em] text-blue-300/70">
-            {meta.eyebrow}
-          </div>
-
-          <div className="mt-1 flex flex-wrap items-center gap-2">
-            <h2 className="truncate text-[20px] font-semibold tracking-[-0.03em] text-white sm:text-[22px]">
-              {room?.name || "Room"}
-            </h2>
-
-            {user?.displayName || user?.username ? (
-              <span className="text-sm text-neutral-500">
-                · {user.displayName || user.username}
-              </span>
-            ) : null}
-          </div>
+      <div className="mt-2.5">
+        <div className="text-[10px] uppercase tracking-[0.18em] text-blue-300/70">
+          {meta.eyebrow}
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          <Link
-            to="/profile"
-            className="inline-flex items-center gap-2 rounded-[16px] border border-white/10 bg-white/[0.035] px-4 py-2.5 text-sm font-medium text-white transition hover:border-white/15 hover:bg-white/[0.05]"
-          >
-            Profile
-          </Link>
+        <div className="mt-1 flex flex-wrap items-center gap-2">
+          <h2 className="truncate text-[18px] font-semibold tracking-[-0.03em] text-white sm:text-[20px]">
+            {room?.name || "Room"}
+          </h2>
 
-          <Link
-            to="/leaderboards?mode=combined&period=current"
-            className="inline-flex items-center gap-2 rounded-[16px] border border-white/10 bg-white/[0.035] px-4 py-2.5 text-sm font-medium text-white transition hover:border-white/15 hover:bg-white/[0.05]"
-          >
-            Leaderboards
-          </Link>
+          {user?.displayName || user?.username ? (
+            <span className="text-[12px] text-neutral-500">
+              · {user.displayName || user.username}
+            </span>
+          ) : null}
         </div>
       </div>
     </div>
@@ -292,6 +275,22 @@ function MobileRoomMetaBar({
   );
 }
 
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function messageMentionsUsername(messageText, username) {
+  if (!messageText || !username) return false;
+
+  const regex = new RegExp(
+    `(^|\\s)@${escapeRegExp(username)}(?=$|\\s|[.,!?;:])`,
+    "i"
+  );
+
+  return regex.test(messageText);
+}
+
 export default function RoomPage() {
   const { roomId } = useParams();
   const { user, token } = useAuth();
@@ -302,12 +301,12 @@ export default function RoomPage() {
   const [sessionSummary, setSessionSummary] = useState(null);
   const [isSessionSummaryLoading, setIsSessionSummaryLoading] = useState(false);
   const [moderationState, setModerationState] = useState(null);
-  const [isModerationStateLoading, setIsModerationStateLoading] =
-    useState(false);
+  const [isModerationStateLoading, setIsModerationStateLoading] = useState(false);
   const [moderationActions, setModerationActions] = useState([]);
-  const [isModerationActionsLoading, setIsModerationActionsLoading] =
-    useState(false);
+  const [isModerationActionsLoading, setIsModerationActionsLoading] = useState(false);
   const [viewportState, setViewportState] = useState(getViewportState);
+  const [replyTarget, setReplyTarget] = useState(null);
+  const [mentionToasts, setMentionToasts] = useState([]);
 
   const messagesContainerRef = useRef(null);
   const shouldAutoScrollRef = useRef(true);
@@ -319,14 +318,44 @@ export default function RoomPage() {
     bootstrapError,
     appendMessage,
     removeMessage,
+    updateMessage,
+    updateMessageReactions,
+    setPinnedMessage,
   } = useRoomBootstrap(roomId);
 
   const handleReceiveMessage = useCallback(
-    (message) => {
-      appendMessage(message);
-    },
-    [appendMessage]
-  );
+  (message) => {
+    appendMessage(message);
+
+    const isChatUserMessage =
+      message?.messageType === "user" && !!message?.messageText;
+
+    const isMine = message?.userId && message.userId === user?.id;
+    const isMention =
+      isChatUserMessage &&
+      !isMine &&
+      messageMentionsUsername(message.messageText, user?.username);
+
+    if (isMention) {
+      setMentionToasts((prev) => {
+        const exists = prev.some((item) => item.id === message.id);
+        if (exists) return prev;
+
+        return [
+          ...prev,
+          {
+            id: message.id,
+            userId: message.userId,
+            username: message.username,
+            displayName: message.displayName,
+            messageText: message.messageText,
+          },
+        ];
+      });
+    }
+  },
+  [appendMessage, user?.id, user?.username]
+);
 
   const handleMessageDeleted = useCallback(
     (messageId) => {
@@ -335,37 +364,89 @@ export default function RoomPage() {
     [removeMessage]
   );
 
-  const {
-    status,
-    connectionError,
-    currentQuestion,
-    currentRoundId,
-    currentRoundNumber,
-    timeLeft,
-    correctAnswer,
-    roundWinners,
-    weeklyWinners,
-    leaderboard,
-    answerFeedback,
-    sessionStatus,
-    playerRank,
-    lastRoundPlacement,
-    liveStreak,
-    attemptsInfo,
-    isQuestionFresh,
-    isRoundReveal,
-    achievementUnlocks,
-    wordScrambleState,
-    wordScrambleStatus,
-    wordScrambleGuessFeedback,
-    sendRoomPayload,
-  } = useRoomLiveState({
-    roomId,
-    token,
-    room,
-    onReceiveMessage: handleReceiveMessage,
-    onMessageDeleted: handleMessageDeleted,
+  const handleMessageUpdated = useCallback(
+    (payload) => {
+      updateMessage(payload);
+    },
+    [updateMessage]
+  );
+
+  const handleMessageReactionUpdated = useCallback(
+    (payload) => {
+      updateMessageReactions(payload);
+    },
+    [updateMessageReactions]
+  );
+
+  const handleMessagePinned = useCallback(
+    (payload) => {
+      setPinnedMessage(payload?.message || payload || null);
+    },
+    [setPinnedMessage]
+  );
+
+  const handleMessageUnpinned = useCallback(() => {
+    setPinnedMessage(null);
+  }, [setPinnedMessage]);
+
+  const dismissMentionToast = useCallback((messageId) => {
+  setMentionToasts((prev) => prev.filter((item) => item.id !== messageId));
+}, []);
+
+const handleJumpToMentionMessage = useCallback((messageId) => {
+  dismissMentionToast(messageId);
+
+  requestAnimationFrame(() => {
+    const node = document.getElementById(`message-${messageId}`);
+    if (!node) return;
+
+    node.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
   });
+}, [dismissMentionToast]);
+
+
+  const {
+  status,
+  connectionError,
+  currentQuestion,
+  currentRoundId,
+  currentRoundNumber,
+  timeLeft,
+  correctAnswer,
+  roundWinners,
+  weeklyWinners,
+  leaderboard,
+  answerFeedback,
+  sessionStatus,
+  playerRank,
+  lastRoundPlacement,
+  liveStreak,
+  attemptsInfo,
+  isQuestionFresh,
+  isRoundReveal,
+  achievementUnlocks,
+  wordScrambleState,
+  wordScrambleStatus,
+  wordScrambleGuessFeedback,
+  sendRoomPayload,
+  editRoomMessage,
+  toggleRoomMessageReaction,
+  pinRoomMessage,
+  unpinRoomMessage,
+} = useRoomLiveState({
+  roomId,
+  token,
+  room,
+  onReceiveMessage: handleReceiveMessage,
+  onMessageDeleted: handleMessageDeleted,
+  onMessageUpdated: handleMessageUpdated,
+  onMessageReactionUpdated: handleMessageReactionUpdated,
+  onMessagePinned: handleMessagePinned,
+  onMessageUnpinned: handleMessageUnpinned,
+});
 
   const isBattleTrivia = useMemo(() => {
     if (!room) return false;
@@ -402,6 +483,29 @@ export default function RoomPage() {
       score: myEntry.score,
     };
   }, [wordScrambleState?.leaderboard, user?.id]);
+
+  const mentionUsers = useMemo(() => {
+    const map = new Map();
+
+    for (const message of messages) {
+      if (message?.messageType !== "user") continue;
+      if (!message?.userId || !message?.username) continue;
+
+      if (!map.has(message.userId)) {
+        map.set(message.userId, {
+          id: message.userId,
+          username: message.username,
+          displayName: message.displayName || message.username,
+        });
+      }
+    }
+
+    return Array.from(map.values()).sort((a, b) =>
+      String(a.displayName || a.username).localeCompare(
+        String(b.displayName || b.username)
+      )
+    );
+  }, [messages]);
 
   const effectiveSessionStatus = isWordScramble
     ? wordScrambleStatus
@@ -597,6 +701,16 @@ export default function RoomPage() {
   }, [loadModerationActions]);
 
   useEffect(() => {
+    setMentionToasts([]);
+  }, [roomId]);
+
+  useEffect(() => {
+  setMentionToasts((prev) =>
+    prev.filter((item) => messages.some((message) => message.id === item.id))
+  );
+}, [messages]);
+
+  useEffect(() => {
     if (!isBattleTrivia || !user?.id) {
       setSessionSummary(null);
       setIsSessionSummaryLoading(false);
@@ -664,7 +778,20 @@ export default function RoomPage() {
     });
   }, [roomId, isLoadingRoom]);
 
-  const handleSend = async (text) => {
+  useEffect(() => {
+  setReplyTarget(null);
+  }, [roomId]);
+
+  useEffect(() => {
+    if (!replyTarget) return;
+
+    const stillExists = messages.some((message) => message.id === replyTarget.id);
+    if (!stillExists) {
+      setReplyTarget(null);
+    }
+  }, [messages, replyTarget]);
+
+  const handleSend = async (text, options = {}) => {
     setLocalError("");
 
     const mode = isBattleTrivia
@@ -674,7 +801,7 @@ export default function RoomPage() {
       : "chat";
 
     try {
-      await sendRoomPayload(text, mode);
+      await sendRoomPayload(text, mode, options);
       return true;
     } catch (error) {
       const rawMessage =
@@ -749,36 +876,104 @@ export default function RoomPage() {
     }
   };
 
-  const sidebar = (
-    <div className="hidden w-[19.5rem] shrink-0 border-r border-white/5 bg-neutral-900/95 xl:block">
-      <DesktopTriviaSidebar
-        room={room}
-        status={status}
-        sessionStatus={effectiveSessionStatus}
-        sessionLabel={effectiveSessionLabel}
-        isBattleTrivia={showGameSidebar}
-        leaderboard={effectiveLeaderboard}
-        playerRank={effectivePlayerRank}
-        currentUserId={user?.id}
-      />
+  const handleReplyMessage = useCallback((message) => {
+    setReplyTarget(message);
+  }, []);
 
-      {isBattleTrivia ? (
-        <div className="space-y-3 px-3 pb-3">
-          <BattleTriviaProfileCard
-            stats={profileStats}
-            liveStreak={liveStreak}
-            playerRank={playerRank}
-            loading={isProfileStatsLoading}
+  const handleCancelReply = useCallback(() => {
+    setReplyTarget(null);
+  }, []);
+
+  const handleEditMessage = async (messageId, text) => {
+    setLocalError("");
+
+    try {
+      await editRoomMessage(messageId, text);
+      return true;
+    } catch (error) {
+      const message = getApiErrorMessage(error, "Failed to edit message.");
+      setLocalError(message);
+      return false;
+    }
+  };
+
+  const handleToggleReaction = async (messageId, emoji) => {
+    setLocalError("");
+
+    try {
+      await toggleRoomMessageReaction(messageId, emoji);
+      return true;
+    } catch (error) {
+      const message = getApiErrorMessage(error, "Failed to react to message.");
+      setLocalError(message);
+      return false;
+    }
+  };
+
+  const handlePinMessage = async (messageId) => {
+    setLocalError("");
+
+    try {
+      await pinRoomMessage(messageId);
+      return true;
+    } catch (error) {
+      const message = getApiErrorMessage(error, "Failed to pin message.");
+      setLocalError(message);
+      return false;
+    }
+  };
+
+  const handleUnpinMessage = async () => {
+    setLocalError("");
+
+    try {
+      await unpinRoomMessage();
+      return true;
+    } catch (error) {
+      const message = getApiErrorMessage(error, "Failed to unpin message.");
+      setLocalError(message);
+      return false;
+    }
+  };
+
+
+
+const sidebar = (
+  <aside className="hidden xl:flex xl:w-[17.25rem] xl:shrink-0 xl:flex-col xl:border-r xl:border-white/5 xl:bg-neutral-900/95">
+    <div className="min-h-0 flex-1 overflow-y-auto px-2.5 py-2.5">
+      <div className="space-y-2.5">
+        <div className="overflow-hidden rounded-[18px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01))]">
+          <DesktopTriviaSidebar
+            room={room}
+            status={status}
+            sessionStatus={effectiveSessionStatus}
+            sessionLabel={effectiveSessionLabel}
+            isBattleTrivia={showGameSidebar}
+            leaderboard={effectiveLeaderboard}
+            playerRank={effectivePlayerRank}
+            currentUserId={user?.id}
             compact
           />
-
-          <BattleTriviaSessionSummaryCard
-            summary={sessionSummary}
-            loading={isSessionSummaryLoading}
-          />
         </div>
-      ) : canModerateChat ? (
-        <div className="space-y-3 px-3 pb-3">
+
+        {isBattleTrivia ? (
+          <>
+            <BattleTriviaProfileCard
+              stats={profileStats}
+              liveStreak={liveStreak}
+              playerRank={playerRank}
+              loading={isProfileStatsLoading}
+              compact
+            />
+
+            <div className="overflow-hidden rounded-[18px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01))]">
+              <BattleTriviaSessionSummaryCard
+                summary={sessionSummary}
+                loading={isSessionSummaryLoading}
+              />
+            </div>
+          </>
+        ) : canModerateChat ? (
           <RoomModerationControlCard
             roomName={room?.name}
             slowModeSeconds={moderationState?.slowModeSeconds ?? 0}
@@ -786,10 +981,11 @@ export default function RoomPage() {
             moderationActions={moderationActions}
             isLoadingActions={isModerationActionsLoading}
           />
-        </div>
-      ) : null}
+        ) : null}
+      </div>
     </div>
-  );
+  </aside>
+);
 
   const roomStateBanner =
     status === "reconnecting" ? (
@@ -806,9 +1002,9 @@ export default function RoomPage() {
     <div className="shrink-0 border-b border-white/5 bg-neutral-950/95 backdrop-blur-xl [padding-top:env(safe-area-inset-top)]">
       <div
         className={`mx-auto w-full max-w-[68rem] ${
-          shouldCompactMobileChrome
-            ? "px-2 pt-2 pb-1.5"
-            : "px-2.5 pt-8 pb-2 sm:px-4 sm:py-3 lg:px-5"
+shouldCompactMobileChrome
+  ? "px-2 pt-2 pb-1.5"
+  : "px-2.5 pt-6 pb-2 sm:px-4 sm:py-3 lg:px-5"
         }`}
       >
         <div className="hidden sm:block">
@@ -870,6 +1066,7 @@ export default function RoomPage() {
     <ChatStream
       messages={messages}
       currentUserId={user?.id}
+      currentUsername={user?.username}
       error={displayError}
       isLoading={isLoadingRoom}
       containerRef={messagesContainerRef}
@@ -877,6 +1074,11 @@ export default function RoomPage() {
       isAdmin={canModerateChat}
       onDeleteMessage={handleDeleteMessage}
       onMuteUser={handleMuteUser}
+      onReplyMessage={!showGameSidebar ? handleReplyMessage : undefined}
+      onEditMessage={!showGameSidebar ? handleEditMessage : undefined}
+      onToggleReaction={!showGameSidebar ? handleToggleReaction : undefined}
+      onPinMessage={!showGameSidebar && canModerateChat ? handlePinMessage : undefined}
+      onUnpinMessage={!showGameSidebar && canModerateChat ? handleUnpinMessage : undefined}
     />
   );
 
@@ -905,8 +1107,11 @@ export default function RoomPage() {
         ) : null
       }
       composer={
-        <ChatInput
+       <ChatInput
           onSend={handleSend}
+          replyTarget={!showGameSidebar ? replyTarget : null}
+          onCancelReply={!showGameSidebar ? handleCancelReply : undefined}
+          mentionUsers={!showGameSidebar ? mentionUsers : []}
           placeholder={
             isBattleTrivia
               ? currentRoundId
@@ -921,6 +1126,8 @@ export default function RoomPage() {
               ? "You are muted in this room"
               : isModerationStateLoading
               ? "Checking room status..."
+              : replyTarget
+              ? "Write your reply..."
               : "Type a message..."
           }
           buttonLabel={
@@ -933,6 +1140,8 @@ export default function RoomPage() {
                 wordScrambleState?.phase === "active"
                 ? "Guess"
                 : "Waiting..."
+              : replyTarget
+              ? "Reply"
               : "Send"
           }
           busyLabel={
@@ -940,6 +1149,8 @@ export default function RoomPage() {
               ? "Answering..."
               : isWordScramble
               ? "Guessing..."
+              : replyTarget
+              ? "Replying..."
               : "Sending..."
           }
           disabled={
@@ -975,6 +1186,10 @@ export default function RoomPage() {
         topContent={topContent}
         stream={stream}
         footer={footer}
+      />
+      <MentionToastStack
+        items={mentionToasts}
+        onDismiss={handleJumpToMentionMessage}
       />
 
       <AchievementToastStack achievements={achievementUnlocks} />

@@ -55,9 +55,16 @@ public sealed class RoomsController : ControllerBase
     {
         take = Math.Clamp(take, 1, 100);
 
+        var userIdValue =
+            User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+            User.FindFirstValue("sub");
+
+        if (!Guid.TryParse(userIdValue, out var userId))
+            return Unauthorized();
+
         try
         {
-            var messages = await _chatService.GetRecentMessagesAsync(roomId, take);
+            var messages = await _chatService.GetRecentMessagesAsync(roomId, userId, take);
             return Ok(messages);
         }
         catch (KeyNotFoundException ex)

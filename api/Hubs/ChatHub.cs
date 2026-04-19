@@ -1,5 +1,4 @@
 ﻿using System.Security.Claims;
-using Bts.Api.Models.Requests;
 using Bts.Api.Repositories;
 using Bts.Api.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -18,6 +17,7 @@ public sealed class ChatHub : Hub
     private readonly WordScrambleAnswerService _wordScrambleAnswerService;
     private readonly WordScrambleStateService _wordScrambleStateService;
     private readonly WordScrambleSessionStatusService _wordScrambleSessionStatusService;
+    private readonly IUserRepository _userRepository;
 
     public ChatHub(
         ChatService chatService,
@@ -27,7 +27,8 @@ public sealed class ChatHub : Hub
         BattleTriviaSessionStatusService battleTriviaSessionStatusService,
         WordScrambleAnswerService wordScrambleAnswerService,
         WordScrambleStateService wordScrambleStateService,
-        WordScrambleSessionStatusService wordScrambleSessionStatusService)
+        WordScrambleSessionStatusService wordScrambleSessionStatusService,
+        IUserRepository userRepository)
     {
         _chatService = chatService;
         _triviaAnswerService = triviaAnswerService;
@@ -37,6 +38,24 @@ public sealed class ChatHub : Hub
         _wordScrambleAnswerService = wordScrambleAnswerService;
         _wordScrambleStateService = wordScrambleStateService;
         _wordScrambleSessionStatusService = wordScrambleSessionStatusService;
+        _userRepository = userRepository;
+    }
+
+    private Guid GetCurrentUserId()
+    {
+        if (!Guid.TryParse(Context.UserIdentifier, out var userId))
+            throw new HubException("Unauthorized.");
+
+        return userId;
+    }
+
+    private async Task EnsureAdminUserAsync()
+    {
+        var userId = GetCurrentUserId();
+        var user = await _userRepository.GetByIdAsync(userId);
+
+        if (user is null || !user.IsAdmin)
+            throw new HubException("Moderator access required.");
     }
 
     public async Task JoinRoom(Guid roomId)
@@ -56,7 +75,7 @@ public sealed class ChatHub : Hub
         if (activeRound is not null &&
             string.Equals(activeRound.Status, "active", StringComparison.OrdinalIgnoreCase))
         {
-           await Clients.Caller.SendAsync("QuestionStarted", new
+            await Clients.Caller.SendAsync("QuestionStarted", new
             {
                 roundId = activeRound.RoundId,
                 questionText = activeRound.QuestionText,
@@ -100,19 +119,115 @@ public sealed class ChatHub : Hub
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId.ToString());
     }
 
-    public async Task SendMessage(Guid roomId, string messageText)
+    public async Task SendMessage(Guid roomId, string messageText, Guid? replyToMessageId = null)
     {
-        if (!Guid.TryParse(Context.UserIdentifier, out var userId))
-            throw new HubException("Unauthorized.");
+        var userId = GetCurrentUserId();
 
         try
         {
-            var message = await _chatService.CreateUserMessageAsync(roomId, userId, messageText);
+            var message = await _chatService.CreateUserMessageAsync(
+                roomId,
+                userId,
+                messageText,
+                replyToMessageId);
 
             await Clients.Group(roomId.ToString())
                 .SendAsync("ReceiveMessage", message);
         }
         catch (InvalidOperationException ex)
+        {
+            throw new HubException(ex.Message);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            throw new HubException(ex.Message);
+        }
+    }
+
+    public async Task EditMessage(Guid roomId, Guid messageId, string messageText)
+    {
+        var userId = GetCurrentUserId();
+
+        try
+        {
+            var updated = await _chatService.EditMessageAsync(
+                roomId,
+                userId,
+                messageId,
+                messageText);
+
+            await Clients.Group(roomId.ToString())
+                .SendAsync("MessageUpdated", updated);
+        }
+        catch (InvalidOperationException ex)
+        {
+            throw new HubException(ex.Message);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            throw new HubException(ex.Message);
+        }
+    }
+
+    public async Task ToggleMessageReaction(Guid roomId, Guid messageId, string emoji)
+    {
+        var userId = GetCurrentUserId();
+
+        try
+        {
+            var payload = await _chatService.ToggleReactionAsync(roomId, userId, messageId, emoji);
+
+            await Clients.Group(roomId.ToString())
+                .SendAsync("MessageReactionUpdated", payload);
+        }
+        catch (InvalidOperationException ex)
+        {
+            throw new HubException(ex.Message);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            throw new HubException(ex.Message);
+        }
+    }
+
+    public async Task PinMessage(Guid roomId, Guid messageId)
+    {
+        var userId = GetCurrentUserId();
+        await EnsureAdminUserAsync();
+
+        try
+        {
+            var pinned = await _chatService.PinMessageAsync(roomId, userId, messageId);
+
+            await Clients.Group(roomId.ToString())
+                .SendAsync("MessagePinned", pinned);
+        }
+        catch (InvalidOperationException ex)
+        {
+            throw new HubException(ex.Message);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            throw new HubException(ex.Message);
+        }
+    }
+
+    public async Task UnpinMessage(Guid roomId)
+    {
+        await EnsureAdminUserAsync();
+
+        try
+        {
+            await _chatService.UnpinMessageAsync(roomId);
+
+            await Clients.Group(roomId.ToString())
+                .SendAsync("MessageUnpinned", new { roomId });
+        }
+        catch (InvalidOperationException ex)
+        {
+            throw new HubException(ex.Message);
+        }
+        catch (KeyNotFoundException ex)
         {
             throw new HubException(ex.Message);
         }
@@ -359,6 +474,4 @@ public sealed class ChatHub : Hub
             correctRank = result.CorrectRank
         };
     }
-
-
 }

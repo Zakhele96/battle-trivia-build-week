@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
+const REACTION_OPTIONS = ["👍", "🔥", "😂", "👏", "😮"];
+
 function formatTime(value) {
   if (!value) return "";
 
@@ -102,38 +104,188 @@ function getSystemLabel(text) {
   return "Update";
 }
 
+function ReplyPreview({
+  message,
+  isMine,
+  onJumpToMessage,
+}) {
+  if (!message?.replyToMessageId) return null;
+
+  const previewAuthor =
+    message.replyToDisplayName ||
+    message.replyToUsername ||
+    "Message";
+
+  const previewText =
+    message.replyToPreviewText || "Tap to view replied message.";
+
+  return (
+    <button
+      type="button"
+      onClick={() => onJumpToMessage?.(message.replyToMessageId)}
+      className={`mb-2 rounded-[14px] border px-3 py-2 text-left transition ${
+        isMine
+          ? "border-white/14 bg-white/10 hover:bg-white/14"
+          : "border-white/8 bg-white/[0.04] hover:bg-white/[0.06]"
+      }`}
+    >
+      <div className="text-[10px] font-medium uppercase tracking-[0.14em] text-white/70">
+        Replying to {previewAuthor}
+      </div>
+      <div className="mt-1 truncate text-[12px] text-white/80">
+        {previewText}
+      </div>
+    </button>
+  );
+}
+
+function ReactionBar({
+  reactions,
+  onToggleReaction,
+  onOpenPicker,
+  busyAction,
+}) {
+  const safeReactions = Array.isArray(reactions) ? reactions : [];
+  const hasReactions = safeReactions.length > 0;
+
+  if (!hasReactions && !onToggleReaction) return null;
+
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+      {safeReactions.map((reaction) => (
+        <button
+          key={`${reaction.emoji}-${reaction.count}`}
+          type="button"
+          disabled={!!busyAction}
+          onClick={() => onToggleReaction?.(reaction.emoji)}
+          className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] transition ${
+            reaction.reactedByMe
+              ? "border-blue-400/20 bg-blue-500/12 text-blue-100"
+              : "border-white/10 bg-white/[0.04] text-neutral-300 hover:bg-white/[0.06]"
+          } disabled:opacity-50`}
+        >
+          <span>{reaction.emoji}</span>
+          <span>{reaction.count}</span>
+        </button>
+      ))}
+
+      {onOpenPicker ? (
+        <button
+          type="button"
+          disabled={!!busyAction}
+          onClick={onOpenPicker}
+          className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] px-2 py-1 text-[11px] text-neutral-400 transition hover:bg-white/[0.06] disabled:opacity-50"
+        >
+          <span>+</span>
+          <span>React</span>
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+function renderMessageText(text, currentUsername) {
+  const value = text || "";
+  const parts = [];
+  const regex = /(^|\s)(@[a-zA-Z0-9._-]+)/g;
+  let lastIndex = 0;
+  let keyIndex = 0;
+  let match;
+
+  while ((match = regex.exec(value)) !== null) {
+    const leadingWhitespace = match[1] || "";
+    const mention = match[2] || "";
+    const matchStart = match.index;
+    const mentionStart = matchStart + leadingWhitespace.length;
+
+    if (matchStart > lastIndex) {
+      parts.push(value.slice(lastIndex, matchStart));
+    }
+
+    if (leadingWhitespace) {
+      parts.push(leadingWhitespace);
+    }
+
+    const normalizedMention = mention.slice(1).toLowerCase();
+    const isCurrentUserMention =
+      !!currentUsername &&
+      normalizedMention === String(currentUsername).toLowerCase();
+
+    parts.push(
+      <span
+        key={`mention-${keyIndex++}`}
+        className={`rounded-full px-1.5 py-0.5 font-medium ${
+          isCurrentUserMention
+            ? "bg-amber-300/16 text-amber-100"
+            : "bg-white/10 text-blue-100"
+        }`}
+      >
+        {mention}
+      </span>
+    );
+
+    lastIndex = mentionStart + mention.length;
+  }
+
+  if (lastIndex < value.length) {
+    parts.push(value.slice(lastIndex));
+  }
+
+  return parts;
+}
+
 export default function ChatMessage({
   message,
   currentUserId,
+  currentUsername,
   previousMessage,
   nextMessage,
   isAdmin = false,
   onDeleteMessage,
   onMuteUser,
+  onReplyMessage,
+  onEditMessage,
+  onToggleReaction,
+  onPinMessage,
+  onUnpinMessage,
+  onJumpToMessage,
+  messageNodeRef,
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [busyAction, setBusyAction] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [editText, setEditText] = useState(message.messageText || "");
   const menuRef = useRef(null);
 
   const isSystem = message.messageType === "system";
   const isMine = message.userId === currentUserId;
   const isMessageFromModerator = message.isAdmin === true;
+  const isPinned = message.isPinned === true;
 
   const groupedWithPrevious = isSameSender(message, previousMessage);
   const groupedWithNext = isSameSender(message, nextMessage);
 
   useEffect(() => {
-    if (!menuOpen) return;
+    setEditText(message.messageText || "");
+  }, [message.messageText]);
+
+  useEffect(() => {
+    if (!menuOpen && !pickerOpen) return;
 
     function handleClickOutside(event) {
       if (!menuRef.current?.contains(event.target)) {
         setMenuOpen(false);
+        setPickerOpen(false);
       }
     }
 
     function handleEscape(event) {
       if (event.key === "Escape") {
         setMenuOpen(false);
+        setPickerOpen(false);
+        setIsEditing(false);
+        setEditText(message.messageText || "");
       }
     }
 
@@ -144,7 +296,7 @@ export default function ChatMessage({
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleEscape);
     };
-  }, [menuOpen]);
+  }, [menuOpen, pickerOpen, message.messageText]);
 
   if (isSystem) {
     const tone = getSystemTone(message.messageText);
@@ -179,6 +331,10 @@ export default function ChatMessage({
 
   const canModerateMessage =
     isAdmin && message.messageType === "user" && !!message.userId && !isMine;
+
+  const canEditMessage = isMine && typeof onEditMessage === "function";
+  const canPinMessage = isAdmin && typeof onPinMessage === "function";
+  const canUnpinMessage = isAdmin && typeof onUnpinMessage === "function";
 
   const bubbleBase =
     "inline-flex min-w-[9rem] max-w-[88%] sm:max-w-[80%] lg:max-w-[44rem] flex-col px-3.5 py-2.5 shadow-[0_8px_20px_rgba(0,0,0,0.14)] transition-all duration-200";
@@ -231,29 +387,135 @@ export default function ChatMessage({
     }
   }
 
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(message.messageText || "");
+      setMenuOpen(false);
+    } catch {
+      setMenuOpen(false);
+    }
+  }
+
+  async function handleSaveEdit() {
+    const trimmed = editText.trim();
+    if (!trimmed || !message.id || !onEditMessage || busyAction) return;
+
+    try {
+      setBusyAction("edit");
+      await onEditMessage(message.id, trimmed);
+      setIsEditing(false);
+      setMenuOpen(false);
+    } finally {
+      setBusyAction("");
+    }
+  }
+
+  async function handleToggleReaction(emoji) {
+    if (!message.id || !onToggleReaction || busyAction) return;
+
+    try {
+      setBusyAction(`react-${emoji}`);
+      await onToggleReaction(message.id, emoji);
+      setPickerOpen(false);
+    } finally {
+      setBusyAction("");
+    }
+  }
+
+  async function handlePinToggle() {
+    if (!message.id || busyAction) return;
+
+    try {
+      setBusyAction(isPinned ? "unpin" : "pin");
+      if (isPinned) {
+        await onUnpinMessage?.(message.id);
+      } else {
+        await onPinMessage?.(message.id);
+      }
+      setMenuOpen(false);
+    } finally {
+      setBusyAction("");
+    }
+  }
+
+  const editedLabel =
+    message.isEdited || message.editedAt ? " · edited" : "";
+
   return (
     <div
+      ref={messageNodeRef}
+      id={`message-${message.id}`}
       className={`${groupedWithPrevious ? "mt-1" : "mt-3.5 sm:mt-4"} flex ${
         isMine ? "justify-end" : "justify-start"
       }`}
     >
-      <div className="relative max-w-full" ref={menuRef}>
-        {canModerateMessage ? (
-          <div
-            className={`absolute -top-2 z-10 ${
-              isMine ? "-left-2" : "-right-2"
-            }`}
-          >
+      <div className="group relative max-w-full" ref={menuRef}>
+        <button
+          type="button"
+          onClick={() => {
+            setMenuOpen((prev) => !prev);
+            setPickerOpen(false);
+          }}
+          className={`absolute -top-2 z-10 rounded-full border border-white/10 bg-black/55 px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-neutral-400 opacity-0 backdrop-blur-sm transition hover:bg-black/75 hover:text-neutral-200 group-hover:opacity-100 focus:opacity-100 ${
+            isMine ? "-left-2" : "-right-2"
+          }`}
+        >
+          •••
+        </button>
+
+        {menuOpen ? (
+          <div className="absolute right-0 top-3 z-20 mt-2 w-44 rounded-2xl border border-white/10 bg-neutral-900 p-1.5 shadow-xl shadow-black/30">
             <button
               type="button"
-              onClick={() => setMenuOpen((prev) => !prev)}
-              className="rounded-full border border-white/10 bg-black/55 px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-neutral-400 backdrop-blur-sm transition hover:bg-black/75 hover:text-neutral-200"
+              onClick={() => {
+                onReplyMessage?.(message);
+                setMenuOpen(false);
+              }}
+              className="flex w-full items-center rounded-xl px-3 py-2 text-left text-xs text-white transition hover:bg-white/[0.06]"
             >
-              •••
+              Reply
             </button>
 
-            {menuOpen ? (
-              <div className="absolute right-0 mt-2 w-40 rounded-2xl border border-white/10 bg-neutral-900 p-1.5 shadow-xl shadow-black/30">
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="flex w-full items-center rounded-xl px-3 py-2 text-left text-xs text-white transition hover:bg-white/[0.06]"
+            >
+              Copy text
+            </button>
+
+            {canEditMessage ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEditing(true);
+                  setMenuOpen(false);
+                }}
+                className="flex w-full items-center rounded-xl px-3 py-2 text-left text-xs text-white transition hover:bg-white/[0.06]"
+              >
+                Edit message
+              </button>
+            ) : null}
+
+            {canPinMessage || (isPinned && canUnpinMessage) ? (
+              <button
+                type="button"
+                onClick={handlePinToggle}
+                disabled={!!busyAction}
+                className="flex w-full items-center rounded-xl px-3 py-2 text-left text-xs text-white transition hover:bg-white/[0.06] disabled:opacity-50"
+              >
+                {busyAction === "pin"
+                  ? "Pinning..."
+                  : busyAction === "unpin"
+                  ? "Unpinning..."
+                  : isPinned
+                  ? "Unpin message"
+                  : "Pin message"}
+              </button>
+            ) : null}
+
+            {canModerateMessage ? (
+              <>
                 <button
                   type="button"
                   onClick={handleDelete}
@@ -280,8 +542,24 @@ export default function ChatMessage({
                 >
                   {busyAction === "mute-60" ? "Muting..." : "Mute 1 hour"}
                 </button>
-              </div>
+              </>
             ) : null}
+          </div>
+        ) : null}
+
+        {pickerOpen ? (
+          <div className="absolute bottom-[-2.5rem] left-0 z-20 flex gap-1 rounded-full border border-white/10 bg-neutral-900 px-2 py-1.5 shadow-xl shadow-black/30">
+            {REACTION_OPTIONS.map((emoji) => (
+              <button
+                key={emoji}
+                type="button"
+                disabled={!!busyAction}
+                onClick={() => handleToggleReaction(emoji)}
+                className="rounded-full px-2 py-1 text-sm transition hover:bg-white/[0.06] disabled:opacity-50"
+              >
+                {emoji}
+              </button>
+            ))}
           </div>
         ) : null}
 
@@ -309,12 +587,57 @@ export default function ChatMessage({
                   Mod
                 </span>
               ) : null}
+
+              {isPinned ? (
+                <span className="rounded-full border border-amber-300/20 bg-amber-300/12 px-2 py-[2px] text-[9px] font-semibold uppercase tracking-[0.14em] text-amber-100">
+                  Pinned
+                </span>
+              ) : null}
             </div>
           ) : null}
 
-          <div className="break-words whitespace-pre-wrap text-[14px] leading-[1.5]">
-            {message.messageText}
-          </div>
+          <ReplyPreview
+            message={message}
+            isMine={isMine}
+            onJumpToMessage={onJumpToMessage}
+          />
+
+          {isEditing ? (
+            <div className="space-y-2">
+              <textarea
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+                rows={3}
+                className="w-full resize-none rounded-[14px] border border-white/12 bg-black/20 px-3 py-2 text-[14px] leading-[1.5] text-white outline-none"
+              />
+
+              <div className="flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditing(false);
+                    setEditText(message.messageText || "");
+                  }}
+                  className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[11px] font-medium text-white transition hover:bg-white/[0.06]"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleSaveEdit}
+                  disabled={!editText.trim() || busyAction === "edit"}
+                  className="rounded-full border border-blue-400/20 bg-blue-500/10 px-3 py-1.5 text-[11px] font-medium text-blue-100 transition hover:bg-blue-500/15 disabled:opacity-50"
+                >
+                  {busyAction === "edit" ? "Saving..." : "Save"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="break-words whitespace-pre-wrap text-[14px] leading-[1.5]">
+              {renderMessageText(message.messageText, currentUsername)}
+            </div>
+          )}
 
           {!groupedWithNext ? (
             <div
@@ -329,9 +652,26 @@ export default function ChatMessage({
               }`}
             >
               {formatTime(message.sentAt)}
+              {editedLabel}
             </div>
           ) : null}
         </div>
+
+        {!isEditing ? (
+          <ReactionBar
+            reactions={message.reactions}
+            busyAction={busyAction}
+            onOpenPicker={() => {
+              setPickerOpen((prev) => !prev);
+              setMenuOpen(false);
+            }}
+            onToggleReaction={
+              typeof onToggleReaction === "function"
+                ? (emoji) => handleToggleReaction(emoji)
+                : null
+            }
+          />
+        ) : null}
       </div>
     </div>
   );

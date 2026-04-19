@@ -1,5 +1,80 @@
 import { Link } from "react-router-dom";
 
+function getAccentStyles(accent) {
+  if (accent === "violet") {
+    return {
+      badge: "border-violet-400/18 bg-violet-500/10 text-violet-200",
+      glow: "from-violet-500/10",
+      score: "text-violet-200",
+      iconBg: "bg-violet-500/12",
+    };
+  }
+
+  return {
+    badge: "border-blue-400/18 bg-blue-500/10 text-blue-200",
+    glow: "from-blue-500/10",
+    score: "text-blue-200",
+    iconBg: "bg-blue-500/12",
+  };
+}
+
+function Crown({ rank }) {
+  if (rank === 1) return <span aria-hidden="true">👑</span>;
+  if (rank === 2) return <span aria-hidden="true">🥈</span>;
+  if (rank === 3) return <span aria-hidden="true">🥉</span>;
+  return null;
+}
+
+function EmptyState() {
+  return (
+    <div className="rounded-[14px] border border-white/8 bg-black/20 px-3 py-4 text-center text-[12px] text-neutral-500">
+      No rankings yet.
+    </div>
+  );
+}
+
+function Row({ row, accent }) {
+  const accentStyles = getAccentStyles(accent);
+  const isTop = row.rank <= 3;
+
+  return (
+    <div
+      className={`flex items-center justify-between gap-3 rounded-[14px] border px-3 py-2.5 ${
+        isTop
+          ? "border-white/10 bg-white/[0.035]"
+          : "border-white/6 bg-black/20"
+      }`}
+    >
+      <div className="min-w-0 flex items-center gap-2.5">
+        <div
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
+            isTop ? accentStyles.iconBg : "bg-white/[0.05]"
+          }`}
+        >
+          {row.rank}
+        </div>
+
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5">
+            <div className="truncate text-[13px] font-semibold text-white">
+              {row.displayName || row.username}
+            </div>
+            {isTop ? <Crown rank={row.rank} /> : null}
+          </div>
+
+          <div className="truncate text-[10px] text-neutral-500">
+            @{row.username}
+          </div>
+        </div>
+      </div>
+
+      <div className={`shrink-0 text-[13px] font-semibold ${accentStyles.score}`}>
+        {row.score}
+      </div>
+    </div>
+  );
+}
+
 export default function LeaderboardPreviewCard({
   title,
   subtitle,
@@ -7,66 +82,45 @@ export default function LeaderboardPreviewCard({
   to,
   accent = "blue",
 }) {
-  const accentClass =
-    accent === "violet"
-      ? "text-violet-300 border-violet-400/20 bg-violet-500/10"
-      : accent === "amber"
-      ? "text-amber-300 border-amber-400/20 bg-amber-500/10"
-      : "text-blue-300 border-blue-400/20 bg-blue-500/10";
+  const accentStyles = getAccentStyles(accent);
 
   return (
     <Link
       to={to}
-      className="block rounded-[20px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.015))] p-3 transition hover:border-white/15 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] sm:rounded-[24px] sm:p-4"
+      className={`group rounded-[20px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-3.5 transition hover:border-white/15 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.018))] sm:rounded-[22px] sm:p-4`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500 sm:text-[11px]">
-            {title}
+          <div className="flex items-center gap-2">
+            <div
+              className={`rounded-full border px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] ${accentStyles.badge}`}
+            >
+              {title}
+            </div>
           </div>
-          <div className="mt-1 text-[13px] text-neutral-300 sm:text-sm">
+
+          <div className="mt-2 text-[12px] leading-5 text-neutral-400">
             {subtitle}
           </div>
         </div>
 
-        <div
-          className={`rounded-full border px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] sm:px-3 sm:text-[10px] ${accentClass}`}
-        >
-          Top 3
+        <div className="shrink-0 text-[10px] font-medium uppercase tracking-[0.14em] text-neutral-500 transition group-hover:text-neutral-300">
+          Open →
         </div>
       </div>
 
-      <div className="mt-3 space-y-2 sm:mt-4">
+      <div className="mt-3 space-y-2.5">
         {rows.length === 0 ? (
-          <div className="rounded-[14px] border border-white/8 bg-black/20 px-3 py-3 text-[13px] text-neutral-500 sm:rounded-[16px] sm:text-sm">
-            No standings yet.
-          </div>
+          <EmptyState />
         ) : (
           rows.slice(0, 3).map((row) => (
-            <div
-              key={row.userId}
-              className="flex items-center justify-between rounded-[14px] border border-white/8 bg-black/20 px-3 py-2 sm:rounded-[16px] sm:py-2.5"
-            >
-              <div className="min-w-0">
-                <div className="text-[13px] font-medium text-white sm:text-sm">
-                  #{row.rank} {row.displayName || row.username}
-                </div>
-                <div className="truncate text-[10px] text-neutral-500 sm:text-[11px]">
-                  @{row.username}
-                </div>
-              </div>
-
-              <div className="ml-3 text-[13px] font-semibold text-blue-300 sm:text-sm">
-                {row.score}
-              </div>
-            </div>
+            <Row
+              key={row.userId || `${row.username}-${row.rank}`}
+              row={row}
+              accent={accent}
+            />
           ))
         )}
-      </div>
-
-      <div className="mt-3 inline-flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.16em] text-neutral-400 sm:mt-4 sm:text-[11px]">
-        View full standings
-        <span aria-hidden="true">→</span>
       </div>
     </Link>
   );

@@ -8,16 +8,16 @@ import { getRoomSessionStatus, getRooms } from "../api/roomsApi";
 
 function SectionHeader({ eyebrow, title, description, action }) {
   return (
-    <div className="mb-4 flex flex-wrap items-end justify-between gap-3 sm:mb-5">
+    <div className="mb-3 flex flex-wrap items-end justify-between gap-2.5 sm:mb-4">
       <div>
-        <div className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 sm:text-[11px]">
+        <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500 sm:text-[11px]">
           {eyebrow}
         </div>
-        <div className="mt-1 text-[17px] font-semibold tracking-[-0.03em] text-white sm:text-xl">
+        <div className="mt-1 text-[16px] font-semibold tracking-[-0.03em] text-white sm:text-[19px]">
           {title}
         </div>
         {description ? (
-          <div className="mt-1.5 text-[13px] text-neutral-400 sm:mt-2 sm:text-sm">
+          <div className="mt-1 text-[12px] leading-5 text-neutral-400 sm:mt-1.5 sm:text-[13px]">
             {description}
           </div>
         ) : null}
@@ -57,6 +57,7 @@ export default function RoomsPage() {
           const status = await getRoomSessionStatus(battleTriviaRoom.id).catch(
             () => null
           );
+
           if (!isMounted) return;
           setFeaturedRoomStatus(status || null);
         } else {
@@ -110,22 +111,12 @@ export default function RoomsPage() {
     <div className="min-h-screen bg-neutral-950 text-white">
       <div className="mx-auto w-full max-w-[76rem] px-4 py-4 pb-24 sm:px-5 sm:py-7 sm:pb-7 lg:px-6 lg:py-9">
         <AppSectionNav />
+
         <AppTopBar
           eyebrow="Rooms"
           title="Game rooms"
-          description="Competitive spaces and structured game sessions live here. Use the dashboard for a quick start, then browse game rooms here when you want more options."
-          actions={[
-            {
-              to: "/leaderboards?mode=combined&period=current",
-              label: "Standings",
-              sublabel: "Weekly rankings",
-            },
-            {
-              to: "/profile",
-              label: "Profile",
-              sublabel: "Your account",
-            },
-          ]}
+          description="Competitive spaces and structured sessions live here."
+          actions={[]}
         />
 
         {error ? (
@@ -141,7 +132,7 @@ export default function RoomsPage() {
         ) : (
           <>
             {featuredRoom ? (
-              <section className="mb-8 sm:mb-10">
+              <section className="mb-6 sm:mb-8">
                 <SectionHeader
                   eyebrow="Featured"
                   title="Main competition"
@@ -149,9 +140,9 @@ export default function RoomsPage() {
                   action={
                     <Link
                       to={`/rooms/${featuredRoom.id}`}
-                      className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.035] px-3.5 py-2 text-[12px] font-medium text-white transition hover:border-white/15 hover:bg-white/[0.05] sm:rounded-[18px] sm:px-4 sm:py-2.5 sm:text-sm"
+                      className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.035] px-3 py-1.5 text-[11px] font-medium text-white transition hover:border-white/15 hover:bg-white/[0.05] sm:rounded-[18px] sm:px-4 sm:py-2 sm:text-sm"
                     >
-                      Open featured room
+                      Open room
                       <span aria-hidden="true">→</span>
                     </Link>
                   }
@@ -165,7 +156,7 @@ export default function RoomsPage() {
               <SectionHeader
                 eyebrow="Browse"
                 title="All game rooms"
-                description="Every competitive room in one place, without stretching the dashboard."
+                description="Every competitive room in one place."
               />
 
               {gameRooms.length === 0 ? (

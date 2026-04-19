@@ -110,7 +110,7 @@ export default function RegisterPage() {
         password: form.password,
       });
 
-      login(data);
+      login(data, "local");
       navigate("/", { replace: true });
     } catch (err) {
       setError(err?.response?.data?.message || "Registration failed.");
@@ -125,7 +125,7 @@ export default function RegisterPage() {
 
     try {
       const data = await googleLogin(credential);
-      login(data);
+      login(data, "google");
       navigate("/", { replace: true });
     } catch (err) {
       setError(err?.response?.data?.message || "Google sign-up failed.");
