@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import FeaturedTriviaCard from "../components/lobby/FeaturedTriviaCard";
 import LeaderboardPreviewCard from "../components/lobby/LeaderboardPreviewCard";
+import WinnersPodiumCard from "../components/lobby/WinnersPodiumCard";
 import AppSectionNav from "../components/layout/AppSectionNav";
 import {
   getBattleTriviaSessionPodium,
@@ -49,10 +50,6 @@ function getInitials(value) {
   if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
 
   return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
-}
-
-function formatMentionCount(count) {
-  return `${count} mention${count === 1 ? "" : "s"}`;
 }
 
 function SectionHeader({ eyebrow, title, description }) {
@@ -485,12 +482,9 @@ export default function LobbyPage() {
         ]);
         if (!isMounted) return;
 
-
-
         const nextRooms = Array.isArray(roomsData) ? roomsData : [];
         setRawRooms(nextRooms);
         syncRoomsFromPayload(nextRooms);
-
         setUnreadMentions(Array.isArray(mentionsData) ? mentionsData : []);
 
         const battleTriviaRoom =
@@ -524,27 +518,31 @@ export default function LobbyPage() {
           })),
         ]);
 
-        if (!isMounted) return;
-
-        setFeaturedRoomStatus(status || null);
-        setSessionPodium(podium || null);
-        setCurrentLeaders(Array.isArray(leaders) ? leaders : []);
-        setWordScrambleLeaders(
-          Array.isArray(scrambleBoard?.rows) ? scrambleBoard.rows : []
-        );
-        setCombinedBoardRows(
-          Array.isArray(combinedBoard?.rows) ? combinedBoard.rows : []
-        );
-        setProfileOverview(profileData || null);
-        setRecentResult(
-          Array.isArray(historyData?.items) ? historyData.items[0] || null : null
-        );
+        if (isMounted) {
+          setFeaturedRoomStatus(status || null);
+          setSessionPodium(podium || null);
+          setCurrentLeaders(Array.isArray(leaders) ? leaders : []);
+          setWordScrambleLeaders(
+            Array.isArray(scrambleBoard?.rows) ? scrambleBoard.rows : []
+          );
+          setCombinedBoardRows(
+            Array.isArray(combinedBoard?.rows) ? combinedBoard.rows : []
+          );
+          setProfileOverview(profileData || null);
+          setRecentResult(
+            Array.isArray(historyData?.items)
+              ? historyData.items[0] || null
+              : null
+          );
+        }
       } catch {
-        if (!isMounted) return;
-        setError("Failed to load dashboard.");
+        if (isMounted) {
+          setError("Failed to load dashboard.");
+        }
       } finally {
-        if (!isMounted) return;
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     }
 
@@ -591,14 +589,6 @@ export default function LobbyPage() {
   const showPodium =
     !!sessionPodium?.hasPodium && sessionPodium?.winners?.length > 0;
   const showCurrentLeaders = !showPodium && currentLeaders.length > 0;
-
-  const battleTriviaPreviewRows = showPodium
-    ? sessionPodium?.winners || []
-    : currentLeaders;
-
-  const battleTriviaPreviewSubtitle = showPodium
-    ? `Latest winners · ${formatEndedAt(sessionPodium?.endedAt)}`
-    : "Current week · Top 3";
 
   const combinedLeadersPreview = useMemo(
     () => combinedBoardRows.slice(0, 3),
@@ -747,10 +737,13 @@ export default function LobbyPage() {
                 <FeaturedTriviaCard room={featuredRoom} />
 
                 {showPodium ? (
-                  <LeadersPanel
+                  <WinnersPodiumCard
                     title="Latest Battle Trivia winners"
-                    subtitle={formatEndedAt(sessionPodium.endedAt)}
-                    entries={sessionPodium.winners}
+                    subtitle={`Finished ${formatEndedAt(
+                      sessionPodium.endedAt
+                    )}. First, second, and third are now front and center in the lobby.`}
+                    winners={sessionPodium.winners}
+                    to="/leaderboards?mode=battle-trivia&period=previous"
                   />
                 ) : showCurrentLeaders ? (
                   <LeadersPanel
@@ -796,34 +789,38 @@ export default function LobbyPage() {
             <section>
               <SectionHeader
                 eyebrow="Standings"
-                title="Quick leaderboard snapshot"
-                description="A lightweight preview. Open the leaderboard page for the full picture."
+                title="Weekly race"
+                description="The lobby stays lighter now: one live combined snapshot here, then the full leaderboard page when you want the full breakdown."
               />
 
-              <div className="grid gap-3 sm:gap-4 lg:grid-cols-3">
+              <div className="grid gap-3 sm:gap-4 lg:grid-cols-[1.2fr_0.8fr]">
                 <LeaderboardPreviewCard
-                  title="Battle Trivia"
-                  subtitle={battleTriviaPreviewSubtitle}
-                  rows={battleTriviaPreviewRows}
-                  to="/leaderboards?mode=battle-trivia&period=current"
-                  accent="blue"
-                />
-
-                <LeaderboardPreviewCard
-                  title="Word Scramble"
-                  subtitle="Current week · Top 3"
-                  rows={wordScrambleLeaders}
-                  to="/leaderboards?mode=word-scramble&period=current"
-                  accent="violet"
-                />
-
-                <LeaderboardPreviewCard
-                  title="Combined"
-                  subtitle="Trivia + Scramble · Current week"
+                  title="Combined race"
+                  subtitle="Current week · Top 3 across Battle Trivia and Word Scramble"
                   rows={combinedLeadersPreview}
                   to="/leaderboards?mode=combined&period=current"
                   accent="blue"
                 />
+
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                  <QuickDestinationCard
+                    to="/leaderboards?mode=battle-trivia&period=previous"
+                    eyebrow="Winners archive"
+                    title="See recent Battle Trivia results"
+                    description="Open the leaderboard page to review completed sessions and full rankings beyond the podium."
+                  />
+
+                  <QuickDestinationCard
+                    to="/leaderboards?mode=word-scramble&period=current"
+                    eyebrow="Live race"
+                    title="Check Word Scramble standings"
+                    description={`${
+                      wordScrambleLeaders[0]?.displayName ||
+                      wordScrambleLeaders[0]?.username ||
+                      "Live players"
+                    } and the rest of the field are still climbing this week's board.`}
+                  />
+                </div>
               </div>
             </section>
           </>

@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { getLeaderboard } from "../api/leaderboardsApi";
 import AppTopBar from "../components/layout/AppTopBar";
 import AppSectionNav from "../components/layout/AppSectionNav";
+import { useAuth } from "../hooks/useAuth";
 
 const MODES = [
   { key: "combined", label: "Combined" },
@@ -39,40 +40,40 @@ function getPeriodLabel(period) {
 function getRankTone(rank) {
   if (rank === 1) {
     return {
-      shell: "border-amber-400/20 bg-amber-500/10",
-      badge: "bg-amber-400/15 text-amber-200",
-      score: "text-amber-200",
-      glow: "shadow-[0_14px_34px_rgba(245,158,11,0.12)]",
-      icon: "👑",
+      shell: "border-amber-300/20 bg-amber-400/10",
+      badge: "bg-amber-400/15 text-amber-100",
+      score: "text-amber-100",
+      accent: "border-amber-300/18",
+      label: "1st",
     };
   }
 
   if (rank === 2) {
     return {
-      shell: "border-slate-300/15 bg-slate-400/10",
-      badge: "bg-slate-300/15 text-slate-200",
-      score: "text-slate-200",
-      glow: "shadow-[0_12px_28px_rgba(148,163,184,0.08)]",
-      icon: "🥈",
+      shell: "border-slate-300/15 bg-slate-300/10",
+      badge: "bg-slate-300/15 text-slate-100",
+      score: "text-slate-100",
+      accent: "border-slate-300/16",
+      label: "2nd",
     };
   }
 
   if (rank === 3) {
     return {
-      shell: "border-orange-400/15 bg-orange-500/10",
-      badge: "bg-orange-400/15 text-orange-200",
-      score: "text-orange-200",
-      glow: "shadow-[0_12px_28px_rgba(249,115,22,0.08)]",
-      icon: "🥉",
+      shell: "border-orange-300/18 bg-orange-400/10",
+      badge: "bg-orange-400/15 text-orange-100",
+      score: "text-orange-100",
+      accent: "border-orange-300/16",
+      label: "3rd",
     };
   }
 
   return {
     shell: "border-white/8 bg-white/[0.03]",
     badge: "bg-white/[0.05] text-neutral-300",
-    score: "text-blue-300",
-    glow: "shadow-[0_10px_24px_rgba(0,0,0,0.12)]",
-    icon: null,
+    score: "text-blue-200",
+    accent: "border-white/8",
+    label: `${rank}th`,
   };
 }
 
@@ -97,13 +98,18 @@ function FilterPill({ active, onClick, children, accent = "blue" }) {
   );
 }
 
-function SummaryStat({ label, value }) {
+function SummaryStat({ label, value, detail }) {
   return (
     <div className="rounded-[18px] border border-white/8 bg-black/20 px-4 py-3">
       <div className="text-[10px] uppercase tracking-[0.14em] text-neutral-500">
         {label}
       </div>
       <div className="mt-1 text-sm font-semibold text-white">{value}</div>
+      {detail ? (
+        <div className="mt-1 text-[11px] leading-5 text-neutral-400">
+          {detail}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -113,18 +119,15 @@ function PodiumCard({ row, mode }) {
 
   return (
     <div
-      className={`rounded-[22px] border p-4 ${tone.shell} ${tone.glow}`}
+      className={`rounded-[22px] border p-4 shadow-[0_18px_36px_rgba(0,0,0,0.14)] ${tone.shell}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span
-              className={`rounded-full px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.14em] ${tone.badge}`}
-            >
-              #{row.rank}
-            </span>
-            {tone.icon ? <span aria-hidden="true">{tone.icon}</span> : null}
-          </div>
+          <span
+            className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.14em] ${tone.badge}`}
+          >
+            {tone.label}
+          </span>
 
           <div className="mt-3 truncate text-base font-semibold text-white">
             {row.displayName || row.username}
@@ -135,104 +138,130 @@ function PodiumCard({ row, mode }) {
           </div>
         </div>
 
-        <div className={`text-right text-xl font-semibold ${tone.score}`}>
-          {row.score}
+        <div className="text-right">
+          <div className={`text-2xl font-semibold ${tone.score}`}>
+            {row.score}
+          </div>
+          <div className="mt-1 text-[10px] uppercase tracking-[0.16em] text-neutral-500">
+            total
+          </div>
         </div>
       </div>
 
-      {mode === "combined" ? (
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          <div className="rounded-[14px] border border-white/8 bg-black/20 px-3 py-2">
-            <div className="text-[10px] uppercase tracking-[0.14em] text-neutral-500">
-              Trivia
-            </div>
-            <div className="mt-1 text-sm font-medium text-white">
-              {row.battleTriviaScore}
-            </div>
-          </div>
-
-          <div className="rounded-[14px] border border-white/8 bg-black/20 px-3 py-2">
-            <div className="text-[10px] uppercase tracking-[0.14em] text-neutral-500">
-              Scramble
-            </div>
-            <div className="mt-1 text-sm font-medium text-white">
-              {row.wordScrambleScore}
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <div className="mt-4 grid gap-2 sm:grid-cols-2">
+        {mode === "combined" ? (
+          <>
+            <SummaryStat
+              label="Trivia"
+              value={row.battleTriviaScore}
+              detail="Battle Trivia points"
+            />
+            <SummaryStat
+              label="Scramble"
+              value={row.wordScrambleScore}
+              detail="Word Scramble points"
+            />
+          </>
+        ) : (
+          <SummaryStat
+            label="Weekly score"
+            value={`${row.score} pts`}
+            detail={`Current position: #${row.rank}`}
+          />
+        )}
+      </div>
     </div>
   );
 }
 
-function MobileLeaderboardCard({ row, mode }) {
+function MobileLeaderboardCard({
+  row,
+  mode,
+  leaderScore,
+  isCurrentUser = false,
+}) {
   const tone = getRankTone(row.rank);
+  const gap = Math.max(0, (leaderScore || 0) - (row.score || 0));
 
   return (
     <div
-      className={`rounded-[20px] border px-4 py-3 ${tone.shell} ${tone.glow}`}
+      className={`rounded-[20px] border p-4 shadow-[0_14px_28px_rgba(0,0,0,0.12)] ${
+        isCurrentUser
+          ? "border-blue-300/25 bg-blue-500/10"
+          : `${tone.shell} ${tone.accent}`
+      }`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span
-              className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.14em] ${tone.badge}`}
+              className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.14em] ${
+                isCurrentUser ? "bg-blue-400/15 text-blue-100" : tone.badge
+              }`}
             >
               #{row.rank}
             </span>
 
-            {tone.icon ? (
-              <span aria-hidden="true" className="text-sm">
-                {tone.icon}
+            <span className="text-[10px] uppercase tracking-[0.14em] text-neutral-500">
+              {row.rank <= 3 ? `${tone.label} place` : "Leaderboard position"}
+            </span>
+
+            {isCurrentUser ? (
+              <span className="rounded-full border border-blue-300/18 bg-blue-400/10 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-blue-100">
+                You
               </span>
             ) : null}
           </div>
 
-          <div className="mt-2 truncate text-sm font-semibold text-white">
+          <div className="mt-3 text-base font-semibold text-white">
             {row.displayName || row.username}
           </div>
 
-          <div className="mt-1 text-[11px] text-neutral-500">
+          <div className="mt-1 text-[12px] text-neutral-400">
             @{row.username}
           </div>
         </div>
 
-        <div className="text-right">
-          <div className={`text-base font-semibold ${tone.score}`}>
+        <div className="shrink-0 text-right">
+          <div
+            className={`text-2xl font-semibold ${
+              isCurrentUser ? "text-blue-100" : tone.score
+            }`}
+          >
             {row.score}
           </div>
-          <div className="mt-1 text-[10px] uppercase tracking-[0.14em] text-neutral-500">
+          <div className="mt-1 text-[10px] uppercase tracking-[0.16em] text-neutral-500">
             points
           </div>
         </div>
       </div>
 
       {mode === "combined" ? (
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <div className="rounded-[14px] border border-white/8 bg-black/20 px-3 py-2">
-            <div className="text-[10px] uppercase tracking-[0.14em] text-neutral-500">
-              Trivia
-            </div>
-            <div className="mt-1 text-sm font-medium text-white">
-              {row.battleTriviaScore}
-            </div>
-          </div>
-
-          <div className="rounded-[14px] border border-white/8 bg-black/20 px-3 py-2">
-            <div className="text-[10px] uppercase tracking-[0.14em] text-neutral-500">
-              Scramble
-            </div>
-            <div className="mt-1 text-sm font-medium text-white">
-              {row.wordScrambleScore}
-            </div>
-          </div>
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <SummaryStat
+            label="Trivia"
+            value={row.battleTriviaScore}
+            detail="Battle Trivia"
+          />
+          <SummaryStat
+            label="Scramble"
+            value={row.wordScrambleScore}
+            detail="Word Scramble"
+          />
         </div>
       ) : null}
+
+      <div className="mt-4 rounded-[16px] border border-white/8 bg-black/20 px-3 py-2.5 text-[12px] leading-5 text-neutral-300">
+        {row.rank === 1
+          ? "Currently leading this board."
+          : `${gap} point${gap === 1 ? "" : "s"} behind the leader.`}
+      </div>
     </div>
   );
 }
 
 export default function LeaderboardsPage() {
+  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const mode = searchParams.get("mode") || "combined";
@@ -251,15 +280,18 @@ export default function LeaderboardsPage() {
 
       try {
         const result = await getLeaderboard(mode, period, 100);
-        if (!isMounted) return;
-        setData(result);
+        if (isMounted) {
+          setData(result);
+        }
       } catch {
-        if (!isMounted) return;
-        setError("Failed to load leaderboard.");
-        setData(null);
+        if (isMounted) {
+          setError("Failed to load leaderboard.");
+          setData(null);
+        }
       } finally {
-        if (!isMounted) return;
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     }
 
@@ -272,6 +304,8 @@ export default function LeaderboardsPage() {
 
   const rows = useMemo(() => data?.rows || [], [data]);
   const podiumRows = useMemo(() => rows.slice(0, 3), [rows]);
+  const leader = rows[0] || null;
+  const leaderScore = leader?.score || 0;
 
   const subtitle = useMemo(() => {
     if (!data) return "";
@@ -282,6 +316,11 @@ export default function LeaderboardsPage() {
       ? "Live standings for this week"
       : "Latest completed week";
   }, [data, period]);
+
+  const currentStanding = useMemo(() => {
+    if (!user?.id) return null;
+    return rows.find((row) => row.userId === user.id) || null;
+  }, [rows, user?.id]);
 
   const updateQuery = (nextMode, nextPeriod) => {
     setSearchParams({
@@ -298,8 +337,7 @@ export default function LeaderboardsPage() {
         <AppTopBar
           eyebrow="Leaderboards"
           title="Weekly standings"
-          description="A cleaner ranking view for Battle Trivia, Word Scramble, and combined performance."
-          showBackToLobby={false}
+          description="A clearer ranking view for Battle Trivia, Word Scramble, and combined performance."
           actions={[]}
         />
 
@@ -346,16 +384,33 @@ export default function LeaderboardsPage() {
             </div>
 
             <div className="rounded-full border border-white/8 bg-white/[0.03] px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.16em] text-neutral-400">
-              {rows.length} players
+              {rows.length} players shown
             </div>
           </div>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <SummaryStat label="Mode" value={getModeLabel(mode)} />
-            <SummaryStat label="Period" value={getPeriodLabel(period)} />
+            <SummaryStat
+              label="Leader"
+              value={leader ? `#1 ${leader.displayName || leader.username}` : "Waiting for scores"}
+              detail={leader ? `${leader.score} total points` : "No leaderboard data yet"}
+            />
+            <SummaryStat
+              label="Your place"
+              value={currentStanding ? `#${currentStanding.rank}` : "Not ranked"}
+              detail={
+                currentStanding
+                  ? `${currentStanding.score} total points so far`
+                  : "Play more this week to appear here"
+              }
+            />
             <SummaryStat
               label="Status"
               value={period === "current" ? "Live this week" : "Completed week"}
+              detail={
+                period === "current"
+                  ? "Scores can still move"
+                  : "Standings are locked"
+              }
             />
           </div>
         </div>
@@ -375,8 +430,13 @@ export default function LeaderboardsPage() {
         ) : (
           <>
             <section className="mb-5 sm:mb-6">
-              <div className="mb-3 text-[10px] uppercase tracking-[0.18em] text-neutral-500 sm:text-[11px]">
-                Top players
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500 sm:text-[11px]">
+                  Podium
+                </div>
+                <div className="text-[11px] text-neutral-500">
+                  Top three right now
+                </div>
               </div>
 
               <div className="grid gap-3 lg:grid-cols-3">
@@ -387,8 +447,21 @@ export default function LeaderboardsPage() {
             </section>
 
             <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-3 sm:p-4">
-              <div className="mb-3 text-[10px] uppercase tracking-[0.18em] text-neutral-500 sm:text-[11px]">
-                Full rankings
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500 sm:text-[11px]">
+                    Full rankings
+                  </div>
+                  <div className="mt-1 text-[12px] leading-5 text-neutral-400 sm:text-[13px]">
+                    Mobile cards explain position, score, and leader gap without making you read a dense table.
+                  </div>
+                </div>
+
+                {currentStanding ? (
+                  <div className="rounded-full border border-blue-300/18 bg-blue-400/10 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-blue-100">
+                    You are #{currentStanding.rank}
+                  </div>
+                ) : null}
               </div>
 
               <div className="space-y-3 sm:hidden">
@@ -397,6 +470,8 @@ export default function LeaderboardsPage() {
                     key={row.userId}
                     row={row}
                     mode={mode}
+                    leaderScore={leaderScore}
+                    isCurrentUser={row.userId === user?.id}
                   />
                 ))}
               </div>
@@ -421,20 +496,32 @@ export default function LeaderboardsPage() {
                     <tbody>
                       {rows.map((row) => {
                         const tone = getRankTone(row.rank);
+                        const isCurrentUser = row.userId === user?.id;
 
                         return (
                           <tr
                             key={row.userId}
                             className={`border-t border-white/6 ${
-                              row.rank <= 3 ? tone.shell : ""
+                              isCurrentUser
+                                ? "bg-blue-500/10"
+                                : row.rank <= 3
+                                ? tone.shell
+                                : ""
                             }`}
                           >
                             <td className="px-4 py-3 text-sm font-semibold text-white">
                               #{row.rank}
                             </td>
                             <td className="px-4 py-3">
-                              <div className="text-sm font-medium text-white">
-                                {row.displayName || row.username}
+                              <div className="flex items-center gap-2">
+                                <div className="text-sm font-medium text-white">
+                                  {row.displayName || row.username}
+                                </div>
+                                {isCurrentUser ? (
+                                  <span className="rounded-full border border-blue-300/18 bg-blue-400/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-blue-100">
+                                    You
+                                  </span>
+                                ) : null}
                               </div>
                               <div className="text-[11px] text-neutral-500">
                                 @{row.username}

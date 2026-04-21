@@ -31,3 +31,34 @@ body {
   -webkit-text-size-adjust: 100%;
   text-rendering: optimizeLegibility;
 }
+
+@keyframes podiumFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.podium-float-slow {
+  animation: podiumFloat 4.8s ease-in-out infinite;
+}
+
+.podium-float-medium {
+  animation: podiumFloat 4s ease-in-out infinite;
+}
+
+.podium-float-fast {
+  animation: podiumFloat 3.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .podium-float-slow,
+  .podium-float-medium,
+  .podium-float-fast {
+    animation: none;
+  }
+}
