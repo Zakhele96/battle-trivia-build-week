@@ -72,6 +72,39 @@ function SectionHeader({ eyebrow, title, description }) {
   );
 }
 
+function LobbyHighlightCard({ eyebrow, title, description, accent = "blue" }) {
+  const accentClass =
+    accent === "amber"
+      ? "border-amber-300/18 bg-amber-400/10"
+      : accent === "emerald"
+      ? "border-emerald-300/18 bg-emerald-400/10"
+      : "border-blue-300/18 bg-blue-400/10";
+
+  return (
+    <div className="rounded-[18px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-3.5">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
+            {eyebrow}
+          </div>
+          <div className="mt-1.5 text-[16px] font-semibold tracking-[-0.03em] text-white">
+            {title}
+          </div>
+          <div className="mt-1 text-[12px] leading-5 text-neutral-400">
+            {description}
+          </div>
+        </div>
+
+        <div
+          className={`rounded-full border px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] ${accentClass}`}
+        >
+          Live
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function QuickDestinationCard({ to, eyebrow, title, description }) {
   return (
     <Link
@@ -216,6 +249,55 @@ function DashboardHero({ user, isFirstTimeUser }) {
           </p>
         </div>
       </div>
+    </div>
+  );
+}
+
+function LobbyHeroRail({
+  featuredRoom,
+  sessionPodium,
+  currentStanding,
+  unreadMentions,
+}) {
+  const winner = sessionPodium?.winners?.find((entry) => entry.rank === 1) || null;
+  const mentionCount = Array.isArray(unreadMentions) ? unreadMentions.length : 0;
+
+  return (
+    <div className="mb-6 grid gap-3 sm:grid-cols-3 sm:gap-4">
+      <LobbyHighlightCard
+        eyebrow="Featured now"
+        title={featuredRoom?.name || "Battle Trivia"}
+        description={
+          featuredRoom?.sessionStatus?.status === "active"
+            ? "Live session in motion. Jump in while the room is hot."
+            : "This is still the fastest way back into competition."
+        }
+        accent="blue"
+      />
+
+      <LobbyHighlightCard
+        eyebrow="Last winner"
+        title={winner ? winner.displayName || winner.username : "Waiting for a finish"}
+        description={
+          winner
+            ? `Won the latest Battle Trivia podium with ${winner.score} pts.`
+            : "As soon as a session closes, the podium will headline the lobby."
+        }
+        accent="amber"
+      />
+
+      <LobbyHighlightCard
+        eyebrow="Your pulse"
+        title={
+          currentStanding ? `#${currentStanding.rank} this week` : "Still unranked"
+        }
+        description={
+          mentionCount > 0
+            ? `${mentionCount} unread mention${mentionCount === 1 ? "" : "s"} waiting for you.`
+            : "Your mentions inbox is clear and ready."
+        }
+        accent="emerald"
+      />
     </div>
   );
 }
@@ -614,6 +696,12 @@ export default function LobbyPage() {
       <div className="mx-auto w-full max-w-[76rem] px-4 py-4 pb-24 sm:px-5 sm:py-7 sm:pb-7 lg:px-6 lg:py-9">
         <AppSectionNav />
         <DashboardHero user={user} isFirstTimeUser={isFirstTimeUser} />
+        <LobbyHeroRail
+          featuredRoom={featuredRoom}
+          sessionPodium={sessionPodium}
+          currentStanding={currentStanding}
+          unreadMentions={unreadMentions}
+        />
 
         <MentionInboxCard
           title="Unread mentions"
@@ -731,27 +819,29 @@ export default function LobbyPage() {
                 <SectionHeader
                   eyebrow="Featured"
                   title="Main competition"
-                  description="The headline room and fastest way into the live action."
+                  description="The headline room sits beside the newest finish, so the lobby feels more like a live stage than a stack of cards."
                 />
 
-                <FeaturedTriviaCard room={featuredRoom} />
+                <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr] xl:items-start">
+                  <FeaturedTriviaCard room={featuredRoom} />
 
-                {showPodium ? (
-                  <WinnersPodiumCard
-                    title="Latest Battle Trivia winners"
-                    subtitle={`Finished ${formatEndedAt(
-                      sessionPodium.endedAt
-                    )}. First, second, and third are now front and center in the lobby.`}
-                    winners={sessionPodium.winners}
-                    to="/leaderboards?mode=battle-trivia&period=previous"
-                  />
-                ) : showCurrentLeaders ? (
-                  <LeadersPanel
-                    title="Current Battle Trivia leaders"
-                    subtitle="Live standings for this week"
-                    entries={currentLeaders}
-                  />
-                ) : null}
+                  {showPodium ? (
+                    <WinnersPodiumCard
+                      title="Latest Battle Trivia winners"
+                      subtitle={`Finished ${formatEndedAt(
+                        sessionPodium.endedAt
+                      )}. First, second, and third are now front and center in the lobby.`}
+                      winners={sessionPodium.winners}
+                      to="/leaderboards?mode=battle-trivia&period=previous"
+                    />
+                  ) : showCurrentLeaders ? (
+                    <LeadersPanel
+                      title="Current Battle Trivia leaders"
+                      subtitle="Live standings for this week"
+                      entries={currentLeaders}
+                    />
+                  ) : null}
+                </div>
               </section>
             ) : null}
 

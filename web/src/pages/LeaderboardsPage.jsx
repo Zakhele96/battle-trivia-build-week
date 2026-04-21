@@ -77,24 +77,67 @@ function getRankTone(rank) {
   };
 }
 
-function FilterPill({ active, onClick, children, accent = "blue" }) {
-  const activeClass =
-    accent === "violet"
-      ? "bg-violet-500 text-white"
-      : "bg-blue-500 text-white";
-
+function ModeOption({ item, active, onClick }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+      className={`rounded-[18px] border p-3 text-left transition sm:p-4 ${
         active
-          ? activeClass
-          : "border border-white/10 bg-white/[0.03] text-neutral-300 hover:bg-white/[0.05]"
+          ? "border-blue-300/22 bg-blue-500/12 shadow-[0_14px_28px_rgba(37,99,235,0.12)]"
+          : "border-white/10 bg-black/20 hover:border-white/16 hover:bg-white/[0.04]"
       }`}
     >
-      {children}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-[13px] font-semibold text-white">{item.label}</div>
+          <div className="mt-1 text-[11px] leading-5 text-neutral-400">
+            {item.description}
+          </div>
+        </div>
+
+        <div
+          className={`mt-0.5 h-5 w-5 shrink-0 rounded-full border ${
+            active
+              ? "border-blue-300/30 bg-blue-400/18"
+              : "border-white/12 bg-white/[0.03]"
+          }`}
+        >
+          <div
+            className={`m-auto mt-[3px] h-2.5 w-2.5 rounded-full ${
+              active ? "bg-blue-200" : "bg-transparent"
+            }`}
+          />
+        </div>
+      </div>
     </button>
+  );
+}
+
+function PeriodSwitcher({ value, onChange }) {
+  return (
+    <div className="rounded-[18px] border border-white/10 bg-black/20 p-1">
+      <div className="grid grid-cols-2 gap-1">
+        {PERIODS.map((item) => {
+          const active = value === item.key;
+
+          return (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => onChange(item.key)}
+              className={`rounded-[14px] px-3 py-2 text-sm font-medium transition ${
+                active
+                  ? "bg-violet-500 text-white shadow-[0_12px_24px_rgba(139,92,246,0.22)]"
+                  : "text-neutral-300 hover:bg-white/[0.04]"
+              }`}
+            >
+              {item.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -342,31 +385,53 @@ export default function LeaderboardsPage() {
         />
 
         <div className="mb-5 rounded-[24px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.12),transparent_32%),linear-gradient(180deg,rgba(255,255,255,0.032),rgba(255,255,255,0.014))] p-4 sm:mb-6 sm:p-5">
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-wrap gap-2">
-              {MODES.map((item) => (
-                <FilterPill
-                  key={item.key}
-                  active={mode === item.key}
-                  onClick={() => updateQuery(item.key, period)}
-                  accent="blue"
-                >
-                  {item.label}
-                </FilterPill>
-              ))}
+          <div className="grid gap-4 lg:grid-cols-[1.18fr_0.82fr]">
+            <div>
+              <div className="mb-2 text-[10px] uppercase tracking-[0.18em] text-neutral-500">
+                Choose a board
+              </div>
+              <div className="grid gap-2.5 sm:grid-cols-3">
+                {MODES.map((item) => (
+                  <ModeOption
+                    key={item.key}
+                    item={{
+                      ...item,
+                      description:
+                        item.key === "combined"
+                          ? "One ranking across both games."
+                          : item.key === "battle-trivia"
+                          ? "Battle Trivia only."
+                          : "Word Scramble only.",
+                    }}
+                    active={mode === item.key}
+                    onClick={() => updateQuery(item.key, period)}
+                  />
+                ))}
+              </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              {PERIODS.map((item) => (
-                <FilterPill
-                  key={item.key}
-                  active={period === item.key}
-                  onClick={() => updateQuery(mode, item.key)}
-                  accent="violet"
-                >
-                  {item.label}
-                </FilterPill>
-              ))}
+            <div>
+              <div className="mb-2 text-[10px] uppercase tracking-[0.18em] text-neutral-500">
+                Time window
+              </div>
+              <PeriodSwitcher
+                value={period}
+                onChange={(nextPeriod) => updateQuery(mode, nextPeriod)}
+              />
+
+              <div className="mt-3 rounded-[18px] border border-white/8 bg-black/20 px-4 py-3">
+                <div className="text-[10px] uppercase tracking-[0.14em] text-neutral-500">
+                  Current selection
+                </div>
+                <div className="mt-1 text-sm font-semibold text-white">
+                  {getModeLabel(mode)} · {getPeriodLabel(period)}
+                </div>
+                <div className="mt-1 text-[12px] leading-5 text-neutral-400">
+                  {period === "current"
+                    ? "Live scores that can still move this week."
+                    : "The most recent finished week with locked results."}
+                </div>
+              </div>
             </div>
           </div>
         </div>
