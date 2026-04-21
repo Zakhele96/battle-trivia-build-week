@@ -302,16 +302,25 @@ public sealed class MessageRepository : IMessageRepository
     public async Task ToggleReactionAsync(Guid messageId, Guid userId, string emoji)
     {
         const string existingSql = """
-            SELECT id
+            SELECT
+                id,
+                emoji
             FROM chat_message_reactions
             WHERE chat_message_id = @MessageId
               AND user_id = @UserId
-              AND emoji = @Emoji
             LIMIT 1;
             """;
 
         const string deleteSql = """
             DELETE FROM chat_message_reactions
+            WHERE id = @Id;
+            """;
+
+        const string updateSql = """
+            UPDATE chat_message_reactions
+            SET
+                emoji = @Emoji,
+                created_at = NOW()
             WHERE id = @Id;
             """;
 
@@ -336,16 +345,25 @@ public sealed class MessageRepository : IMessageRepository
 
         using var connection = _context.CreateConnection();
 
-        var existingId = await connection.ExecuteScalarAsync<Guid?>(existingSql, new
+        var existingReaction = await connection.QuerySingleOrDefaultAsync<ReactionRow>(existingSql, new
         {
             MessageId = messageId,
-            UserId = userId,
-            Emoji = emoji
+            UserId = userId
         });
 
-        if (existingId.HasValue)
+        if (existingReaction is not null)
         {
-            await connection.ExecuteAsync(deleteSql, new { Id = existingId.Value });
+            if (string.Equals(existingReaction.Emoji, emoji, StringComparison.Ordinal))
+            {
+                await connection.ExecuteAsync(deleteSql, new { Id = existingReaction.Id });
+                return;
+            }
+
+            await connection.ExecuteAsync(updateSql, new
+            {
+                Id = existingReaction.Id,
+                Emoji = emoji
+            });
             return;
         }
 
@@ -795,5 +813,11 @@ public sealed class MessageRepository : IMessageRepository
         public DateTime? PinnedAt { get; set; }
         public Guid? PinnedByUserId { get; set; }
         public string? ReactionsJson { get; set; }
+    }
+
+    private sealed class ReactionRow
+    {
+        public Guid Id { get; set; }
+        public string Emoji { get; set; } = string.Empty;
     }
 }

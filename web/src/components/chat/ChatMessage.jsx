@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-const REACTION_OPTIONS = ["👍", "🔥", "😂", "👏", "😮"];
+const REACTION_OPTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏", "🔥"];
 
 function formatTime(value) {
   if (!value) return "";
@@ -159,7 +159,7 @@ function ReactionBar({
           onClick={() => onToggleReaction?.(reaction.emoji)}
           className={`inline-flex h-7 items-center gap-1 rounded-full border px-2.5 text-[10px] transition sm:h-auto sm:px-2 sm:py-1 sm:text-[11px] ${
             reaction.reactedByMe
-              ? "border-blue-400/20 bg-blue-500/12 text-blue-100"
+              ? "border-emerald-300/30 bg-emerald-400/12 text-emerald-100"
               : "border-white/10 bg-white/[0.04] text-neutral-300 hover:bg-white/[0.06]"
           } disabled:opacity-50`}
         >
@@ -173,9 +173,9 @@ function ReactionBar({
           type="button"
           disabled={!!busyAction}
           onClick={onOpenPicker}
-          className="inline-flex h-7 items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] px-2.5 text-[10px] text-neutral-400 transition hover:bg-white/[0.06] disabled:opacity-50 sm:h-auto sm:px-2 sm:py-1 sm:text-[11px]"
+          className="inline-flex h-7 items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] px-2.5 text-[10px] text-neutral-300 transition hover:bg-white/[0.06] disabled:opacity-50 sm:h-auto sm:px-2 sm:py-1 sm:text-[11px]"
         >
-          <span>+</span>
+          <span className="text-[12px] leading-none">+</span>
           <span className="hidden sm:inline">React</span>
         </button>
       ) : null}
@@ -261,6 +261,10 @@ export default function ChatMessage({
   const isMine = message.userId === currentUserId;
   const isMessageFromModerator = message.isAdmin === true;
   const isPinned = message.isPinned === true;
+  const currentUserReaction =
+    Array.isArray(message.reactions)
+      ? message.reactions.find((reaction) => reaction.reactedByMe)?.emoji ?? ""
+      : "";
 
   const groupedWithPrevious = isSameSender(message, previousMessage);
   const groupedWithNext = isSameSender(message, nextMessage);
@@ -460,7 +464,7 @@ export default function ChatMessage({
             setMenuOpen((prev) => !prev);
             setPickerOpen(false);
           }}
-          className={`absolute -top-2 z-10 rounded-full border border-white/10 bg-black/65 px-2.5 py-1 text-[9px] uppercase tracking-[0.14em] text-neutral-300 opacity-100 backdrop-blur-sm transition hover:bg-black/75 hover:text-neutral-100 sm:px-2 sm:py-0.5 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100 ${
+          className={`absolute -top-2 z-[1] rounded-full border border-white/10 bg-black/65 px-2.5 py-1 text-[9px] uppercase tracking-[0.14em] text-neutral-300 opacity-100 backdrop-blur-sm transition hover:bg-black/75 hover:text-neutral-100 sm:px-2 sm:py-0.5 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100 ${
             isMine ? "-left-1 sm:-left-2" : "-right-1 sm:-right-2"
           }`}
         >
@@ -469,7 +473,7 @@ export default function ChatMessage({
 
         {menuOpen ? (
           <div
-            className={`absolute top-3 z-20 mt-2 w-44 rounded-2xl border border-white/10 bg-neutral-900 p-1.5 shadow-xl shadow-black/30 ${
+            className={`absolute top-3 z-[2] mt-2 w-44 rounded-2xl border border-white/10 bg-neutral-900 p-1.5 shadow-xl shadow-black/30 ${
               isMine ? "left-0 sm:left-auto sm:right-0" : "right-0"
             }`}
           >
@@ -557,23 +561,32 @@ export default function ChatMessage({
 
         {pickerOpen ? (
           <div
-            className={`absolute z-20 mt-2 flex max-w-[calc(100vw-2.5rem)] flex-wrap gap-1 rounded-[18px] border border-white/10 bg-neutral-900 px-2 py-1.5 shadow-xl shadow-black/30 ${
+            className={`absolute z-[2] mt-2 max-w-[calc(100vw-2.5rem)] overflow-x-auto rounded-full border border-white/10 bg-neutral-950/96 px-2 py-1.5 shadow-[0_18px_40px_rgba(0,0,0,0.34)] backdrop-blur-xl ${
               isMine
                 ? "right-0 top-full"
                 : "left-0 top-full"
             }`}
           >
-            {REACTION_OPTIONS.map((emoji) => (
-              <button
-                key={emoji}
-                type="button"
-                disabled={!!busyAction}
-                onClick={() => handleToggleReaction(emoji)}
-                className="rounded-full px-2 py-1 text-sm transition hover:bg-white/[0.06] disabled:opacity-50"
-              >
-                {emoji}
-              </button>
-            ))}
+            <div className="flex min-w-max items-center gap-1">
+              {REACTION_OPTIONS.map((emoji) => {
+                const isSelected = currentUserReaction === emoji;
+
+                return (
+                  <button
+                    key={emoji}
+                    type="button"
+                    disabled={!!busyAction}
+                    onClick={() => handleToggleReaction(emoji)}
+                    className={`flex h-10 w-10 items-center justify-center rounded-full text-[20px] transition duration-150 hover:-translate-y-0.5 hover:bg-white/[0.06] disabled:opacity-50 ${
+                      isSelected ? "bg-white/[0.08] ring-1 ring-emerald-300/30" : ""
+                    }`}
+                    aria-pressed={isSelected}
+                  >
+                    {emoji}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         ) : null}
 

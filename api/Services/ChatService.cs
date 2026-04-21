@@ -7,7 +7,7 @@ public sealed class ChatService
 {
     private static readonly HashSet<string> AllowedReactions =
     [
-        "👍", "🔥", "😂", "👏", "😮"
+        "👍", "❤️", "😂", "😮", "😢", "🙏", "🔥"
     ];
 
     private readonly IMessageRepository _messageRepository;

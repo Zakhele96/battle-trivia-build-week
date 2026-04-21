@@ -93,7 +93,7 @@ function PinnedMessageBar({ message, onJumpToMessage, onUnpinMessage, isAdmin })
   if (!message) return null;
 
   return (
-    <div className="sticky top-0 z-[3] mb-3 rounded-[18px] border border-amber-400/15 bg-[linear-gradient(180deg,rgba(245,158,11,0.08),rgba(245,158,11,0.03))] px-3 py-3 shadow-[0_12px_28px_rgba(0,0,0,0.12)] backdrop-blur-md sm:px-4">
+    <div className="sticky top-0 z-[20] mb-3 rounded-[18px] border border-amber-400/15 bg-[linear-gradient(180deg,rgba(245,158,11,0.08),rgba(245,158,11,0.03))] px-3 py-3 shadow-[0_12px_28px_rgba(0,0,0,0.12)] backdrop-blur-md sm:px-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <button
           type="button"
