@@ -17,6 +17,11 @@ export async function getRoomMessages(roomId, take = 50) {
   return data;
 }
 
+export async function getPinnedRoomMessage(roomId) {
+  const { data } = await api.get(`/rooms/${roomId}/pinned-message`);
+  return data;
+}
+
 export async function getRoomMessageContext(
   roomId,
   messageId,

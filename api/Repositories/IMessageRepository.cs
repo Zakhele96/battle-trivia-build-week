@@ -13,6 +13,7 @@ public interface IMessageRepository
         Guid? replyToMessageId = null);
 
     Task<IEnumerable<ChatMessageResponse>> GetRecentByRoomAsync(Guid roomId, Guid currentUserId, int take);
+    Task<ChatMessageResponse?> GetPinnedByRoomAsync(Guid roomId, Guid currentUserId);
     Task<ChatMessageResponse?> GetByIdAsync(Guid messageId, Guid currentUserId);
     Task<Guid?> GetRoomIdByMessageIdAsync(Guid messageId);
     Task DeleteAsync(Guid messageId);
@@ -26,7 +27,6 @@ public interface IMessageRepository
 
     Task PinMessageAsync(Guid roomId, Guid messageId, Guid pinnedByUserId, DateTime pinnedAtUtc);
     Task UnpinRoomAsync(Guid roomId);
-    Task<ChatMessageResponse?> GetPinnedByRoomAsync(Guid roomId, Guid currentUserId);
     
     Task<IEnumerable<ChatMessageResponse>> GetContextByMessageIdAsync(
     Guid roomId,

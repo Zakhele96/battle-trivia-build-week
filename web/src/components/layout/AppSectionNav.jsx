@@ -201,9 +201,9 @@ export default function AppSectionNav() {
       </div>
 
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 sm:hidden [backface-visibility:hidden] [transform:translateZ(0)] [will-change:transform]">
-        <div className="pointer-events-auto border-t border-white/10 bg-neutral-950/96 px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-14px_34px_rgba(0,0,0,0.3)] backdrop-blur-xl supports-[backdrop-filter]:bg-neutral-950/88">
+        <div className="pointer-events-auto border-t border-white/10 bg-neutral-950/96 px-2 pt-2 pb-[max(0.55rem,env(safe-area-inset-bottom))] shadow-[0_-14px_34px_rgba(0,0,0,0.3)] backdrop-blur-xl supports-[backdrop-filter]:bg-neutral-950/88">
           <div className="mx-auto max-w-[38rem]">
-            <div className="grid grid-cols-5 gap-1">
+            <div className="grid grid-cols-5 gap-1.5">
               {MOBILE_ITEMS.map((item) => {
                 const Icon = item.icon;
                 const active = isItemActive(item, location.pathname);
@@ -213,21 +213,21 @@ export default function AppSectionNav() {
                     key={item.to}
                     to={item.to}
                     end={item.exact}
-                    className={`relative flex min-h-[4rem] touch-manipulation flex-col items-center justify-center gap-1 rounded-[16px] px-2 py-2 text-[10px] font-medium transition ${
+                    className={`relative flex min-h-[4.15rem] touch-manipulation flex-col items-center justify-center gap-1 rounded-[18px] px-1.5 py-2 text-[10px] font-medium transition ${
                       active
-                        ? "bg-blue-500/10 text-white"
-                        : "text-neutral-400 hover:bg-white/[0.04] hover:text-white"
+                        ? "border border-blue-400/15 bg-blue-500/10 text-white shadow-[0_8px_22px_rgba(37,99,235,0.12)]"
+                        : "border border-transparent text-neutral-400 hover:bg-white/[0.04] hover:text-white"
                     }`}
                   >
                     <div className="relative">
                       <Icon />
                       {item.showMentionBadge ? (
-                        <div className="absolute -right-3 -top-2">
+                        <div className="absolute -right-2.5 -top-2">
                           <MentionBadge count={totalUnreadMentions} mobile />
                         </div>
                       ) : null}
                     </div>
-                    <span>{item.label}</span>
+                    <span className="max-w-full truncate px-1">{item.label}</span>
                   </NavLink>
                 );
               })}

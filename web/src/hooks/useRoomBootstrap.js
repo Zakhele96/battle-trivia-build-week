@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import { getOlderRoomMessages, getRoom, getRoomMessages } from "../api/roomsApi";
+import {
+  getOlderRoomMessages,
+  getPinnedRoomMessage,
+  getRoom,
+  getRoomMessages,
+} from "../api/roomsApi";
 
 const PAGE_SIZE = 50;
 
@@ -49,6 +54,7 @@ function mergeUniqueById(messages) {
 export default function useRoomBootstrap(roomId) {
   const [room, setRoom] = useState(null);
   const [messages, setMessages] = useState([]);
+  const [pinnedMessage, setPinnedMessageState] = useState(null);
   const [isLoadingRoom, setIsLoadingRoom] = useState(true);
   const [isLoadingOlder, setIsLoadingOlder] = useState(false);
   const [hasOlderMessages, setHasOlderMessages] = useState(true);
@@ -64,11 +70,13 @@ export default function useRoomBootstrap(roomId) {
       setHasOlderMessages(true);
       setRoom(null);
       setMessages([]);
+      setPinnedMessageState(null);
 
       try {
-        const [roomData, messageData] = await Promise.all([
+        const [roomData, messageData, pinnedMessageData] = await Promise.all([
           getRoom(roomId),
           getRoomMessages(roomId, PAGE_SIZE),
+          getPinnedRoomMessage(roomId).catch(() => null),
         ]);
 
         if (!isMounted) return;
@@ -77,6 +85,7 @@ export default function useRoomBootstrap(roomId) {
 
         setRoom(roomData);
         setMessages(normalized);
+        setPinnedMessageState(pinnedMessageData || null);
         setHasOlderMessages(normalized.length >= PAGE_SIZE);
       } catch {
         if (!isMounted) return;
@@ -122,9 +131,14 @@ export default function useRoomBootstrap(roomId) {
     }
   }, [roomId, isLoadingOlder, hasOlderMessages, messages]);
 
-  const replaceMessages = useCallback((nextMessages) => {
+  const replaceMessages = useCallback((nextMessages, options = {}) => {
     const normalized = normalizeMessages(nextMessages);
     setMessages(normalized);
+    if (typeof options.hasOlderMessages === "boolean") {
+      setHasOlderMessages(options.hasOlderMessages);
+      return;
+    }
+
     setHasOlderMessages(normalized.length >= PAGE_SIZE);
   }, []);
 
@@ -180,6 +194,7 @@ export default function useRoomBootstrap(roomId) {
 
   const setPinnedMessage = useCallback((messageOrNull) => {
     const pinnedMessage = extractMessage(messageOrNull);
+    setPinnedMessageState(pinnedMessage?.id ? pinnedMessage : null);
 
     setMessages((prev) => {
       if (!pinnedMessage?.id) {
@@ -237,6 +252,7 @@ export default function useRoomBootstrap(roomId) {
   return {
     room,
     messages,
+    pinnedMessage,
     isLoadingRoom,
     isLoadingOlder,
     hasOlderMessages,

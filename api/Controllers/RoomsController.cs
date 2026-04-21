@@ -140,6 +140,27 @@ public sealed class RoomsController : ControllerBase
         }
     }
 
+    [HttpGet("{roomId:guid}/pinned-message")]
+    public async Task<IActionResult> GetPinnedMessage(Guid roomId)
+    {
+        var userIdValue =
+            User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+            User.FindFirstValue("sub");
+
+        if (!Guid.TryParse(userIdValue, out var userId))
+            return Unauthorized();
+
+        try
+        {
+            var message = await _chatService.GetPinnedMessageAsync(roomId, userId);
+            return Ok(message);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+    }
+
     [HttpGet("{roomId:guid}/messages/{messageId:guid}/context")]
     public async Task<IActionResult> GetMessageContext(
         Guid roomId,

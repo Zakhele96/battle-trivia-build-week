@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useRef } from "react";
 import ChatMessage from "./ChatMessage";
 
 function StreamStatusPill({ children }) {
@@ -93,12 +93,12 @@ function PinnedMessageBar({ message, onJumpToMessage, onUnpinMessage, isAdmin })
   if (!message) return null;
 
   return (
-    <div className="sticky top-0 z-[3] mb-3 rounded-[18px] border border-amber-400/15 bg-[linear-gradient(180deg,rgba(245,158,11,0.08),rgba(245,158,11,0.03))] px-4 py-3 shadow-[0_12px_28px_rgba(0,0,0,0.12)] backdrop-blur-md">
-      <div className="flex items-start justify-between gap-3">
+    <div className="sticky top-0 z-[3] mb-3 rounded-[18px] border border-amber-400/15 bg-[linear-gradient(180deg,rgba(245,158,11,0.08),rgba(245,158,11,0.03))] px-3 py-3 shadow-[0_12px_28px_rgba(0,0,0,0.12)] backdrop-blur-md sm:px-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <button
           type="button"
           onClick={() => onJumpToMessage?.(message.id)}
-          className="min-w-0 text-left"
+          className="min-w-0 flex-1 text-left"
         >
           <div className="text-[10px] font-medium uppercase tracking-[0.16em] text-amber-200/80">
             Pinned message
@@ -127,6 +127,7 @@ function PinnedMessageBar({ message, onJumpToMessage, onUnpinMessage, isAdmin })
 
 export default function ChatStream({
   messages,
+  pinnedMessage,
   currentUserId,
   currentUsername,
   error,
@@ -142,16 +143,12 @@ export default function ChatStream({
   onPinMessage,
   onUnpinMessage,
   onLoadOlder,
+  onRequestMessageFocus,
   hasOlderMessages = false,
   loadingOlder = false,
 }) {
   const messageCount = Array.isArray(messages) ? messages.length : 0;
   const messageRefs = useRef(new Map());
-
-  const pinnedMessage = useMemo(
-    () => (Array.isArray(messages) ? messages.find((m) => m.isPinned) || null : null),
-    [messages]
-  );
 
   const setMessageNodeRef = useCallback((messageId, node) => {
     if (!messageId) return;
@@ -167,13 +164,16 @@ export default function ChatStream({
     if (!messageId) return;
 
     const node = messageRefs.current.get(messageId);
-    if (!node) return;
+    if (!node) {
+      onRequestMessageFocus?.(messageId);
+      return;
+    }
 
     node.scrollIntoView({
       behavior: "smooth",
       block: "center",
     });
-  }, []);
+  }, [onRequestMessageFocus]);
 
   return (
     <div

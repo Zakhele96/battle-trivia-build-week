@@ -336,7 +336,7 @@ export default function ChatMessage({
   const canUnpinMessage = isAdmin && typeof onUnpinMessage === "function";
 
   const bubbleBase =
-    "inline-flex min-w-[8.5rem] max-w-[88%] sm:max-w-[80%] lg:max-w-[44rem] flex-col px-3 py-2.5 shadow-[0_8px_20px_rgba(0,0,0,0.14)] transition-all duration-200";
+    "inline-flex min-w-[8rem] max-w-[90%] sm:max-w-[80%] lg:max-w-[44rem] flex-col px-3 py-2.5 shadow-[0_8px_20px_rgba(0,0,0,0.14)] transition-all duration-200";
 
   const mineStyles = isMessageFromModerator
     ? "bg-[linear-gradient(180deg,rgba(88,101,242,1)_0%,rgba(64,78,237,1)_100%)] text-white ring-1 ring-violet-300/25"
@@ -444,7 +444,7 @@ export default function ChatMessage({
     <div
       ref={messageNodeRef}
       id={`message-${message.id}`}
-      className={`${groupedWithPrevious ? "mt-1" : "mt-3.5 sm:mt-4"} flex ${
+      className={`${groupedWithPrevious ? "mt-1" : "mt-3 sm:mt-4"} flex ${
         isMine ? "justify-end" : "justify-start"
       }`}
     >
@@ -460,8 +460,8 @@ export default function ChatMessage({
             setMenuOpen((prev) => !prev);
             setPickerOpen(false);
           }}
-          className={`absolute -top-2 z-10 rounded-full border border-white/10 bg-black/55 px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-neutral-400 opacity-100 backdrop-blur-sm transition hover:bg-black/75 hover:text-neutral-200 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100 ${
-            isMine ? "-left-2" : "-right-2"
+          className={`absolute -top-2 z-10 rounded-full border border-white/10 bg-black/65 px-2.5 py-1 text-[9px] uppercase tracking-[0.14em] text-neutral-300 opacity-100 backdrop-blur-sm transition hover:bg-black/75 hover:text-neutral-100 sm:px-2 sm:py-0.5 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100 ${
+            isMine ? "-left-1 sm:-left-2" : "-right-1 sm:-right-2"
           }`}
         >
           •••
@@ -557,7 +557,7 @@ export default function ChatMessage({
 
         {pickerOpen ? (
           <div
-            className={`absolute z-20 mt-2 flex gap-1 rounded-full border border-white/10 bg-neutral-900 px-2 py-1.5 shadow-xl shadow-black/30 ${
+            className={`absolute z-20 mt-2 flex max-w-[calc(100vw-2.5rem)] flex-wrap gap-1 rounded-[18px] border border-white/10 bg-neutral-900 px-2 py-1.5 shadow-xl shadow-black/30 ${
               isMine
                 ? "right-0 top-full"
                 : "left-0 top-full"
@@ -583,7 +583,7 @@ export default function ChatMessage({
           }`}
         >
           {!groupedWithPrevious ? (
-            <div className="mb-1.5 flex items-center gap-2">
+            <div className="mb-1.5 flex flex-wrap items-center gap-2">
               {!isMine ? (
                 <div
                   className={`text-[10px] font-medium tracking-[0.01em] ${

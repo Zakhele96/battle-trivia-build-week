@@ -293,6 +293,19 @@ function messageMentionsUsername(messageText, username) {
   return regex.test(messageText);
 }
 
+function deriveHasOlderMessagesFromContext(messages, targetMessageId, beforeCount) {
+  if (!Array.isArray(messages) || messages.length === 0 || !targetMessageId) {
+    return false;
+  }
+
+  const targetIndex = messages.findIndex((message) => message.id === targetMessageId);
+  if (targetIndex < 0) {
+    return messages.length > 0;
+  }
+
+  return targetIndex >= Math.max(1, beforeCount);
+}
+
 export default function RoomPage() {
   const { roomId } = useParams();
   const { user, token } = useAuth();
@@ -320,6 +333,7 @@ export default function RoomPage() {
 const {
   room,
   messages,
+  pinnedMessage,
   isLoadingRoom,
   isLoadingOlder,
   hasOlderMessages,
@@ -428,28 +442,87 @@ const {
     setMentionToasts((prev) => prev.filter((item) => item.id !== messageId));
   }, []);
 
-  const handleJumpToMentionMessage = useCallback(
-    async (messageId) => {
-      dismissMentionToast(messageId);
+  const focusMessageInStream = useCallback(
+    async (messageId, options = {}) => {
+      if (!messageId) return false;
 
-      requestAnimationFrame(() => {
+      const {
+        markMentionRead: shouldMarkMentionRead = false,
+        beforeCount = 25,
+        afterCount = 25,
+      } = options;
+
+      const scrollToMessage = async () => {
         const node = document.getElementById(`message-${messageId}`);
-        if (!node) return;
+        if (!node) return false;
 
         node.scrollIntoView({
           behavior: "smooth",
           block: "center",
         });
-      });
+
+        if (shouldMarkMentionRead) {
+          try {
+            await markMessageMentionRead(messageId);
+            await refreshMentionCounts();
+          } catch {
+            // ignore mention read sync errors
+          }
+        }
+
+        return true;
+      };
+
+      const existingNode = document.getElementById(`message-${messageId}`);
+      if (existingNode) {
+        await scrollToMessage();
+        return true;
+      }
+
+      if (!roomId || !room || !isChatRoom) {
+        return false;
+      }
 
       try {
-        await markMessageMentionRead(messageId);
-        await refreshMentionCounts();
+        const contextMessages = await getRoomMessageContext(
+          roomId,
+          messageId,
+          beforeCount,
+          afterCount
+        );
+
+        if (!Array.isArray(contextMessages) || contextMessages.length === 0) {
+          return false;
+        }
+
+        shouldAutoScrollRef.current = false;
+
+        setMessages(contextMessages, {
+          hasOlderMessages: deriveHasOlderMessagesFromContext(
+            contextMessages,
+            messageId,
+            beforeCount
+          ),
+        });
+
+        return await new Promise((resolve) => {
+          requestAnimationFrame(() => {
+            scrollToMessage().then(resolve);
+          });
+        });
       } catch {
-        // ignore mention read sync errors
+        return false;
       }
     },
-    [dismissMentionToast, refreshMentionCounts]
+    [isChatRoom, refreshMentionCounts, room, roomId, setMessages]
+  );
+
+  const handleJumpToMentionMessage = useCallback(
+    async (messageId) => {
+      dismissMentionToast(messageId);
+      await focusMessageInStream(messageId, { markMentionRead: true });
+    },
+    [dismissMentionToast, focusMessageInStream]
   );
 
   const handleLoadOlderMessages = useCallback(async () => {
@@ -631,38 +704,12 @@ const {
       let isMounted = true;
 
       async function loadTargetMentionContext() {
-        try {
-          const contextMessages = await getRoomMessageContext(
-            roomId,
-            targetMessageId,
-            25,
-            25
-          );
+        const focused = await focusMessageInStream(targetMessageId, {
+          markMentionRead: true,
+        });
 
-          if (!isMounted) return;
-
-          if (Array.isArray(contextMessages) && contextMessages.length > 0) {
-            setMessages(contextMessages);
-
-            requestAnimationFrame(async () => {
-              const node = document.getElementById(`message-${targetMessageId}`);
-              if (node) {
-                node.scrollIntoView({
-                  behavior: "smooth",
-                  block: "center",
-                });
-              }
-
-              try {
-                await markMessageMentionRead(targetMessageId);
-                await refreshMentionCounts();
-              } catch {
-                // ignore mention read sync errors
-              }
-            });
-          }
-        } catch {
-          // ignore context loading errors
+        if (!isMounted || focused) {
+          return;
         }
       }
 
@@ -671,7 +718,7 @@ const {
       return () => {
         isMounted = false;
       };
-    }, [roomId, room, isChatRoom, location.state, setMessages, refreshMentionCounts]);
+    }, [roomId, room, isChatRoom, location.state, focusMessageInStream]);
 
   useEffect(() => {
     let meta = document.querySelector('meta[name="theme-color"]');
@@ -1156,6 +1203,7 @@ const {
   const stream = (
    <ChatStream
       messages={messages}
+      pinnedMessage={pinnedMessage}
       currentUserId={user?.id}
       currentUsername={user?.username}
       error={displayError}
@@ -1163,6 +1211,7 @@ const {
       loadingOlder={isChatRoom ? isLoadingOlder : false}
       hasOlderMessages={isChatRoom ? hasOlderMessages : false}
       onLoadOlder={isChatRoom ? handleLoadOlderMessages : undefined}
+      onRequestMessageFocus={isChatRoom ? focusMessageInStream : undefined}
       containerRef={messagesContainerRef}
       onScroll={updateAutoScrollState}
       isAdmin={canModerateChat}

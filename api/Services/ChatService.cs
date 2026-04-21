@@ -42,6 +42,15 @@ public sealed class ChatService
         return await _messageRepository.GetRecentByRoomAsync(roomId, currentUserId, take);
     }
 
+    public async Task<ChatMessageResponse?> GetPinnedMessageAsync(Guid roomId, Guid currentUserId)
+    {
+        var room = await _roomRepository.GetByIdAsync(roomId);
+        if (room is null)
+            throw new KeyNotFoundException("Room not found.");
+
+        return await _messageRepository.GetPinnedByRoomAsync(roomId, currentUserId);
+    }
+
     public async Task<IEnumerable<ChatMessageResponse>> GetMessageContextAsync(
         Guid roomId,
         Guid messageId,
