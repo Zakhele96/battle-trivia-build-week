@@ -21,6 +21,7 @@ import {
   getMyRoomModerationState,
   getRoomMessageContext,
   markMessageMentionRead,
+  markRoomMentionsRead,
 } from "../api/roomsApi";
 import {
   deleteRoomMessage,
@@ -310,7 +311,7 @@ export default function RoomPage() {
   const { roomId } = useParams();
   const { user, token } = useAuth();
   const location = useLocation();
-  const { refreshMentionCounts } = useMentions();
+  const { clearRoomMentions, refreshMentionCounts } = useMentions();
 
   const [localError, setLocalError] = useState("");
   const [profileStats, setProfileStats] = useState(null);
@@ -329,6 +330,7 @@ export default function RoomPage() {
 
   const messagesContainerRef = useRef(null);
   const shouldAutoScrollRef = useRef(true);
+  const roomMentionSyncKeyRef = useRef("");
 
 const {
   room,
@@ -719,6 +721,41 @@ const {
         isMounted = false;
       };
     }, [roomId, room, isChatRoom, location.state, focusMessageInStream]);
+
+  useEffect(() => {
+    const targetMessageId = location.state?.targetMessageId;
+
+    if (!roomId || !room || !isChatRoom) {
+      roomMentionSyncKeyRef.current = "";
+      return;
+    }
+
+    if (targetMessageId) {
+      roomMentionSyncKeyRef.current = "";
+      return;
+    }
+
+    const syncKey = `${roomId}:room-open`;
+    if (roomMentionSyncKeyRef.current === syncKey) {
+      return;
+    }
+
+    roomMentionSyncKeyRef.current = syncKey;
+    clearRoomMentions(roomId);
+
+    markRoomMentionsRead(roomId).catch(() => {
+      refreshMentionCounts().catch(() => {
+        // ignore mention count re-sync errors after room-open read attempt
+      });
+    });
+  }, [
+    clearRoomMentions,
+    isChatRoom,
+    location.state,
+    refreshMentionCounts,
+    room,
+    roomId,
+  ]);
 
   useEffect(() => {
     let meta = document.querySelector('meta[name="theme-color"]');
@@ -1142,7 +1179,7 @@ const {
         className={`mx-auto w-full max-w-[68rem] ${
           shouldCompactMobileChrome
             ? "px-2 pt-2 pb-1.5"
-            : "px-2.5 pt-6 pb-2 sm:px-4 sm:py-3 lg:px-5"
+            : "px-2.5 pt-10.5 pb-2 sm:px-4 sm:py-3 lg:px-5"
         }`}
       >
         <div className="hidden sm:block">
