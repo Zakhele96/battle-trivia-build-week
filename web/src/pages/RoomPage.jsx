@@ -1362,7 +1362,9 @@ const {
           : "100dvh",
       }}
     >
-      <MobileFloatingRoomNav compact={shouldCompactMobileChrome} />
+      {!isKeyboardOpen ? (
+        <MobileFloatingRoomNav compact={shouldCompactMobileChrome} />
+      ) : null}
 
       <RoomShell
         sidebar={sidebar}
