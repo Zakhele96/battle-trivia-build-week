@@ -82,7 +82,7 @@ public sealed class ChatHub : Hub
                 category = activeRound.Category,
                 difficulty = activeRound.Difficulty,
                 roundNumber = activeRound.RoundNumber,
-                endsAt = activeRound.EndsAt
+                endsAt = activeRound.EndsAt.ToUniversalTime().ToString("O")
             });
         }
 
