@@ -150,9 +150,9 @@ export default function useRoomSoundEffects({
       if (!context || !isAudioUnlockedRef.current) return;
 
       const startTime = context.currentTime + 0.01;
-      const isUrgent = secondsRemaining <= 3;
+      const isFinalCue = secondsRemaining <= 1;
 
-      if (isUrgent) {
+      if (isFinalCue) {
         playLayeredTone(context, [
           {
             startTime,
