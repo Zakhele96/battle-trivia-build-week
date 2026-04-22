@@ -32,6 +32,7 @@ import {
   updateRoomSlowMode,
 } from "../api/roomModerationApi";
 import { useAuth } from "../hooks/useAuth";
+import useRoomSoundEffects from "../hooks/useRoomSoundEffects";
 import { useTheme } from "../hooks/useTheme";
 import useRoomBootstrap from "../hooks/useRoomBootstrap";
 import useRoomLiveState from "../hooks/useRoomLiveState";
@@ -619,6 +620,18 @@ const {
     onMessageReactionUpdated: handleMessageReactionUpdated,
     onMessagePinned: handleMessagePinned,
     onMessageUnpinned: handleMessageUnpinned,
+  });
+
+  useRoomSoundEffects({
+    isChatRoom,
+    isBattleTrivia,
+    isWordScramble,
+    currentRoundId,
+    timeLeft,
+    lastRoundPlacement,
+    mentionToasts,
+    wordScrambleState,
+    wordScrambleGuessFeedback,
   });
 
   const scramblePlayerRank = useMemo(() => {

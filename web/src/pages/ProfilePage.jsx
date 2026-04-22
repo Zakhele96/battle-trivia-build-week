@@ -11,6 +11,7 @@ import ProfileAchievementsCard from "../components/profile/ProfileAchievementsCa
 import ProfileProgressCard from "../components/profile/ProfileProgressCard";
 import AppTopBar from "../components/layout/AppTopBar";
 import AppSectionNav from "../components/layout/AppSectionNav";
+import { useSoundPreferences } from "../hooks/useSoundPreferences";
 import { useAuth } from "../hooks/useAuth";
 import { useTheme } from "../hooks/useTheme";
 
@@ -322,10 +323,94 @@ function ThemeCard({ themePreference, setThemePreference }) {
   );
 }
 
+function PreferenceToggle({
+  label,
+  description,
+  active,
+  onToggle,
+  accentClass = "border-blue-300/22 bg-blue-500/10",
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onToggle(!active)}
+      className={`w-full rounded-[16px] border px-4 py-3 text-left transition ${
+        active
+          ? accentClass
+          : "border-white/10 bg-white/[0.03] hover:border-white/15 hover:bg-white/[0.05]"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-sm font-medium text-white">{label}</div>
+          <div className="mt-1 text-[12px] leading-5 text-neutral-400">
+            {description}
+          </div>
+        </div>
+
+        <div
+          className={`mt-0.5 h-5 w-5 shrink-0 rounded-full border ${
+            active
+              ? "border-blue-300/30 bg-blue-400/18"
+              : "border-white/12 bg-white/[0.03]"
+          }`}
+        >
+          <div
+            className={`m-auto mt-[3px] h-2.5 w-2.5 rounded-full ${
+              active ? "bg-blue-100" : "bg-transparent"
+            }`}
+          />
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function SoundCard({
+  soundEffectsEnabled,
+  timerWarningsEnabled,
+  setSoundEffectsEnabled,
+  setTimerWarningsEnabled,
+}) {
+  return (
+    <div className="rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-4 sm:rounded-[24px] sm:p-5">
+      <div className="mb-4">
+        <div className="text-sm font-semibold text-white">Sound</div>
+        <div className="mt-1 text-sm text-neutral-400">
+          Keep game feedback lively with local sound cues that only play on your
+          device.
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <PreferenceToggle
+          label="Sound effects"
+          description="Play a soft chime when you answer correctly in Battle Trivia or solve a Word Scramble round."
+          active={soundEffectsEnabled}
+          onToggle={setSoundEffectsEnabled}
+        />
+
+        <PreferenceToggle
+          label="Timer warnings"
+          description="Play subtle end-of-round cues in the final seconds so you can react faster on mobile."
+          active={timerWarningsEnabled}
+          onToggle={setTimerWarningsEnabled}
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function ProfilePage() {
   const navigate = useNavigate();
   const { logout, user: authUser } = useAuth();
   const { themePreference, setThemePreference, resolvedTheme } = useTheme();
+  const {
+    soundEffectsEnabled,
+    timerWarningsEnabled,
+    setSoundEffectsEnabled,
+    setTimerWarningsEnabled,
+  } = useSoundPreferences();
 
   const [profile, setProfile] = useState(null);
   const [progression, setProgression] = useState(null);
@@ -686,6 +771,12 @@ const isGoogleAccount = loginProvider === "google";
                     themePreference={themePreference}
                     setThemePreference={setThemePreference}
                   />
+                  <SoundCard
+                    soundEffectsEnabled={soundEffectsEnabled}
+                    timerWarningsEnabled={timerWarningsEnabled}
+                    setSoundEffectsEnabled={setSoundEffectsEnabled}
+                    setTimerWarningsEnabled={setTimerWarningsEnabled}
+                  />
                 </div>
               ) : (
                 <div className="grid gap-4">
@@ -693,6 +784,12 @@ const isGoogleAccount = loginProvider === "google";
                   <ThemeCard
                     themePreference={themePreference}
                     setThemePreference={setThemePreference}
+                  />
+                  <SoundCard
+                    soundEffectsEnabled={soundEffectsEnabled}
+                    timerWarningsEnabled={timerWarningsEnabled}
+                    setSoundEffectsEnabled={setSoundEffectsEnabled}
+                    setTimerWarningsEnabled={setTimerWarningsEnabled}
                   />
                 </div>
               )}
