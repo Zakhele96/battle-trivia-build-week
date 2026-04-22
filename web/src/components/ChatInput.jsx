@@ -273,7 +273,11 @@ export default function ChatInput({
         onSelect={applyMention}
       />
 
-      <form onSubmit={submit} className="flex items-end gap-2 sm:gap-3">
+      <form
+        onSubmit={submit}
+        autoComplete="off"
+        className="flex items-end gap-2 sm:gap-3"
+      >
         <div className="group relative flex-1">
           <div className="pointer-events-none absolute inset-0 rounded-[24px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_58%)]" />
 
@@ -291,6 +295,8 @@ export default function ChatInput({
 
               <input
                 ref={inputRef}
+                id="chat-message-input"
+                name="chatMessage"
                 value={text}
                 onChange={(e) => {
                   setText(e.target.value);
@@ -302,9 +308,14 @@ export default function ChatInput({
                 onKeyDown={handleKeyDown}
                 placeholder={placeholder}
                 disabled={disabled || isSending}
+                autoComplete="off"
                 autoCapitalize="sentences"
                 autoCorrect="on"
                 spellCheck
+                autoSave="off"
+                data-form-type="other"
+                data-lpignore="true"
+                data-1p-ignore="true"
                 enterKeyHint="send"
                 inputMode="text"
                 className="h-full w-full bg-transparent text-[16px] text-white outline-none placeholder:text-neutral-500 disabled:cursor-not-allowed disabled:opacity-60 sm:text-[15px]"
