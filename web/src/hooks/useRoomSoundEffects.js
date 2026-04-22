@@ -45,6 +45,7 @@ export default function useRoomSoundEffects({
   isBattleTrivia,
   isWordScramble,
   currentRoundId,
+  roundEndsAt,
   timeLeft,
   lastRoundPlacement,
   mentionToasts,
@@ -247,22 +248,46 @@ export default function useRoomSoundEffects({
 
   useEffect(() => {
     if (!soundEffectsEnabled || !timerWarningsEnabled) return;
+    if (!isBattleTrivia || !currentRoundId || !roundEndsAt) return;
 
-    const warningSeconds =
-      timeLeft === 5 || timeLeft === 3 || timeLeft === 1 ? timeLeft : null;
-    if (!isBattleTrivia || !currentRoundId || !warningSeconds) return;
+    const endsAtMs =
+      roundEndsAt instanceof Date
+        ? roundEndsAt.getTime()
+        : new Date(roundEndsAt).getTime();
 
-    const key = `battle-timer:${currentRoundId}:${warningSeconds}`;
-    if (playedTimerCueKeysRef.current.has(key)) return;
+    if (!Number.isFinite(endsAtMs)) return;
 
-    playedTimerCueKeysRef.current.add(key);
-    playTimerWarning(warningSeconds);
+    const warningSeconds = [5, 3, 1];
+    const timerIds = [];
+
+    warningSeconds.forEach((secondsRemaining) => {
+      const key = `battle-timer:${currentRoundId}:${secondsRemaining}`;
+      if (playedTimerCueKeysRef.current.has(key)) return;
+
+      const fireAtMs = endsAtMs - secondsRemaining * 1000;
+      const delayMs = fireAtMs - Date.now();
+
+      if (delayMs <= 0) return;
+
+      const timerId = window.setTimeout(() => {
+        if (playedTimerCueKeysRef.current.has(key)) return;
+
+        playedTimerCueKeysRef.current.add(key);
+        playTimerWarning(secondsRemaining);
+      }, delayMs);
+
+      timerIds.push(timerId);
+    });
+
+    return () => {
+      timerIds.forEach((timerId) => window.clearTimeout(timerId));
+    };
   }, [
     currentRoundId,
     isBattleTrivia,
     playTimerWarning,
+    roundEndsAt,
     soundEffectsEnabled,
-    timeLeft,
     timerWarningsEnabled,
   ]);
 

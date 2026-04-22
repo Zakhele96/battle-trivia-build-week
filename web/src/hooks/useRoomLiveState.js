@@ -792,6 +792,7 @@ export default function useRoomLiveState({
     currentQuestion,
     currentRoundId,
     currentRoundNumber,
+    roundEndsAt,
     timeLeft,
     correctAnswer,
     roundWinners,
