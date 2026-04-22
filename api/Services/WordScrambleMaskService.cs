@@ -58,41 +58,38 @@ public sealed class WordScrambleMaskService
         if (revealable.Count <= 2)
             return revealable;
 
+        // Reveal inner letters first so the opening and closing letters stay hidden longer.
+        var interior = revealable.Skip(1).Take(Math.Max(0, revealable.Count - 2)).ToList();
         var ordered = new List<int>();
-        var used = new HashSet<int>();
 
-        void AddIndex(int index)
+        var left = interior.Count / 2;
+        var right = left + 1;
+
+        if (interior.Count % 2 == 1)
         {
-            if (index < 0 || index >= value.Length)
-                return;
+            ordered.Add(interior[left]);
+            left--;
+        }
 
-            if (!char.IsLetterOrDigit(value[index]))
-                return;
-
-            if (used.Add(index))
+        while (left >= 0 || right < interior.Count)
+        {
+            if (right < interior.Count)
             {
-                ordered.Add(index);
+                ordered.Add(interior[right]);
+                right++;
+            }
+
+            if (left >= 0)
+            {
+                ordered.Add(interior[left]);
+                left--;
             }
         }
 
-        var first = revealable.First();
-        var last = revealable.Last();
-        var middle = revealable[revealable.Count / 2];
-        var quarter = revealable[revealable.Count / 4];
-        var threeQuarter = revealable[(revealable.Count * 3) / 4];
+        ordered.Add(revealable.First());
+        ordered.Add(revealable.Last());
 
-        AddIndex(first);
-        AddIndex(last);
-        AddIndex(middle);
-        AddIndex(quarter);
-        AddIndex(threeQuarter);
-
-        foreach (var index in revealable)
-        {
-            AddIndex(index);
-        }
-
-        return ordered;
+        return ordered.Distinct().ToList();
     }
 
     private static int GetInitialRevealCount(int length)
@@ -100,7 +97,7 @@ public sealed class WordScrambleMaskService
         if (length <= 2)
             return length;
 
-        return Math.Min(length, Math.Max(3, (int)Math.Ceiling(length * 0.35)));
+        return Math.Min(length, Math.Max(2, (int)Math.Ceiling(length * 0.22)));
     }
 
     private static int GetReveal20Count(int length, int initialRevealCount)
@@ -108,7 +105,7 @@ public sealed class WordScrambleMaskService
         if (length <= initialRevealCount)
             return length;
 
-        return Math.Min(length, Math.Max(initialRevealCount + 1, (int)Math.Ceiling(length * 0.6)));
+        return Math.Min(length, Math.Max(initialRevealCount + 1, (int)Math.Ceiling(length * 0.4)));
     }
 
     private static int GetReveal10Count(int length, int reveal20Count)
@@ -117,9 +114,10 @@ public sealed class WordScrambleMaskService
             return length;
 
         if (length <= 4)
-            return length;
+            return Math.Min(length, reveal20Count + 1);
 
-        return Math.Min(length, Math.Max(reveal20Count + 1, length - 1));
+        // Keep the final moments challenging; do not reveal the full outline of the word.
+        return Math.Min(length, Math.Max(reveal20Count + 1, (int)Math.Ceiling(length * 0.58)));
     }
 
     private static string BuildMask(string display, HashSet<int> revealedIndexes)

@@ -15,6 +15,7 @@ public sealed class WordScrambleStateDto
     public DateTime? StartsAt { get; set; }
     public DateTime? EndsAt { get; set; }
     public int TimeLeft { get; set; }
+    public WordScramblePlayerStatsDto? PlayerStats { get; set; }
 
     public IReadOnlyList<WordScrambleLeaderboardRowDto> Winners { get; set; } =
         Array.Empty<WordScrambleLeaderboardRowDto>();

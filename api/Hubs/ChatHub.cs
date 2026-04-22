@@ -98,7 +98,15 @@ public sealed class ChatHub : Hub
         var sessionStatus = await _battleTriviaSessionStatusService.GetRoomStatusAsync(roomId);
         await Clients.Caller.SendAsync("SessionStatusUpdated", sessionStatus);
 
-        var wordScrambleState = await _wordScrambleStateService.GetRoomStateAsync(roomId);
+        Guid? currentWordScrambleUserId = null;
+        if (Guid.TryParse(Context.UserIdentifier, out var parsedWordScrambleUserId))
+        {
+            currentWordScrambleUserId = parsedWordScrambleUserId;
+        }
+
+        var wordScrambleState = await _wordScrambleStateService.GetRoomStateAsync(
+            roomId,
+            currentWordScrambleUserId);
         await Clients.Caller.SendAsync("WordScrambleStateChanged", wordScrambleState);
 
         var wordScrambleStatus = await _wordScrambleSessionStatusService.GetRoomStatusAsync(roomId);
@@ -347,6 +355,7 @@ public sealed class ChatHub : Hub
                 roundId = result.RoundId,
                 submittedAnswer = result.SubmittedAnswer,
                 normalizedAnswer = result.NormalizedAnswer,
+                playerStats = result.PlayerStats,
                 wrongAttemptsUsed = result.WrongAttemptsUsed,
                 wrongAttemptsLeft = result.WrongAttemptsLeft,
                 maxWrongAttempts = result.MaxWrongAttempts
@@ -361,6 +370,7 @@ public sealed class ChatHub : Hub
                 roundId = result.RoundId,
                 submittedAnswer = result.SubmittedAnswer,
                 normalizedAnswer = result.NormalizedAnswer,
+                playerStats = result.PlayerStats,
                 wrongAttemptsUsed = result.WrongAttemptsUsed,
                 wrongAttemptsLeft = result.WrongAttemptsLeft,
                 maxWrongAttempts = result.MaxWrongAttempts
@@ -378,6 +388,7 @@ public sealed class ChatHub : Hub
                 roundId = result.RoundId,
                 submittedAnswer = result.SubmittedAnswer,
                 normalizedAnswer = result.NormalizedAnswer,
+                playerStats = result.PlayerStats,
                 wrongAttemptsUsed = result.WrongAttemptsUsed,
                 wrongAttemptsLeft = result.WrongAttemptsLeft,
                 maxWrongAttempts = result.MaxWrongAttempts
@@ -392,6 +403,7 @@ public sealed class ChatHub : Hub
                 roundId = result.RoundId,
                 submittedAnswer = result.SubmittedAnswer,
                 normalizedAnswer = result.NormalizedAnswer,
+                playerStats = result.PlayerStats,
                 wrongAttemptsUsed = result.WrongAttemptsUsed,
                 wrongAttemptsLeft = result.WrongAttemptsLeft,
                 maxWrongAttempts = result.MaxWrongAttempts
@@ -408,7 +420,8 @@ public sealed class ChatHub : Hub
                 message = result.Message,
                 roundId = result.RoundId,
                 submittedAnswer = result.SubmittedAnswer,
-                normalizedAnswer = result.NormalizedAnswer
+                normalizedAnswer = result.NormalizedAnswer,
+                playerStats = result.PlayerStats
             });
 
             return new
@@ -419,7 +432,8 @@ public sealed class ChatHub : Hub
                 message = result.Message,
                 roundId = result.RoundId,
                 submittedAnswer = result.SubmittedAnswer,
-                normalizedAnswer = result.NormalizedAnswer
+                normalizedAnswer = result.NormalizedAnswer,
+                playerStats = result.PlayerStats
             };
         }
 
@@ -450,12 +464,17 @@ public sealed class ChatHub : Hub
             submittedAnswer = result.SubmittedAnswer,
             normalizedAnswer = result.NormalizedAnswer,
             pointsAwarded = result.PointsAwarded,
-            correctRank = result.CorrectRank
+            correctRank = result.CorrectRank,
+            solveSeconds = result.SolveSeconds,
+            playerStats = result.PlayerStats
         });
 
         var updatedState = await _wordScrambleStateService.GetRoomStateAsync(roomId);
-        await Clients.Group(roomId.ToString())
+        await Clients.OthersInGroup(roomId.ToString())
             .SendAsync("WordScrambleStateChanged", updatedState);
+
+        var callerState = await _wordScrambleStateService.GetRoomStateAsync(roomId, userId);
+        await Clients.Caller.SendAsync("WordScrambleStateChanged", callerState);
 
         var updatedStatus = await _wordScrambleSessionStatusService.GetRoomStatusAsync(roomId);
         await Clients.Group(roomId.ToString())
@@ -471,7 +490,9 @@ public sealed class ChatHub : Hub
             submittedAnswer = result.SubmittedAnswer,
             normalizedAnswer = result.NormalizedAnswer,
             pointsAwarded = result.PointsAwarded,
-            correctRank = result.CorrectRank
+            correctRank = result.CorrectRank,
+            solveSeconds = result.SolveSeconds,
+            playerStats = result.PlayerStats
         };
     }
 }

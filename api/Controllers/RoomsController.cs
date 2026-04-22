@@ -226,7 +226,17 @@ public sealed class RoomsController : ControllerBase
     [HttpGet("{roomId:guid}/word-scramble-state")]
     public async Task<ActionResult<WordScrambleStateDto>> GetWordScrambleState(Guid roomId)
     {
-        var state = await _wordScrambleStateService.GetRoomStateAsync(roomId);
+        Guid? userId = null;
+        var userIdValue =
+            User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+            User.FindFirstValue("sub");
+
+        if (Guid.TryParse(userIdValue, out var parsedUserId))
+        {
+            userId = parsedUserId;
+        }
+
+        var state = await _wordScrambleStateService.GetRoomStateAsync(roomId, userId);
         return Ok(state);
     }
 

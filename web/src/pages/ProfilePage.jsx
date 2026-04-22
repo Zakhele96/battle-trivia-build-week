@@ -77,6 +77,49 @@ function StatCard({ label, value }) {
   );
 }
 
+function GameBreakdownCard({
+  eyebrow,
+  title,
+  description,
+  accent = "blue",
+  stats = [],
+}) {
+  const accentClass =
+    accent === "violet"
+      ? "border-violet-400/18 bg-violet-500/10 text-violet-200"
+      : "border-blue-400/18 bg-blue-500/10 text-blue-200";
+
+  return (
+    <div className="rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-4 sm:rounded-[24px] sm:p-5">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
+            {eyebrow}
+          </div>
+          <div className="mt-1.5 text-[18px] font-semibold tracking-[-0.03em] text-white">
+            {title}
+          </div>
+          <div className="mt-1 text-[12px] leading-5 text-neutral-400">
+            {description}
+          </div>
+        </div>
+
+        <div
+          className={`rounded-full border px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] ${accentClass}`}
+        >
+          Stats
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        {stats.map((item) => (
+          <StatCard key={item.label} label={item.label} value={item.value} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function EmptyBlock({ message }) {
   return (
     <div className="rounded-[18px] border border-white/8 bg-white/[0.03] px-4 py-6 text-sm text-neutral-500">
@@ -559,7 +602,7 @@ const isGoogleAccount = loginProvider === "google";
               <SectionHeader
                 eyebrow="Stats"
                 title="All-time numbers"
-                description="A compact view of your long-term performance."
+                description="A compact cross-account snapshot without repeating the full game breakdown below."
                 action={
                   <Link
                     to="/leaderboards?mode=combined&period=current"
@@ -573,12 +616,12 @@ const isGoogleAccount = loginProvider === "google";
 
               <div className="grid grid-cols-2 gap-3">
                 <StatCard
-                  label="Correct answers"
+                  label="Battle Trivia correct"
                   value={stats.totalCorrectAnswers ?? 0}
                 />
                 <StatCard
-                  label="Best streak"
-                  value={`x${stats.bestStreak ?? 0}`}
+                  label="Word Scramble correct"
+                  value={stats.wordScrambleCorrectAnswers ?? 0}
                 />
                 <StatCard
                   label="Weekly wins"
@@ -587,6 +630,58 @@ const isGoogleAccount = loginProvider === "google";
                 <StatCard
                   label="Fastest correct"
                   value={formatFastest(stats.fastestCorrectAnswerMs)}
+                />
+              </div>
+            </section>
+
+            <section>
+              <SectionHeader
+                eyebrow="Games"
+                title="Game breakdown"
+                description="Separate cards keep Battle Trivia and Word Scramble stats tidy."
+              />
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <GameBreakdownCard
+                  eyebrow="Battle Trivia"
+                  title="Performance"
+                  description="Your long-term Battle Trivia profile."
+                  accent="blue"
+                  stats={[
+                    {
+                      label: "Correct answers",
+                      value: stats.totalCorrectAnswers ?? 0,
+                    },
+                    {
+                      label: "Best streak",
+                      value: `x${stats.bestStreak ?? 0}`,
+                    },
+                    {
+                      label: "Weekly wins",
+                      value: stats.weeklyWins ?? 0,
+                    },
+                    {
+                      label: "Fastest correct",
+                      value: formatFastest(stats.fastestCorrectAnswerMs),
+                    },
+                  ]}
+                />
+
+                <GameBreakdownCard
+                  eyebrow="Word Scramble"
+                  title="Performance"
+                  description="Your all-time correct solves in Word Scramble."
+                  accent="violet"
+                  stats={[
+                    {
+                      label: "Correct answers",
+                      value: stats.wordScrambleCorrectAnswers ?? 0,
+                    },
+                    {
+                      label: "Mode",
+                      value: "Word Scramble",
+                    },
+                  ]}
                 />
               </div>
             </section>

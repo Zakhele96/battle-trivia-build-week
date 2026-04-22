@@ -185,4 +185,69 @@ public sealed class WordScrambleAnswerRepository : IWordScrambleAnswerRepository
 
         return rows.ToList();
     }
+
+    public async Task<WordScramblePlayerStatsDto> GetPlayerStatsAsync(Guid sessionId, Guid userId)
+    {
+        const string sql = """
+            WITH correct_answers AS (
+                SELECT
+                    r.round_number,
+                    EXTRACT(EPOCH FROM (a.submitted_at - r.starts_at))::double precision AS solve_seconds
+                FROM word_scramble_answers a
+                INNER JOIN word_scramble_rounds r
+                    ON r.id = a.round_id
+                WHERE r.session_id = @SessionId
+                  AND a.user_id = @UserId
+                  AND a.is_correct = TRUE
+            ),
+            streak_rows AS (
+                SELECT
+                    round_number,
+                    round_number - ROW_NUMBER() OVER (ORDER BY round_number) AS grp
+                FROM correct_answers
+            ),
+            streak_lengths AS (
+                SELECT COUNT(*)::int AS streak_len
+                FROM streak_rows
+                GROUP BY grp
+            ),
+            current_streak_rows AS (
+                SELECT
+                    round_number,
+                    ROW_NUMBER() OVER (ORDER BY round_number DESC) AS seq
+                FROM correct_answers
+            )
+            SELECT
+                COALESCE((SELECT COUNT(*)::int FROM correct_answers), 0) AS CorrectAnswers,
+                COALESCE((SELECT MAX(streak_len) FROM streak_lengths), 0) AS BestStreak,
+                COALESCE((
+                    SELECT COUNT(*)::int
+                    FROM current_streak_rows
+                    WHERE round_number = (
+                        SELECT MAX(round_number) FROM correct_answers
+                    ) - (seq - 1)
+                ), 0) AS CurrentStreak,
+                (
+                    SELECT ROUND(MIN(solve_seconds)::numeric, 2)::double precision
+                    FROM correct_answers
+                ) AS FastestSolveSeconds,
+                (
+                    SELECT ROUND(AVG(solve_seconds)::numeric, 2)::double precision
+                    FROM correct_answers
+                ) AS AverageSolveSeconds,
+                (
+                    SELECT ROUND(solve_seconds::numeric, 2)::double precision
+                    FROM correct_answers
+                    ORDER BY round_number DESC
+                    LIMIT 1
+                ) AS LatestSolveSeconds;
+            """;
+
+        using var connection = _context.CreateConnection();
+        return await connection.QuerySingleAsync<WordScramblePlayerStatsDto>(sql, new
+        {
+            SessionId = sessionId,
+            UserId = userId
+        });
+    }
 }

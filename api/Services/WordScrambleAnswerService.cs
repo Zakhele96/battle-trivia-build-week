@@ -267,6 +267,9 @@ public sealed class WordScrambleAnswerService
                 var correctRank = currentCorrectCount + 1;
                 var points = GetPointsForRank(correctRank);
                 var submittedAtUtc = DateTime.UtcNow;
+                var solveSeconds = Math.Max(
+                    0,
+                    Math.Round((submittedAtUtc - activeRound.StartsAt).TotalSeconds, 2));
 
                 var answer = new WordScrambleAnswer
                 {
@@ -300,6 +303,9 @@ public sealed class WordScrambleAnswerService
 
                 var progressionResult = await _progressionService.EvaluateAndAwardAsync(userId);
                 await _progressionRealtimeService.NotifyAsync(userId, progressionResult);
+                var playerStats = await _answerRepository.GetPlayerStatsAsync(
+                    activeRound.SessionId,
+                    userId);
 
                 return new SubmitWordScrambleGuessResultDto
                 {
@@ -314,7 +320,9 @@ public sealed class WordScrambleAnswerService
                     NormalizedAnswer = normalizedAnswer,
                     CorrectRank = correctRank,
                     PointsAwarded = points,
-                    Message = $"{displayName} got {points} points!"
+                    SolveSeconds = solveSeconds,
+                    PlayerStats = playerStats,
+                    Message = $"{displayName} got {points} points in {solveSeconds:0.##}s!"
                 };
             }
             catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.UniqueViolation)

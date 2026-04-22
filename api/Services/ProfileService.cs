@@ -29,6 +29,24 @@ public sealed class ProfileService
             return null;
 
         var stats = await _battleTriviaProfileStatsService.GetForUserAsync(userId);
+        const string wordScrambleCorrectSql = """
+            SELECT COUNT(*)::int
+            FROM word_scramble_answers a
+            INNER JOIN word_scramble_rounds r
+                ON r.id = a.round_id
+            INNER JOIN word_scramble_sessions s
+                ON s.id = r.session_id
+            INNER JOIN rooms ro
+                ON ro.id = s.room_id
+            WHERE a.user_id = @UserId
+              AND a.is_correct = TRUE
+              AND ro.slug = 'word-scramble';
+            """;
+
+        using var connection = _context.CreateConnection();
+        var wordScrambleCorrectAnswers = await connection.ExecuteScalarAsync<int>(
+            wordScrambleCorrectSql,
+            new { UserId = userId });
 
         return new ProfileMeResponse
         {
@@ -40,6 +58,7 @@ public sealed class ProfileService
             Stats = new ProfileStatsResponse
             {
                 TotalCorrectAnswers = stats.TotalCorrectAnswers,
+                WordScrambleCorrectAnswers = wordScrambleCorrectAnswers,
                 BestStreak = stats.BestStreak,
                 WeeklyWins = stats.WeeklyWins,
                 FastestCorrectAnswerMs = stats.FastestCorrectAnswerMs

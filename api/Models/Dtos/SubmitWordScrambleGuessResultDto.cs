@@ -21,6 +21,8 @@ public sealed class SubmitWordScrambleGuessResultDto
     public int WrongAttemptsUsed { get; set; }
     public int WrongAttemptsLeft { get; set; }
     public int MaxWrongAttempts { get; set; }
+    public double? SolveSeconds { get; set; }
+    public WordScramblePlayerStatsDto? PlayerStats { get; set; }
 
     public string Message { get; set; } = string.Empty;
 }

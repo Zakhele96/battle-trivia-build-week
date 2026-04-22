@@ -22,7 +22,7 @@ public sealed class WordScrambleStateService
         _leaderboardRepository = leaderboardRepository;
     }
 
-    public async Task<WordScrambleStateDto> GetRoomStateAsync(Guid roomId)
+    public async Task<WordScrambleStateDto> GetRoomStateAsync(Guid roomId, Guid? userId = null)
     {
         var session = await _sessionRepository.GetActiveByRoomIdAsync(roomId);
         if (session is null)
@@ -68,6 +68,9 @@ public sealed class WordScrambleStateService
             : Array.Empty<WordScrambleLeaderboardRowDto>();
 
         var leaderboard = await _leaderboardRepository.GetSessionLeaderboardAsync(session.Id, 10);
+        var playerStats = userId.HasValue
+            ? await _answerRepository.GetPlayerStatsAsync(session.Id, userId.Value)
+            : null;
 
         return new WordScrambleStateDto
         {
@@ -86,6 +89,7 @@ public sealed class WordScrambleStateService
             StartsAt = latestRound.StartsAt,
             EndsAt = latestRound.EndsAt,
             TimeLeft = timeLeft,
+            PlayerStats = playerStats,
             Winners = winners,
             Leaderboard = leaderboard
         };

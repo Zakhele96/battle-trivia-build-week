@@ -28,4 +28,5 @@ public interface IWordScrambleAnswerRepository
         DbTransaction? transaction = null);
 
     Task<IReadOnlyList<WordScrambleLeaderboardRowDto>> GetRoundWinnersAsync(Guid roundId, int take = 5);
+    Task<WordScramblePlayerStatsDto> GetPlayerStatsAsync(Guid sessionId, Guid userId);
 }

@@ -94,6 +94,17 @@ export default function useRoomLiveState({
     (payload, forceRejected = false) => {
       if (!payload) return;
 
+      if (payload?.playerStats) {
+        setWordScrambleState((prev) =>
+          prev
+            ? {
+                ...prev,
+                playerStats: payload.playerStats,
+              }
+            : prev
+        );
+      }
+
       if (forceRejected || payload.success === false) {
         setWordScrambleGuessFeedback({
           ...payload,
@@ -537,7 +548,14 @@ export default function useRoomLiveState({
 
     connection.on("WordScrambleStateChanged", (payload) => {
       if (isCancelled) return;
-      setWordScrambleState(payload || null);
+      setWordScrambleState((prev) => {
+        if (!payload) return null;
+
+        return {
+          ...payload,
+          playerStats: payload.playerStats ?? prev?.playerStats ?? null,
+        };
+      });
     });
 
     connection.on("WordScrambleSessionStatusChanged", (payload) => {
@@ -655,7 +673,15 @@ export default function useRoomLiveState({
           if (isCancelled) return;
 
           setWordScrambleStatus(scrambleStatus);
-          setWordScrambleState(scrambleState);
+          setWordScrambleState((prev) =>
+            scrambleState
+              ? {
+                  ...scrambleState,
+                  playerStats:
+                    scrambleState.playerStats ?? prev?.playerStats ?? null,
+                }
+              : null
+          );
         }
       } catch {}
     }
