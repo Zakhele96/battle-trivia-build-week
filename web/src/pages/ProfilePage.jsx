@@ -12,6 +12,7 @@ import ProfileProgressCard from "../components/profile/ProfileProgressCard";
 import AppTopBar from "../components/layout/AppTopBar";
 import AppSectionNav from "../components/layout/AppSectionNav";
 import { useAuth } from "../hooks/useAuth";
+import { useTheme } from "../hooks/useTheme";
 
 function formatFastest(ms) {
   if (typeof ms !== "number") return "—";
@@ -246,9 +247,85 @@ function SignInMethodCard({ isGoogleAccount }) {
   );
 }
 
+function ThemeCard({ themePreference, setThemePreference }) {
+  const options = [
+    {
+      value: "system",
+      label: "Follow device",
+      description: "Switch automatically with your phone or desktop theme.",
+    },
+    {
+      value: "dark",
+      label: "Dark",
+      description: "Keep the current dark look everywhere.",
+    },
+    {
+      value: "light",
+      label: "Light",
+      description: "Use the lighter app appearance.",
+    },
+  ];
+
+  return (
+    <div className="rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-4 sm:rounded-[24px] sm:p-5">
+      <div className="mb-4">
+        <div className="text-sm font-semibold text-white">Theme</div>
+        <div className="mt-1 text-sm text-neutral-400">
+          Choose how the app should look for you.
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        {options.map((option) => {
+          const active = themePreference === option.value;
+
+          return (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => setThemePreference(option.value)}
+              className={`w-full rounded-[16px] border px-4 py-3 text-left transition ${
+                active
+                  ? "border-blue-300/22 bg-blue-500/10"
+                  : "border-white/10 bg-white/[0.03] hover:border-white/15 hover:bg-white/[0.05]"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-sm font-medium text-white">
+                    {option.label}
+                  </div>
+                  <div className="mt-1 text-[12px] leading-5 text-neutral-400">
+                    {option.description}
+                  </div>
+                </div>
+
+                <div
+                  className={`mt-0.5 h-5 w-5 shrink-0 rounded-full border ${
+                    active
+                      ? "border-blue-300/30 bg-blue-400/18"
+                      : "border-white/12 bg-white/[0.03]"
+                  }`}
+                >
+                  <div
+                    className={`m-auto mt-[3px] h-2.5 w-2.5 rounded-full ${
+                      active ? "bg-blue-100" : "bg-transparent"
+                    }`}
+                  />
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function ProfilePage() {
   const navigate = useNavigate();
   const { logout, user: authUser } = useAuth();
+  const { themePreference, setThemePreference } = useTheme();
 
   const [profile, setProfile] = useState(null);
   const [progression, setProgression] = useState(null);
@@ -552,47 +629,60 @@ const isGoogleAccount = loginProvider === "google";
               />
 
               {!isGoogleAccount ? (
-                <div className="rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-4 sm:rounded-[24px] sm:p-5">
-                  <div className="mb-4 text-sm font-semibold text-white">
-                    Change password
+                <div className="grid gap-4">
+                  <div className="rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-4 sm:rounded-[24px] sm:p-5">
+                    <div className="mb-4 text-sm font-semibold text-white">
+                      Change password
+                    </div>
+
+                    <form onSubmit={handleChangePassword} className="space-y-4">
+                      <input
+                        type="password"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        placeholder="Current password"
+                        className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none focus:border-blue-400/20"
+                      />
+
+                      <input
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="New password"
+                        className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none focus:border-blue-400/20"
+                      />
+
+                      <input
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Confirm new password"
+                        className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none focus:border-blue-400/20"
+                      />
+
+                      <button
+                        type="submit"
+                        disabled={isSavingPassword}
+                        className="rounded-[16px] bg-white/[0.08] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.12] disabled:opacity-60"
+                      >
+                        {isSavingPassword ? "Updating..." : "Update password"}
+                      </button>
+                    </form>
                   </div>
 
-                  <form onSubmit={handleChangePassword} className="space-y-4">
-                    <input
-                      type="password"
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
-                      placeholder="Current password"
-                      className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none focus:border-blue-400/20"
-                    />
-
-                    <input
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="New password"
-                      className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none focus:border-blue-400/20"
-                    />
-
-                    <input
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Confirm new password"
-                      className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none focus:border-blue-400/20"
-                    />
-
-                    <button
-                      type="submit"
-                      disabled={isSavingPassword}
-                      className="rounded-[16px] bg-white/[0.08] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.12] disabled:opacity-60"
-                    >
-                      {isSavingPassword ? "Updating..." : "Update password"}
-                    </button>
-                  </form>
+                  <ThemeCard
+                    themePreference={themePreference}
+                    setThemePreference={setThemePreference}
+                  />
                 </div>
               ) : (
-                <SignInMethodCard isGoogleAccount={isGoogleAccount} />
+                <div className="grid gap-4">
+                  <SignInMethodCard isGoogleAccount={isGoogleAccount} />
+                  <ThemeCard
+                    themePreference={themePreference}
+                    setThemePreference={setThemePreference}
+                  />
+                </div>
               )}
             </section>
           </div>

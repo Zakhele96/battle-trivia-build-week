@@ -30,6 +30,7 @@ import {
   updateRoomSlowMode,
 } from "../api/roomModerationApi";
 import { useAuth } from "../hooks/useAuth";
+import { useTheme } from "../hooks/useTheme";
 import useRoomBootstrap from "../hooks/useRoomBootstrap";
 import useRoomLiveState from "../hooks/useRoomLiveState";
 import { useMentions } from "../context/MentionContext";
@@ -310,6 +311,7 @@ function deriveHasOlderMessagesFromContext(messages, targetMessageId, beforeCoun
 export default function RoomPage() {
   const { roomId } = useParams();
   const { user, token } = useAuth();
+  const { resolvedTheme } = useTheme();
   const location = useLocation();
   const { clearRoomMentions, refreshMentionCounts } = useMentions();
 
@@ -767,7 +769,10 @@ const {
     }
 
     const previous = meta.getAttribute("content");
-    meta.setAttribute("content", "#0a0a0a");
+    meta.setAttribute(
+      "content",
+      resolvedTheme === "light" ? "#f4f0e8" : "#0a0a0a"
+    );
 
     return () => {
       if (previous) {
@@ -776,7 +781,7 @@ const {
         meta.removeAttribute("content");
       }
     };
-  }, []);
+  }, [resolvedTheme]);
 
   useEffect(() => {
     const html = document.documentElement;

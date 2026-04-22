@@ -4,6 +4,10 @@
   color-scheme: dark;
 }
 
+:root[data-theme-resolved="light"] {
+  color-scheme: light;
+}
+
 *,
 *::before,
 *::after {
@@ -30,6 +34,54 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   -webkit-text-size-adjust: 100%;
   text-rendering: optimizeLegibility;
+}
+
+:root[data-theme-resolved="light"] body {
+  position: relative;
+  background:
+    radial-gradient(circle at top left, rgba(196, 168, 120, 0.16), transparent 28%),
+    radial-gradient(circle at top right, rgba(123, 160, 214, 0.14), transparent 24%),
+    linear-gradient(180deg, #f7f2e8 0%, #efe5d7 100%);
+  color: #111111;
+}
+
+:root[data-theme-resolved="light"] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.5), transparent 22%),
+    repeating-linear-gradient(
+      135deg,
+      rgba(94, 63, 23, 0.018) 0,
+      rgba(94, 63, 23, 0.018) 1px,
+      transparent 1px,
+      transparent 14px
+    );
+  opacity: 0.65;
+  z-index: 0;
+}
+
+:root[data-theme-resolved="light"] #root {
+  position: relative;
+  z-index: 1;
+  filter: invert(1) hue-rotate(180deg) saturate(1.08) contrast(1.08)
+    brightness(0.97);
+}
+
+:root[data-theme-resolved="light"] img,
+:root[data-theme-resolved="light"] video,
+:root[data-theme-resolved="light"] picture,
+:root[data-theme-resolved="light"] svg,
+:root[data-theme-resolved="light"] canvas,
+:root[data-theme-resolved="light"] iframe {
+  filter: invert(1) hue-rotate(180deg) saturate(0.96) contrast(1.02);
+}
+
+:root[data-theme-resolved="light"] ::selection {
+  background: rgba(103, 80, 164, 0.22);
+  color: #1f1637;
 }
 
 @keyframes podiumFloat {
