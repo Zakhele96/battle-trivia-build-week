@@ -249,7 +249,7 @@ export default function useRoomSoundEffects({
     if (!soundEffectsEnabled || !timerWarningsEnabled) return;
 
     const warningSeconds =
-      timeLeft === 7 || timeLeft === 5 || timeLeft === 3 ? timeLeft : null;
+      timeLeft === 5 || timeLeft === 3 || timeLeft === 1 ? timeLeft : null;
     if (!isBattleTrivia || !currentRoundId || !warningSeconds) return;
 
     const key = `battle-timer:${currentRoundId}:${warningSeconds}`;
@@ -270,9 +270,9 @@ export default function useRoomSoundEffects({
     if (!soundEffectsEnabled || !timerWarningsEnabled) return;
 
     const warningSeconds =
-      wordScrambleState?.timeLeft === 7 ||
       wordScrambleState?.timeLeft === 5 ||
-      wordScrambleState?.timeLeft === 3
+      wordScrambleState?.timeLeft === 3 ||
+      wordScrambleState?.timeLeft === 1
         ? wordScrambleState.timeLeft
         : null;
 
