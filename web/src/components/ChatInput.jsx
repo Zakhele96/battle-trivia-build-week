@@ -177,6 +177,15 @@ export default function ChatInput({
     setActiveMentionIndex(0);
   }, [text, caretIndex]);
 
+  useEffect(() => {
+    const input = inputRef.current;
+    if (!input) return;
+
+    input.style.height = "0px";
+    const nextHeight = Math.min(input.scrollHeight, 120);
+    input.style.height = `${Math.max(nextHeight, 26)}px`;
+  }, [text]);
+
   const updateCaret = (event) => {
     setCaretIndex(event.target.selectionStart ?? 0);
   };
@@ -204,36 +213,44 @@ export default function ChatInput({
   };
 
   const handleKeyDown = (event) => {
-    if (!isMentionMenuOpen) return;
-
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      setActiveMentionIndex((prev) =>
-        prev >= mentionSuggestions.length - 1 ? 0 : prev + 1
-      );
-      return;
-    }
-
-    if (event.key === "ArrowUp") {
-      event.preventDefault();
-      setActiveMentionIndex((prev) =>
-        prev <= 0 ? mentionSuggestions.length - 1 : prev - 1
-      );
-      return;
-    }
-
-    if (event.key === "Enter" || event.key === "Tab") {
-      event.preventDefault();
-      const selected = mentionSuggestions[activeMentionIndex];
-      if (selected) {
-        applyMention(selected);
+    if (isMentionMenuOpen) {
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        setActiveMentionIndex((prev) =>
+          prev >= mentionSuggestions.length - 1 ? 0 : prev + 1
+        );
+        return;
       }
-      return;
+
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        setActiveMentionIndex((prev) =>
+          prev <= 0 ? mentionSuggestions.length - 1 : prev - 1
+        );
+        return;
+      }
+
+      if (event.key === "Enter" || event.key === "Tab") {
+        event.preventDefault();
+        const selected = mentionSuggestions[activeMentionIndex];
+        if (selected) {
+          applyMention(selected);
+        }
+        return;
+      }
+
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setActiveMentionIndex(0);
+        return;
+      }
     }
 
-    if (event.key === "Escape") {
+    if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
-      setActiveMentionIndex(0);
+      if (canSubmit) {
+        submit(event);
+      }
     }
   };
 
@@ -293,10 +310,11 @@ export default function ChatInput({
                 }`}
               />
 
-              <input
+              <textarea
                 ref={inputRef}
                 id="chat-message-input"
                 name="chatMessage"
+                rows={1}
                 value={text}
                 onChange={(e) => {
                   setText(e.target.value);
@@ -318,7 +336,7 @@ export default function ChatInput({
                 data-1p-ignore="true"
                 enterKeyHint="send"
                 inputMode="text"
-                className="h-full w-full bg-transparent text-[16px] text-white outline-none placeholder:text-neutral-500 disabled:cursor-not-allowed disabled:opacity-60 sm:text-[15px]"
+                className="max-h-[120px] min-h-[26px] w-full resize-none overflow-y-auto bg-transparent py-0.5 text-[16px] leading-6 text-white outline-none placeholder:text-neutral-500 disabled:cursor-not-allowed disabled:opacity-60 sm:text-[15px]"
               />
             </div>
           </div>
