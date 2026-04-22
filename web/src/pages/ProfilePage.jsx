@@ -494,7 +494,7 @@ const isGoogleAccount = loginProvider === "google";
 
   console.log("authUser", authUser);
   return (
-    <div className="min-h-screen bg-neutral-950 text-white">
+    <div className="profile-page min-h-screen bg-neutral-950 text-white">
       <div className="mx-auto w-full max-w-[76rem] px-4 py-4 pb-24 sm:px-5 sm:py-7 sm:pb-7 lg:px-6 lg:py-9">
         <AppSectionNav />
 

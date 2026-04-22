@@ -63,7 +63,7 @@ export default function AppTopBar({
                 to="/"
                 className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.035] px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.14em] text-neutral-300 transition hover:border-white/15 hover:bg-white/[0.05]"
               >
-                <span aria-hidden="true">←</span>
+                <span aria-hidden="true">&larr;</span>
                 Lobby
               </Link>
             ) : null}
@@ -116,7 +116,7 @@ export default function AppTopBar({
                   to="/"
                   className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.15em] text-neutral-300 transition hover:border-white/15 hover:bg-white/[0.05]"
                 >
-                  <span aria-hidden="true">←</span>
+                  <span aria-hidden="true">&larr;</span>
                   Back to lobby
                 </Link>
               ) : null}

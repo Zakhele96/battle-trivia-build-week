@@ -373,7 +373,7 @@ export default function LeaderboardsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white">
+    <div className="leaderboards-page min-h-screen bg-neutral-950 text-white">
       <div className="mx-auto w-full max-w-[76rem] px-4 py-6 pb-24 sm:px-5 sm:py-8 sm:pb-8 lg:px-6 lg:py-10">
         <AppSectionNav />
 

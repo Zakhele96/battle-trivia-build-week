@@ -84,6 +84,58 @@ body {
   color: #1f1637;
 }
 
+:root[data-theme-resolved="light"] .lobby-page,
+:root[data-theme-resolved="light"] .leaderboards-page,
+:root[data-theme-resolved="light"] .profile-page {
+  position: relative;
+}
+
+:root[data-theme-resolved="light"] .lobby-page::before,
+:root[data-theme-resolved="light"] .leaderboards-page::before,
+:root[data-theme-resolved="light"] .profile-page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.16), transparent 30%),
+    linear-gradient(180deg, rgba(87, 62, 31, 0.035), transparent 24%);
+  opacity: 0.9;
+}
+
+:root[data-theme-resolved="light"] .lobby-page .mx-auto,
+:root[data-theme-resolved="light"] .leaderboards-page .mx-auto,
+:root[data-theme-resolved="light"] .profile-page .mx-auto {
+  position: relative;
+  z-index: 1;
+}
+
+:root[data-theme-resolved="light"] .lobby-page .rounded-\[24px\],
+:root[data-theme-resolved="light"] .lobby-page .rounded-\[22px\],
+:root[data-theme-resolved="light"] .lobby-page .rounded-\[20px\],
+:root[data-theme-resolved="light"] .leaderboards-page .rounded-\[24px\],
+:root[data-theme-resolved="light"] .leaderboards-page .rounded-\[22px\],
+:root[data-theme-resolved="light"] .leaderboards-page .rounded-\[20px\],
+:root[data-theme-resolved="light"] .profile-page .rounded-\[24px\],
+:root[data-theme-resolved="light"] .profile-page .rounded-\[22px\],
+:root[data-theme-resolved="light"] .profile-page .rounded-\[20px\] {
+  box-shadow:
+    0 16px 34px rgba(111, 82, 38, 0.08),
+    0 2px 0 rgba(255, 255, 255, 0.38) inset;
+}
+
+:root[data-theme-resolved="light"] .lobby-page h1,
+:root[data-theme-resolved="light"] .leaderboards-page h1,
+:root[data-theme-resolved="light"] .profile-page h1 {
+  letter-spacing: -0.045em;
+}
+
+:root[data-theme-resolved="light"] .lobby-page .text-neutral-400,
+:root[data-theme-resolved="light"] .leaderboards-page .text-neutral-400,
+:root[data-theme-resolved="light"] .profile-page .text-neutral-400 {
+  opacity: 0.92;
+}
+
 @keyframes podiumFloat {
   0%,
   100% {

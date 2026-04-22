@@ -4,7 +4,6 @@ function getAccentStyles(accent) {
   if (accent === "violet") {
     return {
       badge: "border-violet-400/18 bg-violet-500/10 text-violet-200",
-      glow: "from-violet-500/10",
       score: "text-violet-200",
       iconBg: "bg-violet-500/12",
     };
@@ -12,7 +11,6 @@ function getAccentStyles(accent) {
 
   return {
     badge: "border-blue-400/18 bg-blue-500/10 text-blue-200",
-    glow: "from-blue-500/10",
     score: "text-blue-200",
     iconBg: "bg-blue-500/12",
   };
@@ -87,7 +85,7 @@ export default function LeaderboardPreviewCard({
   return (
     <Link
       to={to}
-      className={`group rounded-[20px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-3.5 transition hover:border-white/15 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.018))] sm:rounded-[22px] sm:p-4`}
+      className="group rounded-[20px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-3.5 transition hover:border-white/15 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.018))] sm:rounded-[22px] sm:p-4"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -105,7 +103,7 @@ export default function LeaderboardPreviewCard({
         </div>
 
         <div className="shrink-0 text-[10px] font-medium uppercase tracking-[0.14em] text-neutral-500 transition group-hover:text-neutral-300">
-          Open →
+          Open &rarr;
         </div>
       </div>
 
