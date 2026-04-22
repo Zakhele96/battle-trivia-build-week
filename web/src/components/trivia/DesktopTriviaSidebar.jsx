@@ -1,6 +1,3 @@
-import LeaderboardCard from "./LeaderboardCard";
-import PlayerStandingCard from "./PlayerStandingCard";
-
 function getStatusDotClass(status) {
   if (status === "connected") {
     return "bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.45)]";
@@ -39,10 +36,6 @@ export default function DesktopTriviaSidebar({
   status,
   sessionStatus,
   sessionLabel,
-  isBattleTrivia,
-  leaderboard,
-  playerRank,
-  currentUserId,
   compact = false,
 }) {
   const isLiveNow = !!sessionStatus?.isLiveNow;
@@ -110,25 +103,6 @@ export default function DesktopTriviaSidebar({
           ) : null}
         </div>
       </div>
-
-      {isBattleTrivia ? (
-        <>
-          <LeaderboardCard
-            title="Leaderboard"
-            badgeText="Top 5"
-            leaderboard={leaderboard}
-            currentUserId={currentUserId}
-            compact
-          />
-
-          <PlayerStandingCard
-            playerRank={playerRank}
-            attemptsInfo={null}
-            compact
-            showAttempts={false}
-          />
-        </>
-      ) : null}
     </div>
   );
 }

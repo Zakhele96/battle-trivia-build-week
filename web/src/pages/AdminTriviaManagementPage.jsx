@@ -8,6 +8,7 @@ import {
   updateAdminTriviaQuestion,
   updateBattleTriviaSettings,
 } from "../api/adminTriviaApi";
+import { useTheme } from "../hooks/useTheme";
 
 const dayNames = [
   "Sunday",
@@ -58,6 +59,7 @@ function formatDate(value) {
 }
 
 export default function AdminTriviaManagementPage() {
+  const { resolvedTheme } = useTheme();
   const [questions, setQuestions] = useState([]);
   const [questionsLoading, setQuestionsLoading] = useState(true);
   const [questionsError, setQuestionsError] = useState("");
@@ -79,6 +81,13 @@ export default function AdminTriviaManagementPage() {
     difficulty: "",
     isActive: "",
   });
+  const isLight = resolvedTheme === "light";
+  const lightModeUndoFilter = isLight
+    ? {
+        filter:
+          "invert(1) hue-rotate(180deg) saturate(1.08) contrast(1.08) brightness(0.97)",
+      }
+    : undefined;
 
   const filterParams = useMemo(() => {
     return {
@@ -242,7 +251,12 @@ export default function AdminTriviaManagementPage() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-950 px-4 py-6 text-white lg:px-6">
+    <div
+      className={`admin-page min-h-screen bg-neutral-950 px-4 py-6 text-white lg:px-6 ${
+        isLight ? "admin-page--light" : ""
+      }`}
+      style={lightModeUndoFilter}
+    >
       <div className="mx-auto max-w-7xl">
         <div className="overflow-hidden rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top,rgba(96,165,250,0.12),transparent_34%),linear-gradient(135deg,rgba(10,10,11,1)_0%,rgba(17,24,39,0.94)_52%,rgba(10,10,11,1)_100%)] shadow-2xl shadow-black/20">
           <div className="pointer-events-none h-px bg-white/10" />

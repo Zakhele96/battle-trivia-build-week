@@ -1,5 +1,6 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { useMentions } from "../../context/MentionContext";
+import { useTheme } from "../../hooks/useTheme";
 
 function DashboardIcon() {
   return (
@@ -148,12 +149,16 @@ function isItemActive(item, pathname) {
   return pathname.startsWith(item.to);
 }
 
-function MentionBadge({ count, mobile = false }) {
+function MentionBadge({ count, mobile = false, isLight = false }) {
   if (!count || count <= 0) return null;
 
   return (
     <span
-      className={`inline-flex items-center justify-center rounded-full border border-amber-300/18 bg-amber-300/12 font-medium text-amber-100 ${
+      className={`inline-flex items-center justify-center rounded-full border font-medium ${
+        isLight
+          ? "border-amber-300 bg-amber-50 text-amber-800"
+          : "border-amber-300/18 bg-amber-300/12 text-amber-100"
+      } ${
         mobile
           ? "min-w-[1.1rem] px-1 py-0.5 text-[9px]"
           : "min-w-[1.2rem] px-1.5 py-0.5 text-[10px]"
@@ -164,34 +169,64 @@ function MentionBadge({ count, mobile = false }) {
   );
 }
 
+function NavIconShell({ children, active = false, isLight = false, mobile = false }) {
+  const baseClassName = mobile
+    ? "flex h-10 w-10 items-center justify-center rounded-[14px] border transition"
+    : "flex h-9 w-9 items-center justify-center rounded-[12px] border transition";
+
+  const toneClassName = active
+    ? isLight
+      ? "border-sky-300 bg-sky-50 text-sky-800 shadow-[0_8px_18px_rgba(59,130,246,0.12)]"
+      : "border-blue-400/25 bg-blue-500/14 text-blue-100 shadow-[0_10px_24px_rgba(37,99,235,0.14)]"
+    : isLight
+    ? "border-stone-200 bg-white/78 text-stone-700"
+    : "border-white/10 bg-white/[0.04] text-neutral-300";
+
+  return <span className={`${baseClassName} ${toneClassName}`}>{children}</span>;
+}
+
 export default function AppSectionNav() {
   const location = useLocation();
   const { totalUnreadMentions } = useMentions();
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === "light";
+
+  const desktopShellClassName = isLight
+    ? "rounded-[24px] border border-[#ddc8a8] bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(245,234,216,0.96))] p-2.5 shadow-[0_18px_34px_rgba(114,84,41,0.12)]"
+    : "rounded-[24px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.08),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-2.5 shadow-[0_18px_36px_rgba(0,0,0,0.16)]";
+  const mobileShellClassName = isLight
+    ? "pointer-events-auto border-t border-[#d9c7aa] bg-[#f6ebd9]/96 px-2 pt-2 pb-[max(0.55rem,env(safe-area-inset-bottom))] shadow-[0_-12px_28px_rgba(114,84,41,0.14)] backdrop-blur-xl supports-[backdrop-filter]:bg-[#f6ebd9]/88"
+    : "pointer-events-auto border-t border-white/10 bg-neutral-950/96 px-2 pt-2 pb-[max(0.55rem,env(safe-area-inset-bottom))] shadow-[0_-14px_34px_rgba(0,0,0,0.3)] backdrop-blur-xl supports-[backdrop-filter]:bg-neutral-950/88";
 
   return (
     <>
       <div className="mb-5 hidden sm:block sm:mb-6">
-        <div className="rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.028),rgba(255,255,255,0.012))] p-2 shadow-[0_14px_34px_rgba(0,0,0,0.14)]">
+        <div className={desktopShellClassName}>
           <div className="flex gap-2 overflow-x-auto">
             {DESKTOP_ITEMS.map((item) => {
               const Icon = item.icon;
               const active = isItemActive(item, location.pathname);
+              const itemClassName = active
+                ? isLight
+                  ? "border border-sky-300 bg-white text-stone-900 shadow-[0_10px_22px_rgba(59,130,246,0.12)]"
+                  : "border border-blue-400/20 bg-[linear-gradient(180deg,rgba(32,63,120,0.46),rgba(18,23,35,0.88))] text-white shadow-[0_10px_24px_rgba(37,99,235,0.14)]"
+                : isLight
+                ? "border border-transparent bg-white/56 text-stone-700 hover:border-stone-200 hover:bg-white"
+                : "border border-transparent bg-white/[0.03] text-neutral-300 hover:border-white/10 hover:bg-white/[0.05]";
 
               return (
                 <NavLink
                   key={item.to}
                   to={item.to}
                   end={item.exact}
-                  className={`inline-flex shrink-0 items-center gap-2 rounded-[16px] px-3.5 py-2.5 text-[12px] font-medium transition sm:px-4 sm:text-sm ${
-                    active
-                      ? "border border-blue-400/20 bg-blue-500/10 text-white shadow-[0_8px_24px_rgba(37,99,235,0.14)]"
-                      : "border border-transparent bg-white/[0.03] text-neutral-300 hover:border-white/10 hover:bg-white/[0.05]"
-                  }`}
+                  className={`inline-flex shrink-0 items-center gap-3 rounded-[18px] px-3.5 py-2.5 text-[12px] font-medium transition sm:px-4 sm:text-sm ${itemClassName}`}
                 >
-                  <Icon />
-                  <span>{item.label}</span>
+                  <NavIconShell active={active} isLight={isLight}>
+                    <Icon />
+                  </NavIconShell>
+                  <span className="tracking-[0.01em]">{item.label}</span>
                   {item.showMentionBadge ? (
-                    <MentionBadge count={totalUnreadMentions} />
+                    <MentionBadge count={totalUnreadMentions} isLight={isLight} />
                   ) : null}
                 </NavLink>
               );
@@ -201,33 +236,42 @@ export default function AppSectionNav() {
       </div>
 
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 sm:hidden [backface-visibility:hidden] [transform:translateZ(0)] [will-change:transform]">
-        <div className="pointer-events-auto border-t border-white/10 bg-neutral-950/96 px-2 pt-2 pb-[max(0.55rem,env(safe-area-inset-bottom))] shadow-[0_-14px_34px_rgba(0,0,0,0.3)] backdrop-blur-xl supports-[backdrop-filter]:bg-neutral-950/88">
+        <div className={mobileShellClassName}>
           <div className="mx-auto max-w-[38rem]">
             <div className="grid grid-cols-5 gap-1.5">
               {MOBILE_ITEMS.map((item) => {
                 const Icon = item.icon;
                 const active = isItemActive(item, location.pathname);
+                const itemClassName = active
+                  ? isLight
+                    ? "border border-sky-300 bg-white text-stone-900 shadow-[0_8px_18px_rgba(59,130,246,0.12)]"
+                    : "border border-blue-400/15 bg-[linear-gradient(180deg,rgba(32,63,120,0.46),rgba(18,23,35,0.9))] text-white shadow-[0_8px_22px_rgba(37,99,235,0.12)]"
+                  : isLight
+                    ? "border border-transparent text-stone-600 hover:bg-white/72 hover:text-stone-900"
+                    : "border border-transparent text-neutral-400 hover:bg-white/[0.04] hover:text-white";
 
                 return (
                   <NavLink
                     key={item.to}
                     to={item.to}
                     end={item.exact}
-                    className={`relative flex min-h-[4.15rem] touch-manipulation flex-col items-center justify-center gap-1 rounded-[18px] px-1.5 py-2 text-[10px] font-medium transition ${
-                      active
-                        ? "border border-blue-400/15 bg-blue-500/10 text-white shadow-[0_8px_22px_rgba(37,99,235,0.12)]"
-                        : "border border-transparent text-neutral-400 hover:bg-white/[0.04] hover:text-white"
-                    }`}
+                    className={`relative flex min-h-[4.45rem] touch-manipulation flex-col items-center justify-center gap-1.5 rounded-[18px] px-1.5 py-2 text-[10px] font-medium transition ${itemClassName}`}
                   >
                     <div className="relative">
-                      <Icon />
+                      <NavIconShell active={active} isLight={isLight} mobile>
+                        <Icon />
+                      </NavIconShell>
                       {item.showMentionBadge ? (
-                        <div className="absolute -right-2.5 -top-2">
-                          <MentionBadge count={totalUnreadMentions} mobile />
+                        <div className="absolute -right-2 -top-1.5">
+                          <MentionBadge
+                            count={totalUnreadMentions}
+                            mobile
+                            isLight={isLight}
+                          />
                         </div>
                       ) : null}
                     </div>
-                    <span className="max-w-full truncate px-1">{item.label}</span>
+                    <span className="max-w-full truncate px-1 tracking-[0.01em]">{item.label}</span>
                   </NavLink>
                 );
               })}

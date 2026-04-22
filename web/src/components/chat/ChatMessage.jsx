@@ -147,7 +147,7 @@ function ReactionBar({
 
   return (
     <div
-      className={`mt-1.5 flex w-full flex-wrap items-center gap-1.5 ${
+      className={`mt-1.5 flex max-w-full flex-wrap items-center gap-1.5 ${
         isMine ? "justify-end" : "justify-start"
       }`}
     >
@@ -163,7 +163,7 @@ function ReactionBar({
               : "border-white/10 bg-white/[0.04] text-neutral-300 hover:bg-white/[0.06]"
           } disabled:opacity-50`}
         >
-          <span>{reaction.emoji}</span>
+          <span className="emoji-native">{reaction.emoji}</span>
           <span>{reaction.count}</span>
         </button>
       ))}
@@ -183,8 +183,9 @@ function ReactionBar({
   );
 }
 
-function renderMessageText(text, currentUsername) {
+function renderMessageText(text, currentUsername, options = {}) {
   const value = text || "";
+  const { vivid = false } = options;
   const parts = [];
   const regex = /(^|\s)(@[a-zA-Z0-9._-]+)/g;
   let lastIndex = 0;
@@ -215,7 +216,11 @@ function renderMessageText(text, currentUsername) {
         key={`mention-${keyIndex++}`}
         className={`rounded-full px-1.5 py-0.5 font-medium ${
           isCurrentUserMention
-            ? "bg-amber-300/16 text-amber-100"
+            ? vivid
+              ? "bg-white/18 text-white"
+              : "bg-amber-300/16 text-amber-100"
+            : vivid
+            ? "bg-white/12 text-white"
             : "bg-white/10 text-blue-100"
         }`}
       >
@@ -249,6 +254,8 @@ export default function ChatMessage({
   onUnpinMessage,
   onJumpToMessage,
   messageNodeRef,
+  variant = "default",
+  bubbleTone = null,
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -340,7 +347,7 @@ export default function ChatMessage({
   const canUnpinMessage = isAdmin && typeof onUnpinMessage === "function";
 
   const bubbleBase =
-    "inline-flex min-w-[8rem] max-w-[90%] sm:max-w-[80%] lg:max-w-[44rem] flex-col px-3 py-2.5 shadow-[0_8px_20px_rgba(0,0,0,0.14)] transition-all duration-200";
+    "inline-flex min-w-[8rem] max-w-[90%] sm:max-w-[80%] lg:max-w-[44rem] flex-col px-3 pb-2.5 pt-3 shadow-[0_8px_20px_rgba(0,0,0,0.14)] transition-all duration-200";
 
   const mineStyles = isMessageFromModerator
     ? "bg-[linear-gradient(180deg,rgba(88,101,242,1)_0%,rgba(64,78,237,1)_100%)] text-white ring-1 ring-violet-300/25"
@@ -348,7 +355,31 @@ export default function ChatMessage({
 
   const theirsStyles = isMessageFromModerator
     ? "border border-violet-400/15 bg-[linear-gradient(180deg,rgba(58,49,94,0.92)_0%,rgba(41,35,68,0.96)_100%)] text-violet-50"
-    : "border border-white/[0.05] bg-[linear-gradient(180deg,rgba(46,46,49,0.98),rgba(34,34,37,0.98))] text-neutral-100";
+    : bubbleTone?.bubbleClass ||
+      "border border-white/[0.05] bg-[linear-gradient(180deg,rgba(46,46,49,0.98),rgba(34,34,37,0.98))] text-neutral-100";
+
+  const usesVividBubble =
+    isMine ||
+    isMessageFromModerator ||
+    (variant === "general-chat" && !!bubbleTone);
+
+  const senderTextClass = isMessageFromModerator
+    ? "text-violet-100/90"
+    : usesVividBubble
+    ? "text-white/90"
+    : bubbleTone?.senderClass
+    ? bubbleTone.senderClass
+    : "text-neutral-300";
+
+  const timestampTextClass = isMessageFromModerator
+    ? isMine
+      ? "text-violet-100/82"
+      : "text-violet-100/76"
+    : usesVividBubble
+    ? "text-white/74"
+    : bubbleTone?.timestampClass
+    ? bubbleTone.timestampClass
+    : "text-neutral-500";
 
   const roundedClass = isMine
     ? groupedWithPrevious && groupedWithNext
@@ -453,157 +484,142 @@ export default function ChatMessage({
       }`}
     >
       <div
-        className={`group relative flex max-w-full flex-col ${
+        className={`group relative flex w-fit max-w-full flex-col ${
           isMine ? "items-end" : "items-start"
         }`}
         ref={menuRef}
       >
-        <button
-          type="button"
-          onClick={() => {
-            setMenuOpen((prev) => !prev);
-            setPickerOpen(false);
-          }}
-          className={`absolute -top-2 z-[1] rounded-full border border-white/10 bg-black/65 px-2.5 py-1 text-[9px] uppercase tracking-[0.14em] text-neutral-300 opacity-100 backdrop-blur-sm transition hover:bg-black/75 hover:text-neutral-100 sm:px-2 sm:py-0.5 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100 ${
-            isMine ? "-left-1 sm:-left-2" : "-right-1 sm:-right-2"
-          }`}
-        >
-          •••
-        </button>
-
-        {menuOpen ? (
-          <div
-            className={`absolute top-3 z-[2] mt-2 w-44 rounded-2xl border border-white/10 bg-neutral-900 p-1.5 shadow-xl shadow-black/30 ${
-              isMine ? "left-0 sm:left-auto sm:right-0" : "right-0"
-            }`}
+        <div className="relative max-w-full">
+          <button
+            type="button"
+            onClick={() => {
+              setMenuOpen((prev) => !prev);
+              setPickerOpen(false);
+            }}
+            className="absolute right-2 top-2 z-[1] rounded-full border border-white/10 bg-black/55 px-2.5 py-1 text-[9px] uppercase tracking-[0.14em] text-neutral-200 opacity-100 backdrop-blur-sm transition hover:bg-black/72 hover:text-white sm:px-2 sm:py-0.5 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
           >
-            <button
-              type="button"
-              onClick={() => {
-                onReplyMessage?.(message);
-                setMenuOpen(false);
-              }}
-              className="flex w-full items-center rounded-xl px-3 py-2 text-left text-xs text-white transition hover:bg-white/[0.06]"
-            >
-              Reply
-            </button>
+            •••
+          </button>
 
-            <button
-              type="button"
-              onClick={handleCopy}
-              className="flex w-full items-center rounded-xl px-3 py-2 text-left text-xs text-white transition hover:bg-white/[0.06]"
-            >
-              Copy text
-            </button>
-
-            {canEditMessage ? (
+          {menuOpen ? (
+            <div className="absolute right-0 top-[calc(100%+0.5rem)] z-[2] w-44 max-w-[calc(100vw-1rem)] rounded-2xl border border-white/10 bg-neutral-900 p-1.5 shadow-xl shadow-black/30">
               <button
                 type="button"
                 onClick={() => {
-                  setIsEditing(true);
+                  onReplyMessage?.(message);
                   setMenuOpen(false);
                 }}
                 className="flex w-full items-center rounded-xl px-3 py-2 text-left text-xs text-white transition hover:bg-white/[0.06]"
               >
-                Edit message
+                Reply
               </button>
-            ) : null}
 
-            {canPinMessage || (isPinned && canUnpinMessage) ? (
               <button
                 type="button"
-                onClick={handlePinToggle}
-                disabled={!!busyAction}
+                onClick={handleCopy}
                 className="flex w-full items-center rounded-xl px-3 py-2 text-left text-xs text-white transition hover:bg-white/[0.06] disabled:opacity-50"
               >
-                {busyAction === "pin"
-                  ? "Pinning..."
-                  : busyAction === "unpin"
-                  ? "Unpinning..."
-                  : isPinned
-                  ? "Unpin message"
-                  : "Pin message"}
+                Copy text
               </button>
-            ) : null}
 
-            {canModerateMessage ? (
-              <>
+              {canEditMessage ? (
                 <button
                   type="button"
-                  onClick={handleDelete}
+                  onClick={() => {
+                    setIsEditing(true);
+                    setMenuOpen(false);
+                  }}
+                  className="flex w-full items-center rounded-xl px-3 py-2 text-left text-xs text-white transition hover:bg-white/[0.06]"
+                >
+                  Edit message
+                </button>
+              ) : null}
+
+              {canPinMessage || (isPinned && canUnpinMessage) ? (
+                <button
+                  type="button"
+                  onClick={handlePinToggle}
                   disabled={!!busyAction}
                   className="flex w-full items-center rounded-xl px-3 py-2 text-left text-xs text-white transition hover:bg-white/[0.06] disabled:opacity-50"
                 >
-                  {busyAction === "delete" ? "Deleting..." : "Delete message"}
+                  {busyAction === "pin"
+                    ? "Pinning..."
+                    : busyAction === "unpin"
+                    ? "Unpinning..."
+                    : isPinned
+                    ? "Unpin message"
+                    : "Pin message"}
                 </button>
+              ) : null}
 
-                <button
-                  type="button"
-                  onClick={() => handleMute(10)}
-                  disabled={!!busyAction}
-                  className="flex w-full items-center rounded-xl px-3 py-2 text-left text-xs text-white transition hover:bg-white/[0.06] disabled:opacity-50"
-                >
-                  {busyAction === "mute-10" ? "Muting..." : "Mute 10 min"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleMute(60)}
-                  disabled={!!busyAction}
-                  className="flex w-full items-center rounded-xl px-3 py-2 text-left text-xs text-white transition hover:bg-white/[0.06] disabled:opacity-50"
-                >
-                  {busyAction === "mute-60" ? "Muting..." : "Mute 1 hour"}
-                </button>
-              </>
-            ) : null}
-          </div>
-        ) : null}
-
-        {pickerOpen ? (
-          <div
-            className={`absolute z-[2] mt-2 max-w-[calc(100vw-2.5rem)] overflow-x-auto rounded-full border border-white/10 bg-neutral-950/96 px-2 py-1.5 shadow-[0_18px_40px_rgba(0,0,0,0.34)] backdrop-blur-xl ${
-              isMine
-                ? "right-0 top-full"
-                : "left-0 top-full"
-            }`}
-          >
-            <div className="flex min-w-max items-center gap-1">
-              {REACTION_OPTIONS.map((emoji) => {
-                const isSelected = currentUserReaction === emoji;
-
-                return (
+              {canModerateMessage ? (
+                <>
                   <button
-                    key={emoji}
                     type="button"
                     disabled={!!busyAction}
-                    onClick={() => handleToggleReaction(emoji)}
-                    className={`flex h-10 w-10 items-center justify-center rounded-full text-[20px] transition duration-150 hover:-translate-y-0.5 hover:bg-white/[0.06] disabled:opacity-50 ${
-                      isSelected ? "bg-white/[0.08] ring-1 ring-emerald-300/30" : ""
-                    }`}
-                    aria-pressed={isSelected}
+                    onClick={handleDelete}
+                    className="flex w-full items-center rounded-xl px-3 py-2 text-left text-xs text-white transition hover:bg-white/[0.06] disabled:opacity-50"
                   >
-                    {emoji}
+                    {busyAction === "delete" ? "Deleting..." : "Delete message"}
                   </button>
-                );
-              })}
-            </div>
-          </div>
-        ) : null}
 
-        <div
-          className={`${bubbleBase} ${roundedClass} ${
-            isMine ? mineStyles : theirsStyles
-          }`}
-        >
+                  <button
+                    type="button"
+                    onClick={() => handleMute(10)}
+                    disabled={!!busyAction}
+                    className="flex w-full items-center rounded-xl px-3 py-2 text-left text-xs text-white transition hover:bg-white/[0.06] disabled:opacity-50"
+                  >
+                    {busyAction === "mute-10" ? "Muting..." : "Mute 10 min"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleMute(60)}
+                    disabled={!!busyAction}
+                    className="flex w-full items-center rounded-xl px-3 py-2 text-left text-xs text-white transition hover:bg-white/[0.06] disabled:opacity-50"
+                  >
+                    {busyAction === "mute-60" ? "Muting..." : "Mute 1 hour"}
+                  </button>
+                </>
+              ) : null}
+            </div>
+          ) : null}
+
+          {pickerOpen ? (
+            <div className="absolute right-0 top-[calc(100%+0.5rem)] z-[2] max-w-[calc(100vw-1rem)] overflow-x-auto rounded-full border border-white/10 bg-neutral-950/96 px-2 py-1.5 shadow-[0_18px_40px_rgba(0,0,0,0.34)] backdrop-blur-xl">
+              <div className="flex min-w-max items-center gap-1">
+                {REACTION_OPTIONS.map((emoji) => {
+                  const isSelected = currentUserReaction === emoji;
+
+                  return (
+                    <button
+                      key={emoji}
+                      type="button"
+                      disabled={!!busyAction}
+                      onClick={() => handleToggleReaction(emoji)}
+                      className={`flex h-10 w-10 items-center justify-center rounded-full text-[20px] transition duration-150 hover:-translate-y-0.5 hover:bg-white/[0.06] disabled:opacity-50 ${
+                        isSelected ? "bg-white/[0.08] ring-1 ring-emerald-300/30" : ""
+                      }`}
+                      aria-pressed={isSelected}
+                    >
+                      <span className="emoji-native">{emoji}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
+
+          <div
+            className={`${bubbleBase} ${roundedClass} ${
+              isMine ? mineStyles : theirsStyles
+            }`}
+          >
           {!groupedWithPrevious ? (
             <div className="mb-1.5 flex flex-wrap items-center gap-2">
               {!isMine ? (
                 <div
-                  className={`text-[10px] font-medium tracking-[0.01em] ${
-                    isMessageFromModerator
-                      ? "text-violet-200/85"
-                      : "text-neutral-400"
-                  }`}
+                  className={`text-[10px] font-semibold tracking-[0.01em] ${senderTextClass}`}
                 >
                   {message.displayName || message.username || "Unknown"}
                 </div>
@@ -616,7 +632,7 @@ export default function ChatMessage({
               ) : null}
 
               {isPinned ? (
-                <span className="rounded-full border border-amber-300/20 bg-amber-300/12 px-2 py-[2px] text-[9px] font-semibold uppercase tracking-[0.14em] text-amber-100">
+                <span className="rounded-full border border-amber-100/18 bg-amber-50/8 px-2 py-[2px] text-[8px] font-semibold uppercase tracking-[0.14em] text-amber-50/88">
                   Pinned
                 </span>
               ) : null}
@@ -662,26 +678,21 @@ export default function ChatMessage({
             </div>
           ) : (
             <div className="break-words whitespace-pre-wrap text-[14px] leading-[1.5]">
-              {renderMessageText(message.messageText, currentUsername)}
+              {renderMessageText(message.messageText, currentUsername, {
+                vivid: usesVividBubble,
+              })}
             </div>
           )}
 
           {!groupedWithNext ? (
             <div
-              className={`mt-1.5 text-[10px] ${
-                isMessageFromModerator
-                  ? isMine
-                    ? "text-violet-100/75"
-                    : "text-violet-200/50"
-                  : isMine
-                  ? "text-white/68"
-                  : "text-neutral-500"
-              }`}
+              className={`mt-1.5 text-[10px] font-medium ${timestampTextClass}`}
             >
               {formatTime(message.sentAt)}
               {editedLabel}
             </div>
           ) : null}
+          </div>
         </div>
 
         {!isEditing ? (

@@ -9,6 +9,7 @@ import AppTopBar from "../components/layout/AppTopBar";
 import AppSectionNav from "../components/layout/AppSectionNav";
 import ProfileAchievementsCard from "../components/profile/ProfileAchievementsCard";
 import ProfileProgressCard from "../components/profile/ProfileProgressCard";
+import { useTheme } from "../hooks/useTheme";
 
 function formatFastest(ms) {
   if (typeof ms !== "number") return "—";
@@ -133,6 +134,7 @@ function NextMoveCard({ title, description, to, actionLabel, accent = "blue" }) 
 }
 
 export default function ActivityPage() {
+  const { resolvedTheme } = useTheme();
   const [profile, setProfile] = useState(null);
   const [progression, setProgression] = useState(null);
   const [history, setHistory] = useState([]);
@@ -228,9 +230,21 @@ export default function ActivityPage() {
 
   const stats = useMemo(() => profile?.stats || {}, [profile]);
   const recentHighlights = useMemo(() => history.slice(0, 3), [history]);
+  const isLight = resolvedTheme === "light";
+  const lightModeUndoFilter = isLight
+    ? {
+        filter:
+          "invert(1) hue-rotate(180deg) saturate(1.08) contrast(1.08) brightness(0.97)",
+      }
+    : undefined;
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white">
+    <div
+      className={`activity-page min-h-screen bg-neutral-950 text-white ${
+        isLight ? "activity-page--light" : ""
+      }`}
+      style={lightModeUndoFilter}
+    >
       <div className="mx-auto w-full max-w-[76rem] px-4 py-4 pb-24 sm:px-5 sm:py-7 sm:pb-7 lg:px-6 lg:py-9">
         <AppSectionNav />
 

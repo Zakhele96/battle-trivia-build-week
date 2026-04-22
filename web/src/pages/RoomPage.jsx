@@ -14,6 +14,8 @@ import BattleTriviaProfileCard from "../components/trivia/BattleTriviaProfileCar
 import BattleTriviaSessionSummaryCard from "../components/trivia/BattleTriviaSessionSummaryCard";
 import { getSessionLabel } from "../components/trivia/triviaUtils";
 import WordScrambleHeroCard from "../components/wordScramble/WordScrambleHeroCard";
+import WordScrambleProfileCard from "../components/wordScramble/WordScrambleProfileCard";
+import WordScrambleSessionCard from "../components/wordScramble/WordScrambleSessionCard";
 import WordScrambleWhisperStatus from "../components/wordScramble/WordScrambleWhisperStatus";
 import {
   getMyBattleTriviaProfileStats,
@@ -117,40 +119,53 @@ function RoomUtilityBar({
   sessionLabel,
   isBattleTrivia,
   isWordScramble,
+  compact = false,
 }) {
   const meta = getRoomModeMeta(room, isBattleTrivia, isWordScramble);
+  const liveLabel = sessionLabel || meta.badgeLabel;
+  const compactBadgeLabel =
+    compact && isBattleTrivia ? "Live now" : liveLabel;
 
   return (
-    <div className="mb-2.5 rounded-[18px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] px-3 py-2.5 shadow-[0_12px_28px_rgba(0,0,0,0.12)] sm:px-3.5">
+    <div
+      className={`rounded-[18px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] shadow-[0_12px_28px_rgba(0,0,0,0.12)] ${
+        compact
+          ? "mb-2 rounded-[16px] px-3 py-2 sm:px-3"
+          : "mb-2.5 px-3 py-2.5 sm:px-3.5"
+      }`}
+    >
       <div className="flex flex-wrap items-center gap-2">
         <Link
           to="/"
-          className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.035] px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.14em] text-neutral-300 transition hover:border-white/15 hover:bg-white/[0.05]"
+          className={`inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.035] font-medium uppercase tracking-[0.14em] text-neutral-300 transition hover:border-white/15 hover:bg-white/[0.05] ${
+            compact ? "px-2.5 py-1 text-[9px]" : "px-3 py-1.5 text-[10px]"
+          }`}
         >
           <span aria-hidden="true">←</span>
           Lobby
         </Link>
 
         <span
-          className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] ${meta.badgeClass}`}
+          className={`inline-flex rounded-full border font-medium uppercase tracking-[0.14em] ${meta.badgeClass} ${
+            compact ? "px-2 py-0.5 text-[8px]" : "px-2.5 py-1 text-[9px]"
+          }`}
         >
-          {meta.badgeLabel}
+          {compactBadgeLabel}
         </span>
-
-        {sessionLabel ? (
-          <span className="inline-flex rounded-full border border-white/10 bg-white/[0.035] px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] text-neutral-300">
-            {sessionLabel}
-          </span>
-        ) : null}
       </div>
 
-      <div className="mt-2.5">
-        <div className="text-[10px] uppercase tracking-[0.18em] text-blue-300/70">
+      {compact ? null : (
+        <div className="mt-2.5">
+          <div className="text-[10px] uppercase tracking-[0.18em] text-blue-300/70">
           {meta.eyebrow}
         </div>
 
-        <div className="mt-1 flex flex-wrap items-center gap-2">
-          <h2 className="truncate text-[18px] font-semibold tracking-[-0.03em] text-white sm:text-[20px]">
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+          <h2
+            className={`truncate font-semibold tracking-[-0.03em] text-white ${
+              compact ? "text-[16px] sm:text-[18px]" : "text-[18px] sm:text-[20px]"
+            }`}
+          >
             {room?.name || "Room"}
           </h2>
 
@@ -159,8 +174,9 @@ function RoomUtilityBar({
               · {user.displayName || user.username}
             </span>
           ) : null}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -333,6 +349,8 @@ export default function RoomPage() {
   const messagesContainerRef = useRef(null);
   const shouldAutoScrollRef = useRef(true);
   const roomMentionSyncKeyRef = useRef("");
+  const profileStatsRef = useRef(null);
+  const sessionSummaryRef = useRef(null);
 
 const {
   room,
@@ -363,18 +381,30 @@ const {
 
   const showGameSidebar = isBattleTrivia || isWordScramble;
   const isChatRoom = room?.roomType === "chat";
+  const isLight = resolvedTheme === "light";
+  const lightModeUndoFilter = isLight
+    ? {
+        filter:
+          "invert(1) hue-rotate(180deg) saturate(1.08) contrast(1.08) brightness(0.97)",
+      }
+    : undefined;
 
   const isAdmin = user?.isAdmin === true || user?.isAdmin === "true";
   const canModerateChat = !!room && !showGameSidebar && isAdmin;
 
   const isMobileViewport =
     viewportState.width > 0 && viewportState.width < 640;
+  const isShortDesktopViewport =
+    !isMobileViewport &&
+    viewportState.height > 0 &&
+    viewportState.height < 860;
   const keyboardInset = Math.max(
     0,
     viewportState.layoutHeight - viewportState.height - viewportState.offsetTop
   );
   const isKeyboardOpen = isMobileViewport && keyboardInset > 140;
   const shouldCompactMobileChrome = isMobileViewport && isKeyboardOpen;
+  const shouldCompactGameChrome = showGameSidebar && isShortDesktopViewport;
 
   const handleReceiveMessage = useCallback(
     async (message) => {
@@ -815,6 +845,14 @@ const {
   }, []);
 
   useEffect(() => {
+    profileStatsRef.current = profileStats;
+  }, [profileStats]);
+
+  useEffect(() => {
+    sessionSummaryRef.current = sessionSummary;
+  }, [sessionSummary]);
+
+  useEffect(() => {
     if (!isBattleTrivia || !user?.id) {
       setProfileStats(null);
       setIsProfileStatsLoading(false);
@@ -824,7 +862,10 @@ const {
     let isMounted = true;
 
     async function loadProfileStats() {
-      setIsProfileStatsLoading(true);
+      const shouldShowLoader = !profileStatsRef.current;
+      if (shouldShowLoader) {
+        setIsProfileStatsLoading(true);
+      }
 
       try {
         const data = await getMyBattleTriviaProfileStats();
@@ -832,10 +873,14 @@ const {
         setProfileStats(data);
       } catch {
         if (!isMounted) return;
-        setProfileStats(null);
+        if (!profileStatsRef.current) {
+          setProfileStats(null);
+        }
       } finally {
         if (!isMounted) return;
-        setIsProfileStatsLoading(false);
+        if (shouldShowLoader) {
+          setIsProfileStatsLoading(false);
+        }
       }
     }
 
@@ -902,7 +947,10 @@ const {
     let isMounted = true;
 
     async function loadSessionSummary() {
-      setIsSessionSummaryLoading(true);
+      const shouldShowLoader = !sessionSummaryRef.current;
+      if (shouldShowLoader) {
+        setIsSessionSummaryLoading(true);
+      }
 
       try {
         const data = await getMyBattleTriviaSessionSummary();
@@ -910,10 +958,14 @@ const {
         setSessionSummary(data);
       } catch {
         if (!isMounted) return;
-        setSessionSummary(null);
+        if (!sessionSummaryRef.current) {
+          setSessionSummary(null);
+        }
       } finally {
         if (!isMounted) return;
-        setIsSessionSummaryLoading(false);
+        if (shouldShowLoader) {
+          setIsSessionSummaryLoading(false);
+        }
       }
     }
 
@@ -925,6 +977,11 @@ const {
   }, [isBattleTrivia, roomId, user?.id, sessionStatus?.sessionId]);
 
   const updateAutoScrollState = () => {
+    if (showGameSidebar) {
+      shouldAutoScrollRef.current = true;
+      return;
+    }
+
     const el = messagesContainerRef.current;
     if (!el) return;
 
@@ -948,7 +1005,7 @@ const {
         behavior: "smooth",
       });
     }
-  }, [messages]);
+  }, [messages, showGameSidebar]);
 
   useEffect(() => {
     const el = messagesContainerRef.current;
@@ -1120,21 +1177,19 @@ const {
 
   const sidebar = (
     <aside className="hidden xl:flex xl:w-[17.25rem] xl:shrink-0 xl:flex-col xl:border-r xl:border-white/5 xl:bg-neutral-900/95">
-      <div className="min-h-0 flex-1 overflow-y-auto px-2.5 py-2.5">
+      <div className="room-panel-scroll min-h-0 flex-1 overflow-y-auto px-2.5 py-2.5">
         <div className="space-y-2.5">
-          <div className="overflow-hidden rounded-[18px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01))]">
-            <DesktopTriviaSidebar
-              room={room}
-              status={status}
-              sessionStatus={effectiveSessionStatus}
-              sessionLabel={effectiveSessionLabel}
-              isBattleTrivia={showGameSidebar}
-              leaderboard={effectiveLeaderboard}
-              playerRank={effectivePlayerRank}
-              currentUserId={user?.id}
-              compact
-            />
-          </div>
+          {isChatRoom ? (
+            <div className="overflow-hidden rounded-[18px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01))]">
+              <DesktopTriviaSidebar
+                room={room}
+                status={status}
+                sessionStatus={effectiveSessionStatus}
+                sessionLabel={effectiveSessionLabel}
+                compact
+              />
+            </div>
+          ) : null}
 
           {isBattleTrivia ? (
             <>
@@ -1152,6 +1207,20 @@ const {
                   loading={isSessionSummaryLoading}
                 />
               </div>
+            </>
+          ) : isWordScramble ? (
+            <>
+              <WordScrambleProfileCard
+                stats={wordScrambleState?.playerStats}
+                playerRank={scramblePlayerRank?.rank ?? null}
+                loading={!wordScrambleState}
+              />
+
+              <WordScrambleSessionCard
+                state={wordScrambleState}
+                currentUserId={user?.id}
+                loading={!wordScrambleState}
+              />
             </>
           ) : canModerateChat ? (
             <RoomModerationControlCard
@@ -1184,6 +1253,8 @@ const {
         className={`mx-auto w-full max-w-[68rem] ${
           shouldCompactMobileChrome
             ? "px-2 pt-2 pb-1.5"
+            : shouldCompactGameChrome
+            ? "px-2.5 pt-2 pb-1 sm:px-4 sm:pt-2.5 sm:pb-1.5 lg:px-5"
             : "px-2.5 pt-10.5 pb-2 sm:px-4 sm:py-3 lg:px-5"
         }`}
       >
@@ -1194,6 +1265,7 @@ const {
             sessionLabel={effectiveSessionLabel}
             isBattleTrivia={isBattleTrivia}
             isWordScramble={isWordScramble}
+            compact={shouldCompactGameChrome}
           />
         </div>
 
@@ -1207,11 +1279,11 @@ const {
           />
         ) : null}
 
-        {isBattleTrivia && !shouldCompactMobileChrome ? (
+        {isBattleTrivia && !shouldCompactMobileChrome && !shouldCompactGameChrome ? (
           <WeeklyWinnersCard data={weeklyWinners} />
         ) : null}
 
-        {!shouldCompactMobileChrome ? roomStateBanner : null}
+        {!shouldCompactMobileChrome && !shouldCompactGameChrome ? roomStateBanner : null}
 
         {isBattleTrivia ? (
           <TriviaHeroCard
@@ -1225,6 +1297,7 @@ const {
             isRoundReveal={isRoundReveal}
             hasActiveRound={!!currentRoundId}
             lastRoundPlacement={lastRoundPlacement}
+            compact={shouldCompactGameChrome}
           />
         ) : isWordScramble ? (
           <WordScrambleHeroCard
@@ -1236,6 +1309,7 @@ const {
             phase={wordScrambleState?.phase}
             timeLeft={wordScrambleState?.timeLeft ?? 0}
             winners={wordScrambleState?.winners || []}
+            compact={shouldCompactGameChrome}
           />
         ) : null}
       </div>
@@ -1246,6 +1320,7 @@ const {
    <ChatStream
       messages={messages}
       pinnedMessage={pinnedMessage}
+      variant={isChatRoom ? "general-chat" : "default"}
       currentUserId={user?.id}
       currentUsername={user?.username}
       error={displayError}
@@ -1256,6 +1331,8 @@ const {
       onRequestMessageFocus={isChatRoom ? focusMessageInStream : undefined}
       containerRef={messagesContainerRef}
       onScroll={updateAutoScrollState}
+      bottomAlign={showGameSidebar}
+      compact={shouldCompactGameChrome}
       isAdmin={canModerateChat}
       onDeleteMessage={handleDeleteMessage}
       onMuteUser={handleMuteUser}
@@ -1359,8 +1436,11 @@ const {
 
   return (
     <div
-      className="fixed inset-x-0 overflow-hidden overscroll-none bg-neutral-950 text-white"
+      className={`room-page fixed inset-x-0 overflow-hidden overscroll-none bg-neutral-950 text-white ${
+        isLight ? "room-page--light" : ""
+      }`}
       style={{
+        ...lightModeUndoFilter,
         top: `${viewportState.offsetTop}px`,
         height: viewportState.height
           ? `${viewportState.height}px`

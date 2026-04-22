@@ -143,6 +143,7 @@ export default function TriviaHeroCard({
   isRoundReveal,
   hasActiveRound,
   lastRoundPlacement,
+  compact = false,
 }) {
   const isLive = !!sessionStatus?.isLiveNow;
   const runModeLabel =
@@ -173,7 +174,9 @@ export default function TriviaHeroCard({
 
   return (
     <div
-      className={`relative overflow-hidden rounded-[18px] border transition-all duration-500 sm:rounded-[24px] ${
+      className={`relative overflow-hidden border transition-all duration-500 ${
+        compact ? "rounded-[18px] sm:rounded-[20px]" : "rounded-[18px] sm:rounded-[24px]"
+      } ${
         isQuestionFresh
           ? "border-blue-400/25 bg-[radial-gradient(circle_at_top_left,rgba(96,165,250,0.14),transparent_30%),linear-gradient(135deg,rgba(10,10,11,1)_0%,rgba(17,24,39,1)_52%,rgba(10,10,11,1)_100%)] shadow-[0_14px_28px_rgba(0,0,0,0.22)] ring-1 ring-blue-400/15"
           : isRoundReveal
@@ -183,8 +186,8 @@ export default function TriviaHeroCard({
     >
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_18%,transparent_82%,rgba(255,255,255,0.02))]" />
 
-      <div className="relative p-2.5 sm:p-4">
-        <div className="flex items-start justify-between gap-2.5">
+      <div className={`relative ${compact ? "p-2.5 sm:p-3" : "p-2.5 sm:p-4"}`}>
+        <div className={`flex items-start justify-between ${compact ? "gap-2" : "gap-2.5"}`}>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-1.5">
               <MetaPill className="border-white/10 bg-white/[0.05] text-neutral-300">
@@ -227,7 +230,13 @@ export default function TriviaHeroCard({
           />
         </div>
 
-        <div className="mt-2.5 rounded-[16px] border border-white/8 bg-black/20 px-3 py-3 sm:mt-3 sm:rounded-[18px] sm:px-3.5 sm:py-3.5">
+        <div
+          className={`rounded-[16px] border border-white/8 bg-black/20 ${
+            compact
+              ? "mt-2 px-3 py-2.5 sm:rounded-[16px] sm:px-3 sm:py-3"
+              : "mt-2.5 px-3 py-3 sm:mt-3 sm:rounded-[18px] sm:px-3.5 sm:py-3.5"
+          }`}
+        >
           <div className="text-[9px] uppercase tracking-[0.16em] text-blue-300/70">
             {hasActiveRound
               ? "Current question"
@@ -236,10 +245,12 @@ export default function TriviaHeroCard({
               : "Trivia state"}
           </div>
 
-          <div className="mt-2 min-h-[54px] sm:min-h-[64px]">
+          <div className={compact ? "mt-1.5 min-h-[44px] sm:min-h-[52px]" : "mt-2 min-h-[54px] sm:min-h-[64px]"}>
             {hasActiveRound ? (
               <div
-                className={`text-[15px] font-semibold tracking-[-0.02em] text-white transition-all duration-500 sm:text-[17px] ${
+                className={`font-semibold tracking-[-0.02em] text-white transition-all duration-500 ${
+                  compact ? "text-[14px] sm:text-[16px]" : "text-[15px] sm:text-[17px]"
+                } ${
                   isQuestionFresh
                     ? "translate-y-0 opacity-100 drop-shadow-[0_0_10px_rgba(96,165,250,0.16)]"
                     : "translate-y-0 opacity-100"
@@ -253,7 +264,9 @@ export default function TriviaHeroCard({
               </div>
             ) : (
               <div
-                className="text-[12px] leading-5 text-neutral-400 sm:text-[14px] sm:leading-6"
+                className={`text-neutral-400 ${
+                  compact ? "text-[11px] leading-5 sm:text-[13px] sm:leading-5" : "text-[12px] leading-5 sm:text-[14px] sm:leading-6"
+                }`}
                 style={{ overflowWrap: "anywhere" }}
               >
                 {standbyText}
@@ -262,7 +275,7 @@ export default function TriviaHeroCard({
           </div>
         </div>
 
-        <div className="mt-2.5 min-h-[48px] sm:mt-3 sm:min-h-[58px]">
+        <div className={compact ? "mt-2 min-h-[40px] sm:min-h-[46px]" : "mt-2.5 min-h-[48px] sm:mt-3 sm:min-h-[58px]"}>
           {hasRevealContent ? (
             <TriviaRevealTray
               correctAnswer={correctAnswer}
@@ -272,7 +285,11 @@ export default function TriviaHeroCard({
               lastRoundPlacement={lastRoundPlacement}
             />
           ) : (
-            <div className="flex items-center justify-between rounded-[14px] border border-white/8 bg-black/20 px-3 py-2 sm:rounded-[16px] sm:px-3.5 sm:py-2.5">
+            <div
+              className={`flex items-center justify-between rounded-[14px] border border-white/8 bg-black/20 ${
+                compact ? "px-3 py-2 sm:rounded-[14px] sm:px-3 sm:py-2" : "px-3 py-2 sm:rounded-[16px] sm:px-3.5 sm:py-2.5"
+              }`}
+            >
               <div className="min-w-0">
                 <div className="text-[8px] uppercase tracking-[0.14em] text-neutral-500">
                   Live state

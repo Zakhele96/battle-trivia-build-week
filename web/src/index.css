@@ -79,20 +79,1232 @@ body {
   filter: invert(1) hue-rotate(180deg) saturate(0.96) contrast(1.02);
 }
 
+.emoji-native {
+  display: inline-block;
+}
+
+:root[data-theme-resolved="light"] .emoji-native {
+  filter: invert(1) hue-rotate(180deg) saturate(0.93) contrast(0.93)
+    brightness(1.031);
+}
+
+:root[data-theme-resolved="light"] .room-page--light .emoji-native {
+  filter: none !important;
+}
+
 :root[data-theme-resolved="light"] ::selection {
   background: rgba(103, 80, 164, 0.22);
   color: #1f1637;
 }
 
 :root[data-theme-resolved="light"] .lobby-page,
+:root[data-theme-resolved="light"] .rooms-page,
+:root[data-theme-resolved="light"] .community-page,
+:root[data-theme-resolved="light"] .activity-page,
 :root[data-theme-resolved="light"] .leaderboards-page,
-:root[data-theme-resolved="light"] .profile-page {
+:root[data-theme-resolved="light"] .profile-page,
+:root[data-theme-resolved="light"] .auth-page,
+:root[data-theme-resolved="light"] .admin-page,
+:root[data-theme-resolved="light"] .room-page {
   position: relative;
 }
 
+:root[data-theme-resolved="light"] .lobby-page--light {
+  color: #241b12;
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.09), transparent 26%),
+    radial-gradient(circle at top right, rgba(245, 158, 11, 0.1), transparent 24%),
+    linear-gradient(180deg, #f8f2e8 0%, #efe5d7 100%) !important;
+}
+
+:root[data-theme-resolved="light"] .lobby-page--light .rounded-\[30px\],
+:root[data-theme-resolved="light"] .lobby-page--light .rounded-\[24px\],
+:root[data-theme-resolved="light"] .lobby-page--light .rounded-\[22px\],
+:root[data-theme-resolved="light"] .lobby-page--light .rounded-\[20px\],
+:root[data-theme-resolved="light"] .lobby-page--light .rounded-\[18px\],
+:root[data-theme-resolved="light"] .lobby-page--light .rounded-\[16px\],
+:root[data-theme-resolved="light"] .lobby-page--light .rounded-\[14px\] {
+  box-shadow:
+    0 18px 34px rgba(121, 86, 39, 0.1),
+    0 1px 0 rgba(255, 255, 255, 0.48) inset;
+}
+
+:root[data-theme-resolved="light"] .lobby-page--light h1,
+:root[data-theme-resolved="light"] .lobby-page--light h2,
+:root[data-theme-resolved="light"] .lobby-page--light h3 {
+  color: #1f170f;
+}
+
+:root[data-theme-resolved="light"] .lobby-page--light > .mx-auto > .rounded-\[24px\]:first-of-type {
+  border-color: #d9c4a0;
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.12), transparent 34%),
+    radial-gradient(circle at bottom right, rgba(245, 158, 11, 0.12), transparent 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(242, 228, 209, 0.96));
+}
+
+:root[data-theme-resolved="light"] .lobby-page--light > .mx-auto > .grid + .mb-5,
+:root[data-theme-resolved="light"] .lobby-page--light .mb-6.grid .rounded-\[18px\],
+:root[data-theme-resolved="light"] .lobby-page--light .lg\:grid-cols-3 > a.rounded-\[18px\],
+:root[data-theme-resolved="light"] .lobby-page--light .grid.gap-3.sm\:grid-cols-2 > a.rounded-\[18px\],
+:root[data-theme-resolved="light"] .lobby-page--light .grid.gap-3.lg\:grid-cols-\[1\.02fr_0\.98fr\] > .rounded-\[20px\] {
+  border-color: #ddc8a8;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(243, 232, 216, 0.95));
+}
+
+:root[data-theme-resolved="light"] .lobby-page--light .mb-6.grid .text-white,
+:root[data-theme-resolved="light"] .lobby-page--light .lg\:grid-cols-3 .text-white,
+:root[data-theme-resolved="light"] .lobby-page--light .grid.gap-3.sm\:grid-cols-2 .text-white,
+:root[data-theme-resolved="light"] .lobby-page--light .grid.gap-3.lg\:grid-cols-\[1\.02fr_0\.98fr\] .text-white,
+:root[data-theme-resolved="light"] .lobby-page--light .grid.gap-3.lg\:grid-cols-\[1\.02fr_0\.98fr\] .text-neutral-300,
+:root[data-theme-resolved="light"] .lobby-page--light .grid.gap-3.lg\:grid-cols-\[1\.02fr_0\.98fr\] .text-neutral-400,
+:root[data-theme-resolved="light"] .lobby-page--light .lg\:grid-cols-3 .text-neutral-400,
+:root[data-theme-resolved="light"] .lobby-page--light .mb-6.grid .text-neutral-400 {
+  color: #5f5141 !important;
+}
+
+:root[data-theme-resolved="light"] .lobby-page--light .mb-6.grid .font-semibold.text-white,
+:root[data-theme-resolved="light"] .lobby-page--light .lg\:grid-cols-3 .font-semibold.text-white,
+:root[data-theme-resolved="light"] .lobby-page--light .grid.gap-3.sm\:grid-cols-2 .font-semibold.text-white,
+:root[data-theme-resolved="light"] .lobby-page--light .grid.gap-3.lg\:grid-cols-\[1\.02fr_0\.98fr\] .font-semibold.text-white {
+  color: #1f170f !important;
+}
+
+:root[data-theme-resolved="light"] .lobby-page--light .rounded-\[14px\].border-white\/8,
+:root[data-theme-resolved="light"] .lobby-page--light .rounded-\[16px\].border-white\/8,
+:root[data-theme-resolved="light"] .lobby-page--light .rounded-\[16px\].border-white\/10,
+:root[data-theme-resolved="light"] .lobby-page--light .rounded-\[14px\].border-white\/10 {
+  border-color: #e2d4c2;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+:root[data-theme-resolved="light"] .lobby-page--light .text-blue-300\/80 {
+  color: #0f5fa8;
+}
+
+:root[data-theme-resolved="light"] .lobby-page--light section > .mb-3 .text-neutral-500,
+:root[data-theme-resolved="light"] .lobby-page--light section > .mb-4 .text-neutral-500 {
+  color: #7a6650 !important;
+}
+
+:root[data-theme-resolved="light"] .lobby-page--light section > .mb-3 .text-white,
+:root[data-theme-resolved="light"] .lobby-page--light section > .mb-4 .text-white {
+  color: #1f170f !important;
+}
+
+:root[data-theme-resolved="light"] .lobby-page--light section > .mb-3 .text-neutral-400,
+:root[data-theme-resolved="light"] .lobby-page--light section > .mb-4 .text-neutral-400 {
+  color: #5f5141 !important;
+}
+
+:root[data-theme-resolved="light"] .lobby-page--light .mb-5.rounded-\[24px\],
+:root[data-theme-resolved="light"] .lobby-page--light .sm\:mb-7.rounded-\[30px\] {
+  border-color: #d7c19d;
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.14), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(245, 158, 11, 0.13), transparent 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(242, 228, 210, 0.98)) !important;
+}
+
+:root[data-theme-resolved="light"] .lobby-page--light .mb-5.rounded-\[24px\] .border-white\/10.bg-white\/\[0\.04\],
+:root[data-theme-resolved="light"] .lobby-page--light .mb-5.rounded-\[24px\] .border-white\/10.bg-white\/\[0\.05\] {
+  border-color: #e2d4c2;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+:root[data-theme-resolved="light"] .lobby-page--light .mb-5.rounded-\[24px\] .text-blue-300\/70 {
+  color: rgba(146, 92, 17, 0.86);
+}
+
+:root[data-theme-resolved="light"] .lobby-page--light .mb-6.grid.gap-3.sm\:grid-cols-3 > .rounded-\[18px\],
+:root[data-theme-resolved="light"] .lobby-page--light .grid.gap-3.sm\:gap-4.lg\:grid-cols-3 > a.rounded-\[18px\],
+:root[data-theme-resolved="light"] .lobby-page--light .grid.gap-3.lg\:grid-cols-\[1\.02fr_0\.98fr\] > .grid.gap-3.sm\:grid-cols-2 > a.rounded-\[18px\],
+:root[data-theme-resolved="light"] .lobby-page--light .grid.gap-3.lg\:grid-cols-\[1\.02fr_0\.98fr\] > .rounded-\[20px\] {
+  border-color: #ddc8a8 !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(243, 232, 216, 0.96)) !important;
+}
+
+:root[data-theme-resolved="light"] .lobby-page--light .mb-6.grid.gap-3.sm\:grid-cols-3 > .rounded-\[18px\] .border-blue-300\/18,
+:root[data-theme-resolved="light"] .lobby-page--light .grid.gap-3.sm\:gap-4.lg\:grid-cols-3 > a.rounded-\[18px\] .border-blue-400\/18,
+:root[data-theme-resolved="light"] .lobby-page--light .grid.gap-3.lg\:grid-cols-\[1\.02fr_0\.98fr\] .border-blue-400\/18 {
+  border-color: #7db5ef;
+  background: #eff7ff;
+  color: #0f5fa8;
+}
+
+:root[data-theme-resolved="light"] .lobby-page--light .mb-6.grid.gap-3.sm\:grid-cols-3 > .rounded-\[18px\] .border-amber-300\/18,
+:root[data-theme-resolved="light"] .lobby-page--light .grid.gap-3.sm\:gap-4.lg\:grid-cols-3 > a.rounded-\[18px\] .border-amber-400\/18,
+:root[data-theme-resolved="light"] .lobby-page--light .grid.gap-3.lg\:grid-cols-\[1\.02fr_0\.98fr\] .border-amber-400\/18 {
+  border-color: #e8bf74;
+  background: #fff5df;
+  color: #9a6706;
+}
+
+:root[data-theme-resolved="light"] .lobby-page--light .mb-6.grid.gap-3.sm\:grid-cols-3 > .rounded-\[18px\] .border-emerald-300\/18,
+:root[data-theme-resolved="light"] .lobby-page--light .grid.gap-3.sm\:gap-4.lg\:grid-cols-3 > a.rounded-\[18px\] .border-emerald-400\/18,
+:root[data-theme-resolved="light"] .lobby-page--light .grid.gap-3.lg\:grid-cols-\[1\.02fr_0\.98fr\] .border-emerald-400\/18 {
+  border-color: #8dd3ae;
+  background: #eefcf4;
+  color: #116149;
+}
+
+:root[data-theme-resolved="light"] .lobby-page--light .grid.gap-3.lg\:grid-cols-\[1\.02fr_0\.98fr\] .space-y-2\.5 > .rounded-\[14px\] {
+  border-color: #e2d4c2 !important;
+  background: rgba(255, 255, 255, 0.8) !important;
+}
+
+:root[data-theme-resolved="light"] .lobby-page--light .grid.gap-3.lg\:grid-cols-\[1\.02fr_0\.98fr\] .space-y-2\.5 > .rounded-\[14px\] .border-blue-400\/18 {
+  border-color: #7db5ef;
+  background: #eff7ff;
+  color: #0f5fa8;
+}
+
+:root[data-theme-resolved="light"] .lobby-page--light .grid.gap-3.lg\:grid-cols-\[1\.02fr_0\.98fr\] .space-y-2\.5 > .rounded-\[14px\] .border-violet-400\/18 {
+  border-color: #c9b1f6;
+  background: #f5efff;
+  color: #6f42c1;
+}
+
+:root[data-theme-resolved="light"] .lobby-page--light .grid.gap-3.lg\:grid-cols-\[1\.02fr_0\.98fr\] .space-y-2\.5 > .rounded-\[14px\] .border-emerald-400\/18 {
+  border-color: #8dd3ae;
+  background: #eefcf4;
+  color: #116149;
+}
+
+:root[data-theme-resolved="light"] .lobby-page--light .border-red-900\/35.bg-red-950\/25 {
+  border-color: #e7b2aa;
+  background: rgba(255, 244, 242, 0.92);
+  color: #b54434;
+}
+
+:root[data-theme-resolved="light"] .lobby-page--light .rounded-\[22px\].border-white\/10.bg-white\/\[0\.03\] {
+  border-color: #dcc9aa;
+  background: rgba(255, 255, 255, 0.82);
+  color: #6c5843;
+}
+
+:root[data-theme-resolved="light"] .lobby-page--light .bg-black\/20,
+:root[data-theme-resolved="light"] .lobby-page--light .bg-black\/30 {
+  background: rgba(255, 252, 247, 0.84) !important;
+}
+
+:root[data-theme-resolved="light"] .lobby-page--light .border-white\/8.bg-black\/20,
+:root[data-theme-resolved="light"] .lobby-page--light .border-white\/6.bg-black\/20 {
+  border-color: #e2d4c2 !important;
+}
+
+:root[data-theme-resolved="light"] .leaderboards-page--light {
+  color: #241b12;
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.09), transparent 26%),
+    radial-gradient(circle at top right, rgba(245, 158, 11, 0.1), transparent 24%),
+    linear-gradient(180deg, #f8f2e8 0%, #efe5d7 100%) !important;
+}
+
+:root[data-theme-resolved="light"] .leaderboards-page--light .rounded-\[24px\],
+:root[data-theme-resolved="light"] .leaderboards-page--light .rounded-\[22px\],
+:root[data-theme-resolved="light"] .leaderboards-page--light .rounded-\[20px\],
+:root[data-theme-resolved="light"] .leaderboards-page--light .rounded-\[18px\],
+:root[data-theme-resolved="light"] .leaderboards-page--light .rounded-\[16px\],
+:root[data-theme-resolved="light"] .leaderboards-page--light .rounded-\[14px\] {
+  box-shadow:
+    0 18px 34px rgba(121, 86, 39, 0.1),
+    0 1px 0 rgba(255, 255, 255, 0.48) inset;
+}
+
+:root[data-theme-resolved="light"] .leaderboards-page--light h1,
+:root[data-theme-resolved="light"] .leaderboards-page--light h2,
+:root[data-theme-resolved="light"] .leaderboards-page--light h3 {
+  color: #1f170f;
+}
+
+:root[data-theme-resolved="light"] .leaderboards-page--light .border-white\/10,
+:root[data-theme-resolved="light"] .leaderboards-page--light .border-white\/8,
+:root[data-theme-resolved="light"] .leaderboards-page--light .border-white\/6,
+:root[data-theme-resolved="light"] .leaderboards-page--light .border-white\/12 {
+  border-color: #e2d4c2 !important;
+}
+
+:root[data-theme-resolved="light"] .leaderboards-page--light .text-white {
+  color: #1f170f !important;
+}
+
+:root[data-theme-resolved="light"] .leaderboards-page--light .text-neutral-500 {
+  color: #7a6650 !important;
+}
+
+:root[data-theme-resolved="light"] .leaderboards-page--light .text-neutral-400,
+:root[data-theme-resolved="light"] .leaderboards-page--light .text-neutral-300 {
+  color: #5f5141 !important;
+}
+
+:root[data-theme-resolved="light"] .leaderboards-page--light .bg-black\/20,
+:root[data-theme-resolved="light"] .leaderboards-page--light .bg-white\/\[0\.03\],
+:root[data-theme-resolved="light"] .leaderboards-page--light .bg-white\/\[0\.04\] {
+  background: rgba(255, 255, 255, 0.82) !important;
+}
+
+:root[data-theme-resolved="light"] .leaderboards-page--light .bg-black\/20 {
+  background: rgba(255, 252, 247, 0.84) !important;
+}
+
+:root[data-theme-resolved="light"] .leaderboards-page--light > .mx-auto > .mb-5.rounded-\[24px\],
+:root[data-theme-resolved="light"] .leaderboards-page--light > .mx-auto > .sm\:mb-6.rounded-\[24px\] {
+  border-color: #d8c3a0;
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.12), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(245, 158, 11, 0.12), transparent 24%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(243, 231, 214, 0.98)) !important;
+}
+
+:root[data-theme-resolved="light"] .leaderboards-page--light button.rounded-\[18px\].border,
+:root[data-theme-resolved="light"] .leaderboards-page--light .rounded-\[18px\].border.p-3.text-left {
+  border-color: #ddc8a8 !important;
+  background: rgba(255, 255, 255, 0.86) !important;
+}
+
+:root[data-theme-resolved="light"] .leaderboards-page--light .border-blue-300\/22,
+:root[data-theme-resolved="light"] .leaderboards-page--light .border-blue-300\/25,
+:root[data-theme-resolved="light"] .leaderboards-page--light .border-blue-300\/18,
+:root[data-theme-resolved="light"] .leaderboards-page--light .border-blue-300\/30 {
+  border-color: #7db5ef !important;
+}
+
+:root[data-theme-resolved="light"] .leaderboards-page--light .bg-blue-500\/12,
+:root[data-theme-resolved="light"] .leaderboards-page--light .bg-blue-500\/10,
+:root[data-theme-resolved="light"] .leaderboards-page--light .bg-blue-400\/10,
+:root[data-theme-resolved="light"] .leaderboards-page--light .bg-blue-400\/18,
+:root[data-theme-resolved="light"] .leaderboards-page--light .bg-blue-400\/15 {
+  background: #eff7ff !important;
+}
+
+:root[data-theme-resolved="light"] .leaderboards-page--light .text-blue-100,
+:root[data-theme-resolved="light"] .leaderboards-page--light .text-blue-200 {
+  color: #0f5fa8 !important;
+}
+
+:root[data-theme-resolved="light"] .leaderboards-page--light .bg-violet-500,
+:root[data-theme-resolved="light"] .leaderboards-page--light .bg-violet-500\/10 {
+  background: linear-gradient(180deg, #d9a74a, #bf8120) !important;
+}
+
+:root[data-theme-resolved="light"] .leaderboards-page--light .shadow-\[0_12px_24px_rgba\(139\,92\,246\,0\.22\)\] {
+  box-shadow: 0 12px 24px rgba(191, 129, 32, 0.22) !important;
+}
+
+:root[data-theme-resolved="light"] .leaderboards-page--light .border-amber-300\/20,
+:root[data-theme-resolved="light"] .leaderboards-page--light .border-amber-300\/18 {
+  border-color: #e8bf74 !important;
+}
+
+:root[data-theme-resolved="light"] .leaderboards-page--light .bg-amber-400\/10,
+:root[data-theme-resolved="light"] .leaderboards-page--light .bg-amber-400\/15 {
+  background: #fff5df !important;
+}
+
+:root[data-theme-resolved="light"] .leaderboards-page--light .text-amber-100 {
+  color: #9a6706 !important;
+}
+
+:root[data-theme-resolved="light"] .leaderboards-page--light .border-slate-300\/15,
+:root[data-theme-resolved="light"] .leaderboards-page--light .border-slate-300\/16 {
+  border-color: #cdd6e1 !important;
+}
+
+:root[data-theme-resolved="light"] .leaderboards-page--light .bg-slate-300\/10,
+:root[data-theme-resolved="light"] .leaderboards-page--light .bg-slate-300\/15 {
+  background: #f1f5f9 !important;
+}
+
+:root[data-theme-resolved="light"] .leaderboards-page--light .text-slate-100 {
+  color: #475569 !important;
+}
+
+:root[data-theme-resolved="light"] .leaderboards-page--light .border-orange-300\/18,
+:root[data-theme-resolved="light"] .leaderboards-page--light .border-orange-300\/16 {
+  border-color: #e3b389 !important;
+}
+
+:root[data-theme-resolved="light"] .leaderboards-page--light .bg-orange-400\/10,
+:root[data-theme-resolved="light"] .leaderboards-page--light .bg-orange-400\/15 {
+  background: #fff0e5 !important;
+}
+
+:root[data-theme-resolved="light"] .leaderboards-page--light .text-orange-100 {
+  color: #b45309 !important;
+}
+
+:root[data-theme-resolved="light"] .leaderboards-page--light .rounded-\[24px\].border-white\/10.bg-white\/\[0\.03\],
+:root[data-theme-resolved="light"] .leaderboards-page--light .rounded-\[24px\].border-white\/10.p-3,
+:root[data-theme-resolved="light"] .leaderboards-page--light .rounded-\[24px\].border-white\/10.p-4,
+:root[data-theme-resolved="light"] .leaderboards-page--light .rounded-\[22px\].border-white\/10.bg-white\/\[0\.03\] {
+  border-color: #dcc9aa !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(243, 232, 216, 0.96)) !important;
+}
+
+:root[data-theme-resolved="light"] .leaderboards-page--light thead.bg-black\/20 {
+  background: rgba(236, 226, 211, 0.92) !important;
+}
+
+:root[data-theme-resolved="light"] .leaderboards-page--light tr.border-t {
+  border-color: #eadfce !important;
+}
+
+:root[data-theme-resolved="light"] .leaderboards-page--light .hidden.overflow-hidden.rounded-\[20px\].border-white\/8 {
+  border-color: #dcc9aa !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(243, 232, 216, 0.96)) !important;
+}
+
+:root[data-theme-resolved="light"] .leaderboards-page--light .rounded-\[18px\].border-white\/10.bg-black\/20.p-1,
+:root[data-theme-resolved="light"] .leaderboards-page--light .rounded-\[18px\].border-white\/8.bg-black\/20,
+:root[data-theme-resolved="light"] .leaderboards-page--light .rounded-\[16px\].border-white\/8.bg-black\/20 {
+  border-color: #e2d4c2 !important;
+  background: rgba(255, 252, 247, 0.84) !important;
+}
+
+:root[data-theme-resolved="light"] .leaderboards-page--light .border-red-900\/35.bg-red-950\/25 {
+  border-color: #e7b2aa !important;
+  background: rgba(255, 244, 242, 0.92) !important;
+  color: #b54434 !important;
+}
+
+:root[data-theme-resolved="light"] .profile-page--light {
+  color: #241b12;
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.09), transparent 26%),
+    radial-gradient(circle at top right, rgba(245, 158, 11, 0.1), transparent 24%),
+    linear-gradient(180deg, #f8f2e8 0%, #efe5d7 100%) !important;
+}
+
+:root[data-theme-resolved="light"] .profile-page--light .rounded-\[26px\],
+:root[data-theme-resolved="light"] .profile-page--light .rounded-\[24px\],
+:root[data-theme-resolved="light"] .profile-page--light .rounded-\[22px\],
+:root[data-theme-resolved="light"] .profile-page--light .rounded-\[20px\],
+:root[data-theme-resolved="light"] .profile-page--light .rounded-\[18px\],
+:root[data-theme-resolved="light"] .profile-page--light .rounded-\[16px\],
+:root[data-theme-resolved="light"] .profile-page--light .rounded-\[14px\] {
+  box-shadow:
+    0 18px 34px rgba(121, 86, 39, 0.1),
+    0 1px 0 rgba(255, 255, 255, 0.48) inset;
+}
+
+:root[data-theme-resolved="light"] .profile-page--light h1,
+:root[data-theme-resolved="light"] .profile-page--light h2,
+:root[data-theme-resolved="light"] .profile-page--light h3 {
+  color: #1f170f;
+}
+
+:root[data-theme-resolved="light"] .profile-page--light .text-white {
+  color: #1f170f !important;
+}
+
+:root[data-theme-resolved="light"] .profile-page--light .text-neutral-500 {
+  color: #7a6650 !important;
+}
+
+:root[data-theme-resolved="light"] .profile-page--light .text-neutral-400,
+:root[data-theme-resolved="light"] .profile-page--light .text-neutral-300 {
+  color: #5f5141 !important;
+}
+
+:root[data-theme-resolved="light"] .profile-page--light .border-white\/10,
+:root[data-theme-resolved="light"] .profile-page--light .border-white\/8,
+:root[data-theme-resolved="light"] .profile-page--light .border-white\/6,
+:root[data-theme-resolved="light"] .profile-page--light .border-white\/12 {
+  border-color: #e2d4c2 !important;
+}
+
+:root[data-theme-resolved="light"] .profile-page--light .bg-black\/20,
+:root[data-theme-resolved="light"] .profile-page--light .bg-white\/\[0\.03\],
+:root[data-theme-resolved="light"] .profile-page--light .bg-white\/\[0\.04\],
+:root[data-theme-resolved="light"] .profile-page--light .bg-white\/\[0\.05\],
+:root[data-theme-resolved="light"] .profile-page--light .bg-white\/\[0\.08\] {
+  background: rgba(255, 255, 255, 0.82) !important;
+}
+
+:root[data-theme-resolved="light"] .profile-page--light .bg-black\/20 {
+  background: rgba(255, 252, 247, 0.84) !important;
+}
+
+:root[data-theme-resolved="light"] .profile-page--light .bg-blue-500\/10,
+:root[data-theme-resolved="light"] .profile-page--light .bg-blue-400\/10,
+:root[data-theme-resolved="light"] .profile-page--light .bg-blue-400\/18 {
+  background: #eff7ff !important;
+}
+
+:root[data-theme-resolved="light"] .profile-page--light .border-blue-400\/20,
+:root[data-theme-resolved="light"] .profile-page--light .border-blue-300\/22,
+:root[data-theme-resolved="light"] .profile-page--light .border-blue-300\/30 {
+  border-color: #7db5ef !important;
+}
+
+:root[data-theme-resolved="light"] .profile-page--light .text-blue-300,
+:root[data-theme-resolved="light"] .profile-page--light .text-blue-200,
+:root[data-theme-resolved="light"] .profile-page--light .text-blue-100 {
+  color: #0f5fa8 !important;
+}
+
+:root[data-theme-resolved="light"] .profile-page--light .bg-violet-500\/10 {
+  background: #f5efff !important;
+}
+
+:root[data-theme-resolved="light"] .profile-page--light .border-violet-400\/18,
+:root[data-theme-resolved="light"] .profile-page--light .border-violet-400\/20 {
+  border-color: #c9b1f6 !important;
+}
+
+:root[data-theme-resolved="light"] .profile-page--light .text-violet-200 {
+  color: #6f42c1 !important;
+}
+
+:root[data-theme-resolved="light"] .profile-page--light .bg-red-500\/10,
+:root[data-theme-resolved="light"] .profile-page--light .bg-red-950\/25 {
+  background: rgba(255, 244, 242, 0.92) !important;
+}
+
+:root[data-theme-resolved="light"] .profile-page--light .border-red-400\/20,
+:root[data-theme-resolved="light"] .profile-page--light .border-red-900\/35 {
+  border-color: #e7b2aa !important;
+}
+
+:root[data-theme-resolved="light"] .profile-page--light .text-red-300\/90,
+:root[data-theme-resolved="light"] .profile-page--light .text-red-200 {
+  color: #b54434 !important;
+}
+
+:root[data-theme-resolved="light"] .profile-page--light .bg-emerald-950\/25 {
+  background: rgba(238, 252, 244, 0.94) !important;
+}
+
+:root[data-theme-resolved="light"] .profile-page--light .border-emerald-900\/35 {
+  border-color: #8dd3ae !important;
+}
+
+:root[data-theme-resolved="light"] .profile-page--light .text-emerald-300\/90 {
+  color: #116149 !important;
+}
+
+:root[data-theme-resolved="light"] .profile-page--light > .mx-auto > .mb-6 .rounded-\[22px\],
+:root[data-theme-resolved="light"] .profile-page--light > .mx-auto > .mb-7 .rounded-\[26px\],
+:root[data-theme-resolved="light"] .profile-page--light .space-y-6 > section > .rounded-\[22px\],
+:root[data-theme-resolved="light"] .profile-page--light .space-y-6 > .grid > .rounded-\[22px\],
+:root[data-theme-resolved="light"] .profile-page--light .grid.gap-4.lg\:grid-cols-\[1\.02fr_0\.98fr\] > .rounded-\[26px\],
+:root[data-theme-resolved="light"] .profile-page--light .grid.gap-3.sm\:grid-cols-2 > .rounded-\[22px\],
+:root[data-theme-resolved="light"] .profile-page--light .grid.grid-cols-2.gap-3 > .rounded-\[18px\] {
+  border-color: #dcc9aa !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(243, 232, 216, 0.96)) !important;
+}
+
+:root[data-theme-resolved="light"] .profile-page--light .rounded-\[22px\].border-white\/10.bg-\[radial-gradient\(circle_at_top_left\,rgba\(59\,130\,246\,0\.1\)\,transparent_28\%\)\,linear-gradient\(180deg\,rgba\(255\,255\,255\,0\.03\)\,rgba\(255\,255\,255\,0\.012\)\)\] {
+  border-color: #d8c3a0 !important;
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.1), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(245, 158, 11, 0.1), transparent 24%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(243, 231, 214, 0.98)) !important;
+}
+
+:root[data-theme-resolved="light"] .profile-page--light input {
+  color: #241b12 !important;
+  border-color: #e2d4c2 !important;
+  background: rgba(255, 255, 255, 0.82) !important;
+}
+
+:root[data-theme-resolved="light"] .profile-page--light input::placeholder {
+  color: #8b7661;
+}
+
+:root[data-theme-resolved="light"] .profile-page--light .bg-blue-600 {
+  background: linear-gradient(180deg, #2563eb, #1d4ed8) !important;
+}
+
+:root[data-theme-resolved="light"] .profile-page--light .rounded-\[16px\].border-white\/8.bg-black\/20,
+:root[data-theme-resolved="light"] .profile-page--light .rounded-\[18px\].border-white\/8.bg-black\/20 {
+  border-color: #e2d4c2 !important;
+  background: rgba(255, 252, 247, 0.84) !important;
+}
+
+:root[data-theme-resolved="light"] .rooms-page--light,
+:root[data-theme-resolved="light"] .community-page--light,
+:root[data-theme-resolved="light"] .activity-page--light,
+:root[data-theme-resolved="light"] .auth-page--light,
+:root[data-theme-resolved="light"] .admin-page--light,
+:root[data-theme-resolved="light"] .room-page--light {
+  color: #241b12;
+}
+
+:root[data-theme-resolved="light"] .rooms-page--light,
+:root[data-theme-resolved="light"] .community-page--light,
+:root[data-theme-resolved="light"] .activity-page--light,
+:root[data-theme-resolved="light"] .auth-page--light,
+:root[data-theme-resolved="light"] .admin-page--light {
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.08), transparent 28%),
+    radial-gradient(circle at top right, rgba(245, 158, 11, 0.09), transparent 24%),
+    linear-gradient(180deg, #f8f2e8 0%, #efe5d7 100%) !important;
+}
+
+:root[data-theme-resolved="light"] .rooms-page--light .rounded-\[24px\],
+:root[data-theme-resolved="light"] .rooms-page--light .rounded-\[22px\],
+:root[data-theme-resolved="light"] .rooms-page--light .rounded-\[20px\],
+:root[data-theme-resolved="light"] .rooms-page--light .rounded-\[18px\],
+:root[data-theme-resolved="light"] .rooms-page--light .rounded-\[16px\],
+:root[data-theme-resolved="light"] .community-page--light .rounded-\[24px\],
+:root[data-theme-resolved="light"] .community-page--light .rounded-\[22px\],
+:root[data-theme-resolved="light"] .community-page--light .rounded-\[20px\],
+:root[data-theme-resolved="light"] .community-page--light .rounded-\[18px\],
+:root[data-theme-resolved="light"] .community-page--light .rounded-\[16px\],
+:root[data-theme-resolved="light"] .activity-page--light .rounded-\[24px\],
+:root[data-theme-resolved="light"] .activity-page--light .rounded-\[22px\],
+:root[data-theme-resolved="light"] .activity-page--light .rounded-\[20px\],
+:root[data-theme-resolved="light"] .activity-page--light .rounded-\[18px\],
+:root[data-theme-resolved="light"] .activity-page--light .rounded-\[16px\],
+:root[data-theme-resolved="light"] .auth-page--light .rounded-\[34px\],
+:root[data-theme-resolved="light"] .auth-page--light .rounded-\[32px\],
+:root[data-theme-resolved="light"] .auth-page--light .rounded-\[24px\],
+:root[data-theme-resolved="light"] .auth-page--light .rounded-\[22px\],
+:root[data-theme-resolved="light"] .auth-page--light .rounded-\[20px\],
+:root[data-theme-resolved="light"] .auth-page--light .rounded-\[18px\],
+:root[data-theme-resolved="light"] .auth-page--light .rounded-\[16px\],
+:root[data-theme-resolved="light"] .admin-page--light .rounded-\[28px\],
+:root[data-theme-resolved="light"] .admin-page--light .rounded-\[26px\],
+:root[data-theme-resolved="light"] .admin-page--light .rounded-\[24px\],
+:root[data-theme-resolved="light"] .admin-page--light .rounded-\[22px\],
+:root[data-theme-resolved="light"] .admin-page--light .rounded-\[20px\],
+:root[data-theme-resolved="light"] .admin-page--light .rounded-\[18px\],
+:root[data-theme-resolved="light"] .admin-page--light .rounded-\[16px\],
+:root[data-theme-resolved="light"] .room-page--light .rounded-\[24px\],
+:root[data-theme-resolved="light"] .room-page--light .rounded-\[22px\],
+:root[data-theme-resolved="light"] .room-page--light .rounded-\[20px\],
+:root[data-theme-resolved="light"] .room-page--light .rounded-\[18px\],
+:root[data-theme-resolved="light"] .room-page--light .rounded-\[16px\] {
+  box-shadow:
+    0 18px 34px rgba(121, 86, 39, 0.1),
+    0 1px 0 rgba(255, 255, 255, 0.48) inset;
+}
+
+:root[data-theme-resolved="light"] .rooms-page--light h1,
+:root[data-theme-resolved="light"] .rooms-page--light h2,
+:root[data-theme-resolved="light"] .rooms-page--light h3,
+:root[data-theme-resolved="light"] .community-page--light h1,
+:root[data-theme-resolved="light"] .community-page--light h2,
+:root[data-theme-resolved="light"] .community-page--light h3,
+:root[data-theme-resolved="light"] .activity-page--light h1,
+:root[data-theme-resolved="light"] .activity-page--light h2,
+:root[data-theme-resolved="light"] .activity-page--light h3,
+:root[data-theme-resolved="light"] .auth-page--light h1,
+:root[data-theme-resolved="light"] .auth-page--light h2,
+:root[data-theme-resolved="light"] .auth-page--light h3,
+:root[data-theme-resolved="light"] .admin-page--light h1,
+:root[data-theme-resolved="light"] .admin-page--light h2,
+:root[data-theme-resolved="light"] .admin-page--light h3,
+:root[data-theme-resolved="light"] .room-page--light h1,
+:root[data-theme-resolved="light"] .room-page--light h2,
+:root[data-theme-resolved="light"] .room-page--light h3 {
+  color: #1f170f;
+}
+
+:root[data-theme-resolved="light"] .rooms-page--light .text-white,
+:root[data-theme-resolved="light"] .community-page--light .text-white,
+:root[data-theme-resolved="light"] .activity-page--light .text-white,
+:root[data-theme-resolved="light"] .auth-page--light .text-white,
+:root[data-theme-resolved="light"] .admin-page--light .text-white,
+:root[data-theme-resolved="light"] .room-page--light .text-white {
+  color: #1f170f !important;
+}
+
+:root[data-theme-resolved="light"] .rooms-page--light .text-neutral-500,
+:root[data-theme-resolved="light"] .community-page--light .text-neutral-500,
+:root[data-theme-resolved="light"] .activity-page--light .text-neutral-500,
+:root[data-theme-resolved="light"] .auth-page--light .text-neutral-500,
+:root[data-theme-resolved="light"] .admin-page--light .text-neutral-500,
+:root[data-theme-resolved="light"] .room-page--light .text-neutral-500 {
+  color: #7a6650 !important;
+}
+
+:root[data-theme-resolved="light"] .rooms-page--light .text-neutral-400,
+:root[data-theme-resolved="light"] .rooms-page--light .text-neutral-300,
+:root[data-theme-resolved="light"] .community-page--light .text-neutral-400,
+:root[data-theme-resolved="light"] .community-page--light .text-neutral-300,
+:root[data-theme-resolved="light"] .activity-page--light .text-neutral-400,
+:root[data-theme-resolved="light"] .activity-page--light .text-neutral-300,
+:root[data-theme-resolved="light"] .auth-page--light .text-neutral-400,
+:root[data-theme-resolved="light"] .auth-page--light .text-neutral-300,
+:root[data-theme-resolved="light"] .admin-page--light .text-neutral-400,
+:root[data-theme-resolved="light"] .admin-page--light .text-neutral-300,
+:root[data-theme-resolved="light"] .room-page--light .text-neutral-400,
+:root[data-theme-resolved="light"] .room-page--light .text-neutral-300 {
+  color: #5f5141 !important;
+}
+
+:root[data-theme-resolved="light"] .rooms-page--light .border-white\/10,
+:root[data-theme-resolved="light"] .rooms-page--light .border-white\/8,
+:root[data-theme-resolved="light"] .rooms-page--light .border-white\/6,
+:root[data-theme-resolved="light"] .community-page--light .border-white\/10,
+:root[data-theme-resolved="light"] .community-page--light .border-white\/8,
+:root[data-theme-resolved="light"] .community-page--light .border-white\/6,
+:root[data-theme-resolved="light"] .activity-page--light .border-white\/10,
+:root[data-theme-resolved="light"] .activity-page--light .border-white\/8,
+:root[data-theme-resolved="light"] .activity-page--light .border-white\/6,
+:root[data-theme-resolved="light"] .auth-page--light .border-white\/10,
+:root[data-theme-resolved="light"] .auth-page--light .border-white\/8,
+:root[data-theme-resolved="light"] .auth-page--light .border-white\/6,
+:root[data-theme-resolved="light"] .admin-page--light .border-white\/10,
+:root[data-theme-resolved="light"] .admin-page--light .border-white\/8,
+:root[data-theme-resolved="light"] .admin-page--light .border-white\/6,
+:root[data-theme-resolved="light"] .room-page--light .border-white\/10,
+:root[data-theme-resolved="light"] .room-page--light .border-white\/8,
+:root[data-theme-resolved="light"] .room-page--light .border-white\/6,
+:root[data-theme-resolved="light"] .room-page--light .border-white\/5 {
+  border-color: #e2d4c2 !important;
+}
+
+:root[data-theme-resolved="light"] .rooms-page--light .bg-black\/20,
+:root[data-theme-resolved="light"] .rooms-page--light .bg-white\/\[0\.03\],
+:root[data-theme-resolved="light"] .rooms-page--light .bg-white\/\[0\.04\],
+:root[data-theme-resolved="light"] .community-page--light .bg-black\/20,
+:root[data-theme-resolved="light"] .community-page--light .bg-white\/\[0\.03\],
+:root[data-theme-resolved="light"] .community-page--light .bg-white\/\[0\.04\],
+:root[data-theme-resolved="light"] .activity-page--light .bg-black\/20,
+:root[data-theme-resolved="light"] .activity-page--light .bg-white\/\[0\.03\],
+:root[data-theme-resolved="light"] .activity-page--light .bg-white\/\[0\.04\],
+:root[data-theme-resolved="light"] .auth-page--light .bg-black\/20,
+:root[data-theme-resolved="light"] .auth-page--light .bg-white\/\[0\.03\],
+:root[data-theme-resolved="light"] .auth-page--light .bg-white\/\[0\.04\],
+:root[data-theme-resolved="light"] .admin-page--light .bg-black\/20,
+:root[data-theme-resolved="light"] .admin-page--light .bg-white\/\[0\.03\],
+:root[data-theme-resolved="light"] .admin-page--light .bg-white\/\[0\.04\],
+:root[data-theme-resolved="light"] .room-page--light .bg-black\/20,
+:root[data-theme-resolved="light"] .room-page--light .bg-white\/\[0\.03\],
+:root[data-theme-resolved="light"] .room-page--light .bg-white\/\[0\.04\] {
+  background: rgba(255, 255, 255, 0.82) !important;
+}
+
+:root[data-theme-resolved="light"] .rooms-page--light > .mx-auto > .mb-5.rounded-\[20px\],
+:root[data-theme-resolved="light"] .rooms-page--light section .rounded-\[22px\].border-white\/10.bg-white\/\[0\.03\],
+:root[data-theme-resolved="light"] .community-page--light .rounded-\[22px\].border-white\/10.bg-white\/\[0\.03\],
+:root[data-theme-resolved="light"] .activity-page--light .rounded-\[22px\].border-white\/10,
+:root[data-theme-resolved="light"] .activity-page--light .rounded-\[18px\].border-white\/10,
+:root[data-theme-resolved="light"] .auth-page--light .rounded-\[34px\].border-white\/10,
+:root[data-theme-resolved="light"] .auth-page--light .rounded-\[24px\].border-white\/10,
+:root[data-theme-resolved="light"] .auth-page--light .rounded-\[22px\].border-white\/10,
+:root[data-theme-resolved="light"] .admin-page--light .rounded-\[28px\].border-white\/10,
+:root[data-theme-resolved="light"] .admin-page--light .rounded-\[26px\].border-white\/10,
+:root[data-theme-resolved="light"] .admin-page--light .rounded-\[24px\].border-white\/8,
+:root[data-theme-resolved="light"] .room-page--light .rounded-\[18px\].border-white\/10.bg-white\/\[0\.035\],
+:root[data-theme-resolved="light"] .room-page--light .rounded-\[16px\].border-white\/10,
+:root[data-theme-resolved="light"] .room-page--light .rounded-\[18px\].border-white\/8 {
+  border-color: #dcc9aa !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(243, 232, 216, 0.96)) !important;
+}
+
+:root[data-theme-resolved="light"] .rooms-page--light .mb-5.rounded-\[20px\],
+:root[data-theme-resolved="light"] .auth-page--light .rounded-\[34px\].border-white\/10,
+:root[data-theme-resolved="light"] .auth-page--light .sm\:hidden.rounded-\[24px\],
+:root[data-theme-resolved="light"] .admin-page--light .overflow-hidden.rounded-\[28px\].border-white\/10 {
+  border-color: #d8c3a0 !important;
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.12), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(245, 158, 11, 0.12), transparent 24%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(243, 231, 214, 0.98)) !important;
+}
+
+:root[data-theme-resolved="light"] .rooms-page--light .border-amber-400\/18,
+:root[data-theme-resolved="light"] .rooms-page--light .border-amber-300\/18,
+:root[data-theme-resolved="light"] .community-page--light .border-amber-400\/18,
+:root[data-theme-resolved="light"] .admin-page--light .border-amber-500\/15,
+:root[data-theme-resolved="light"] .admin-page--light .bg-amber-500\/15,
+:root[data-theme-resolved="light"] .room-page--light .border-amber-500\/15,
+:root[data-theme-resolved="light"] .room-page--light .border-amber-500\/20 {
+  border-color: #e8bf74 !important;
+}
+
+:root[data-theme-resolved="light"] .rooms-page--light .bg-amber-300\/10,
+:root[data-theme-resolved="light"] .rooms-page--light .bg-amber-300\/14,
+:root[data-theme-resolved="light"] .community-page--light .bg-amber-300\/10,
+:root[data-theme-resolved="light"] .room-page--light .bg-amber-500\/10,
+:root[data-theme-resolved="light"] .room-page--light .bg-amber-400\/15,
+:root[data-theme-resolved="light"] .admin-page--light .bg-amber-500\/15 {
+  background: #fff5df !important;
+}
+
+:root[data-theme-resolved="light"] .rooms-page--light .text-amber-50\/80,
+:root[data-theme-resolved="light"] .rooms-page--light .text-amber-200\/80,
+:root[data-theme-resolved="light"] .community-page--light .text-amber-200\/80,
+:root[data-theme-resolved="light"] .room-page--light .text-amber-200,
+:root[data-theme-resolved="light"] .room-page--light .text-amber-100,
+:root[data-theme-resolved="light"] .admin-page--light .text-amber-300 {
+  color: #9a6706 !important;
+}
+
+:root[data-theme-resolved="light"] .activity-page--light .bg-blue-500\/10,
+:root[data-theme-resolved="light"] .activity-page--light .border-blue-400\/18,
+:root[data-theme-resolved="light"] .activity-page--light .border-blue-400\/20,
+:root[data-theme-resolved="light"] .auth-page--light .bg-blue-500\/10,
+:root[data-theme-resolved="light"] .auth-page--light .border-blue-400\/15,
+:root[data-theme-resolved="light"] .auth-page--light .border-blue-400\/20,
+:root[data-theme-resolved="light"] .admin-page--light .bg-blue-500\/15,
+:root[data-theme-resolved="light"] .admin-page--light .border-blue-400\/20,
+:root[data-theme-resolved="light"] .room-page--light .bg-blue-500\/10,
+:root[data-theme-resolved="light"] .room-page--light .border-blue-400\/20 {
+  background: #eff7ff !important;
+  border-color: #7db5ef !important;
+}
+
+:root[data-theme-resolved="light"] .activity-page--light .text-blue-300,
+:root[data-theme-resolved="light"] .activity-page--light .text-blue-200,
+:root[data-theme-resolved="light"] .auth-page--light .text-blue-300,
+:root[data-theme-resolved="light"] .auth-page--light .text-blue-200,
+:root[data-theme-resolved="light"] .auth-page--light .text-blue-300\/70,
+:root[data-theme-resolved="light"] .admin-page--light .text-blue-400,
+:root[data-theme-resolved="light"] .admin-page--light .text-blue-300,
+:root[data-theme-resolved="light"] .admin-page--light .text-blue-300\/70,
+:root[data-theme-resolved="light"] .room-page--light .text-blue-300,
+:root[data-theme-resolved="light"] .room-page--light .text-blue-300\/70 {
+  color: #0f5fa8 !important;
+}
+
+:root[data-theme-resolved="light"] .activity-page--light .bg-violet-500\/10,
+:root[data-theme-resolved="light"] .room-page--light .bg-violet-500\/10 {
+  background: #f5efff !important;
+}
+
+:root[data-theme-resolved="light"] .activity-page--light .border-violet-400\/18,
+:root[data-theme-resolved="light"] .room-page--light .border-violet-400\/20 {
+  border-color: #c9b1f6 !important;
+}
+
+:root[data-theme-resolved="light"] .activity-page--light .text-violet-200,
+:root[data-theme-resolved="light"] .room-page--light .text-violet-300 {
+  color: #6f42c1 !important;
+}
+
+:root[data-theme-resolved="light"] .activity-page--light .border-emerald-400\/18,
+:root[data-theme-resolved="light"] .auth-page--light .border-emerald-900\/40,
+:root[data-theme-resolved="light"] .admin-page--light .border-emerald-900\/40,
+:root[data-theme-resolved="light"] .room-page--light .border-emerald-400\/20 {
+  border-color: #8dd3ae !important;
+}
+
+:root[data-theme-resolved="light"] .activity-page--light .bg-emerald-500\/10,
+:root[data-theme-resolved="light"] .auth-page--light .bg-emerald-950\/30,
+:root[data-theme-resolved="light"] .admin-page--light .bg-emerald-950\/30,
+:root[data-theme-resolved="light"] .room-page--light .bg-emerald-500\/10 {
+  background: #eefcf4 !important;
+}
+
+:root[data-theme-resolved="light"] .activity-page--light .text-emerald-200,
+:root[data-theme-resolved="light"] .auth-page--light .text-emerald-300,
+:root[data-theme-resolved="light"] .admin-page--light .text-emerald-300,
+:root[data-theme-resolved="light"] .room-page--light .text-emerald-300 {
+  color: #116149 !important;
+}
+
+:root[data-theme-resolved="light"] .rooms-page--light .border-red-900\/35,
+:root[data-theme-resolved="light"] .community-page--light .border-red-900\/35,
+:root[data-theme-resolved="light"] .activity-page--light .border-red-900\/35,
+:root[data-theme-resolved="light"] .auth-page--light .border-red-900\/35,
+:root[data-theme-resolved="light"] .auth-page--light .border-red-900\/40,
+:root[data-theme-resolved="light"] .admin-page--light .border-red-900\/40,
+:root[data-theme-resolved="light"] .room-page--light .border-red-900\/35 {
+  border-color: #e7b2aa !important;
+}
+
+:root[data-theme-resolved="light"] .rooms-page--light .bg-red-950\/25,
+:root[data-theme-resolved="light"] .community-page--light .bg-red-950\/25,
+:root[data-theme-resolved="light"] .activity-page--light .bg-red-950\/25,
+:root[data-theme-resolved="light"] .auth-page--light .bg-red-950\/25,
+:root[data-theme-resolved="light"] .auth-page--light .bg-red-950\/30,
+:root[data-theme-resolved="light"] .admin-page--light .bg-red-950\/30,
+:root[data-theme-resolved="light"] .room-page--light .bg-red-950\/25 {
+  background: rgba(255, 244, 242, 0.92) !important;
+}
+
+:root[data-theme-resolved="light"] .rooms-page--light .text-red-300\/90,
+:root[data-theme-resolved="light"] .auth-page--light .text-red-300\/90,
+:root[data-theme-resolved="light"] .admin-page--light .text-red-400,
+:root[data-theme-resolved="light"] .room-page--light .text-red-300\/90 {
+  color: #b54434 !important;
+}
+
+:root[data-theme-resolved="light"] .auth-page--light input,
+:root[data-theme-resolved="light"] .admin-page--light input,
+:root[data-theme-resolved="light"] .admin-page--light textarea,
+:root[data-theme-resolved="light"] .admin-page--light select {
+  color: #241b12 !important;
+  border-color: #e2d4c2 !important;
+  background: rgba(255, 255, 255, 0.82) !important;
+}
+
+:root[data-theme-resolved="light"] .auth-page--light input::placeholder,
+:root[data-theme-resolved="light"] .admin-page--light input::placeholder,
+:root[data-theme-resolved="light"] .admin-page--light textarea::placeholder {
+  color: #8b7661;
+}
+
+:root[data-theme-resolved="light"] .auth-page--light .h-px.bg-white\/10 {
+  background: rgba(199, 175, 141, 0.7) !important;
+}
+
+:root[data-theme-resolved="light"] .auth-page--light .bg-\[linear-gradient\(180deg\,rgba\(64\,156\,255\,1\)_0\%\,rgba\(10\,132\,255\,1\)_100\%\)\],
+:root[data-theme-resolved="light"] .admin-page--light .bg-\[linear-gradient\(180deg\,rgba\(64\,156\,255\,1\)_0\%\,rgba\(10\,132\,255\,1\)_100\%\)\] {
+  background: linear-gradient(180deg, #1f6fbd 0%, #145fa7 100%) !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light {
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.08), transparent 26%),
+    radial-gradient(circle at top right, rgba(245, 158, 11, 0.08), transparent 24%),
+    linear-gradient(180deg, #f8f2e8 0%, #efe5d7 100%) !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .bg-neutral-950\/95,
+:root[data-theme-resolved="light"] .room-page--light .bg-neutral-950\/78,
+:root[data-theme-resolved="light"] .room-page--light .bg-neutral-900\/85,
+:root[data-theme-resolved="light"] .room-page--light .bg-neutral-900\/95,
+:root[data-theme-resolved="light"] .room-page--light .xl\:bg-neutral-900\/95 {
+  background: rgba(247, 240, 228, 0.9) !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .bg-neutral-950,
+:root[data-theme-resolved="light"] .room-page--light .bg-neutral-900 {
+  background: transparent !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .bg-\[linear-gradient\(180deg\,\#090909_0\%\,\#0a0a0a_24\%\,\#090909_100\%\)\] {
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.36), transparent 28%),
+    linear-gradient(180deg, rgba(244, 235, 221, 0.9), rgba(236, 224, 205, 0.94)) !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .bg-\[radial-gradient\(circle_at_top_left\,rgba\(10\,132\,255\,0\.08\)\,transparent_26\%\)\,radial-gradient\(circle_at_top_right\,rgba\(16\,185\,129\,0\.06\)\,transparent_24\%\)\,linear-gradient\(180deg\,\#070809_0\%\,\#0a0a0a_24\%\,\#090909_100\%\)\] {
+  background:
+    radial-gradient(circle at top left, rgba(92, 146, 214, 0.12), transparent 28%),
+    radial-gradient(circle at top right, rgba(217, 177, 97, 0.1), transparent 24%),
+    linear-gradient(180deg, rgba(248, 242, 232, 0.98), rgba(239, 229, 215, 0.98)) !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .bg-\[linear-gradient\(180deg\,rgba\(10\,10\,10\,0\.94\)\,rgba\(10\,10\,10\,0\.82\)\,rgba\(10\,10\,10\,0\)\)\] {
+  background:
+    linear-gradient(180deg, rgba(247, 240, 228, 0.96), rgba(247, 240, 228, 0.82), rgba(247, 240, 228, 0)) !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .bg-neutral-900.p-1\.5,
+:root[data-theme-resolved="light"] .room-page--light .bg-neutral-950\/96 {
+  background: rgba(255, 252, 247, 0.94) !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .bg-black\/65,
+:root[data-theme-resolved="light"] .room-page--light .bg-black\/75 {
+  background: rgba(244, 234, 217, 0.9) !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .border-white\/\[0\.05\] {
+  border-color: #decebc !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .bg-\[linear-gradient\(180deg\,rgba\(46\,46\,49\,0\.98\)\,rgba\(34\,34\,37\,0\.98\)\)\] {
+  background:
+    linear-gradient(180deg, rgba(255, 252, 247, 0.98), rgba(243, 234, 221, 0.98)) !important;
+  color: #2a2016 !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .bg-\[linear-gradient\(180deg\,rgba\(58\,49\,94\,0\.92\)_0\%\,rgba\(41\,35\,68\,0\.96\)_100\%\)\] {
+  background:
+    linear-gradient(180deg, rgba(244, 239, 255, 0.98) 0%, rgba(232, 224, 252, 0.98) 100%) !important;
+  color: #4c2d88 !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .bg-black\/20 {
+  background: rgba(255, 255, 255, 0.76) !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .bg-neutral-950\/80,
+:root[data-theme-resolved="light"] .room-page--light .bg-neutral-950\/70 {
+  background:
+    linear-gradient(180deg, rgba(255, 252, 247, 0.96), rgba(243, 234, 221, 0.96)) !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .bg-\[radial-gradient\(circle_at_top\,rgba\(255\,255\,255\,0\.05\)\,transparent_35\%\)\,linear-gradient\(135deg\,rgba\(10\,10\,11\,1\)_0\%\,rgba\(18\,22\,30\,0\.96\)_55\%\,rgba\(10\,10\,11\,1\)_100\%\)\] {
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.42), transparent 34%),
+    linear-gradient(135deg, rgba(255, 252, 247, 0.98) 0%, rgba(241, 232, 217, 0.98) 100%) !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .bg-\[radial-gradient\(circle_at_top_left\,rgba\(255\,255\,255\,0\.05\)\,transparent_28\%\)\,linear-gradient\(135deg\,rgba\(10\,10\,11\,1\)_0\%\,rgba\(17\,24\,39\,0\.96\)_55\%\,rgba\(10\,10\,11\,1\)_100\%\)\] {
+  background:
+    radial-gradient(circle at top left, rgba(90, 138, 204, 0.12), transparent 30%),
+    linear-gradient(135deg, rgba(255, 252, 247, 0.98) 0%, rgba(239, 229, 213, 0.98) 100%) !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .border-white\/10.bg-neutral-950\/80,
+:root[data-theme-resolved="light"] .room-page--light .border-white\/10.bg-neutral-950\/70,
+:root[data-theme-resolved="light"] .room-page--light .border-white\/10.bg-neutral-900\/80,
+:root[data-theme-resolved="light"] .room-page--light .border-white\/8.bg-black\/20,
+:root[data-theme-resolved="light"] .room-page--light .border-white\/6.bg-black\/20 {
+  border-color: #dcc9aa !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .text-white\/70,
+:root[data-theme-resolved="light"] .room-page--light .text-white\/80,
+:root[data-theme-resolved="light"] .room-page--light .text-white\/90,
+:root[data-theme-resolved="light"] .room-page--light .text-white\/68 {
+  color: #7a6650 !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .bg-\[linear-gradient\(180deg\,rgba\(88\,101\,242\,1\)_0\%\,rgba\(64\,78\,237\,1\)_100\%\)\] {
+  background: linear-gradient(180deg, #7c74f2 0%, #675fe0 100%) !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .bg-\[linear-gradient\(180deg\,rgba\(55\,149\,255\,1\)_0\%\,rgba\(10\,132\,255\,1\)_100\%\)\] {
+  background: linear-gradient(180deg, #4194e8 0%, #2574c9 100%) !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .rounded-\[24px\].border-white\/8.bg-\[linear-gradient\(180deg\,rgba\(255\,255\,255\,0\.03\)\,rgba\(255\,255\,255\,0\.018\)\)\] {
+  border-color: #dcc9aa !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(243, 232, 216, 0.96)) !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .bg-\[linear-gradient\(180deg\,rgba\(10\,10\,11\,0\.78\)\,rgba\(18\,18\,20\,0\.96\)\)\] {
+  background:
+    linear-gradient(180deg, rgba(245, 238, 226, 0.84), rgba(239, 229, 213, 0.96)) !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .border-t.border-white\/6.bg-\[linear-gradient\(180deg\,rgba\(10\,10\,11\,0\.78\)\,rgba\(18\,18\,20\,0\.96\)\)\] {
+  border-color: #dcc9aa !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .bg-\[radial-gradient\(circle_at_top\,rgba\(255\,255\,255\,0\.08\)\,transparent_58\%\)\] {
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.52), transparent 60%) !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .border-white\/10.bg-\[linear-gradient\(180deg\,rgba\(255\,255\,255\,0\.04\)\,rgba\(255\,255\,255\,0\.018\)\)\] {
+  border-color: #dcc9aa !important;
+  background:
+    linear-gradient(180deg, rgba(255, 252, 247, 0.98), rgba(243, 232, 216, 0.98)) !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .rounded-\[24px\].border-white\/6.bg-\[linear-gradient\(180deg\,rgba\(255\,255\,255\,0\.018\)\,rgba\(255\,255\,255\,0\.008\)\)\] {
+  border-color: #d9c4a0 !important;
+  background:
+    linear-gradient(180deg, rgba(252, 247, 239, 0.98), rgba(243, 232, 216, 0.98)) !important;
+  box-shadow:
+    0 18px 34px rgba(121, 86, 39, 0.12),
+    0 1px 0 rgba(255, 255, 255, 0.55) inset !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .placeholder\:text-neutral-500::placeholder {
+  color: #8b7661 !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .bg-\[radial-gradient\(circle_at_top_left\,rgba\(96\,165\,250\,0\.14\)\,transparent_30\%\)\,linear-gradient\(135deg\,rgba\(10\,10\,11\,1\)_0\%\,rgba\(17\,24\,39\,1\)_52\%\,rgba\(10\,10\,11\,1\)_100\%\)\],
+:root[data-theme-resolved="light"] .room-page--light .bg-\[radial-gradient\(circle_at_top_left\,rgba\(52\,211\,153\,0\.14\)\,transparent_28\%\)\,linear-gradient\(135deg\,rgba\(10\,10\,11\,1\)_0\%\,rgba\(16\,24\,20\,1\)_50\%\,rgba\(10\,10\,11\,1\)_100\%\)\],
+:root[data-theme-resolved="light"] .room-page--light .bg-\[radial-gradient\(circle_at_top_left\,rgba\(168\,85\,247\,0\.14\)\,transparent_30\%\)\,linear-gradient\(135deg\,rgba\(10\,10\,11\,1\)_0\%\,rgba\(24\,24\,39\,0\.98\)_55\%\,rgba\(10\,10\,11\,1\)_100\%\)\],
+:root[data-theme-resolved="light"] .room-page--light .bg-\[radial-gradient\(circle_at_top_left\,rgba\(255\,255\,255\,0\.05\)\,transparent_28\%\)\,linear-gradient\(135deg\,rgba\(10\,10\,11\,1\)_0\%\,rgba\(17\,24\,39\,0\.96\)_55\%\,rgba\(10\,10\,11\,1\)_100\%\)\] {
+  background:
+    radial-gradient(circle at top left, rgba(90, 138, 204, 0.12), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(245, 158, 11, 0.08), transparent 24%),
+    linear-gradient(135deg, rgba(255, 252, 247, 0.98) 0%, rgba(240, 230, 214, 0.98) 100%) !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .bg-\[linear-gradient\(135deg\,rgba\(16\,24\,20\,0\.92\)_0\%\,rgba\(18\,28\,24\,0\.94\)_50\%\,rgba\(18\,24\,34\,0\.92\)_100\%\)\] {
+  background:
+    radial-gradient(circle at top left, rgba(110, 231, 183, 0.14), transparent 30%),
+    linear-gradient(135deg, rgba(244, 251, 246, 0.98) 0%, rgba(231, 244, 236, 0.98) 100%) !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .shadow-black\/20 {
+  box-shadow: 0 16px 30px rgba(120, 89, 47, 0.12) !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .text-blue-300\/70 {
+  color: #0f5fa8 !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .text-neutral-200,
+:root[data-theme-resolved="light"] .room-page--light .text-neutral-300 {
+  color: #5f5141 !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .border-white\/8.bg-white\/\[0\.03\],
+:root[data-theme-resolved="light"] .room-page--light .border-white\/8.bg-white\/\[0\.04\] {
+  border-color: #e1d1bc !important;
+  background: rgba(253, 249, 242, 0.88) !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .text-white\/70,
+:root[data-theme-resolved="light"] .room-page--light .text-white\/80 {
+  color: #7a6650 !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .bg-\[linear-gradient\(180deg\,rgba\(46\,46\,49\,0\.98\)\,rgba\(34\,34\,37\,0\.98\)\)\] {
+  background:
+    linear-gradient(180deg, rgba(245, 236, 223, 0.98), rgba(236, 225, 208, 0.98)) !important;
+  color: #2a2016 !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .bg-\[linear-gradient\(180deg\,rgba\(255\,255\,255\,0\.03\)\,rgba\(255\,255\,255\,0\.015\)\)\] {
+  background:
+    linear-gradient(180deg, rgba(250, 245, 237, 0.96), rgba(241, 231, 216, 0.96)) !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .text-neutral-400 {
+  color: #6f5b46 !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .text-neutral-500 {
+  color: #826c55 !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .border-emerald-400\/10 {
+  border-color: #8fd4af !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .border-violet-400\/10 {
+  border-color: #cdb7ef !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .border-blue-400\/10 {
+  border-color: #8dbce8 !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .border-amber-400\/10 {
+  border-color: #e9c486 !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .bg-\[linear-gradient\(180deg\,rgba\(16\,185\,129\,0\.08\)\,rgba\(16\,185\,129\,0\.03\)\)\] {
+  background: linear-gradient(180deg, rgba(234, 248, 239, 0.98), rgba(221, 243, 230, 0.96)) !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .bg-\[linear-gradient\(180deg\,rgba\(168\,85\,247\,0\.08\)\,rgba\(168\,85\,247\,0\.03\)\)\] {
+  background: linear-gradient(180deg, rgba(245, 239, 255, 0.98), rgba(236, 229, 251, 0.96)) !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .bg-\[linear-gradient\(180deg\,rgba\(59\,130\,246\,0\.08\)\,rgba\(59\,130\,246\,0\.03\)\)\] {
+  background: linear-gradient(180deg, rgba(236, 245, 255, 0.98), rgba(224, 238, 252, 0.96)) !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .bg-\[linear-gradient\(180deg\,rgba\(245\,158\,11\,0\.08\)\,rgba\(245\,158\,11\,0\.03\)\)\] {
+  background: linear-gradient(180deg, rgba(255, 247, 232, 0.98), rgba(250, 238, 214, 0.96)) !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .text-emerald-200\/75,
+:root[data-theme-resolved="light"] .room-page--light .text-emerald-200\/60 {
+  color: #1c7b57 !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .text-emerald-100 {
+  color: #0f7a4f !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.24);
+}
+
+:root[data-theme-resolved="light"] .room-page--light .text-violet-200\/75,
+:root[data-theme-resolved="light"] .room-page--light .text-violet-200\/60 {
+  color: #7650b8 !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .text-violet-200 {
+  color: #6e42b5 !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .text-violet-200\/70 {
+  color: #7a4fc0 !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .text-blue-200\/75,
+:root[data-theme-resolved="light"] .room-page--light .text-blue-200\/60 {
+  color: #2c6aa8 !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .text-amber-200\/75,
+:root[data-theme-resolved="light"] .room-page--light .text-amber-200\/60 {
+  color: #9a6706 !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .border-rose-400\/20 {
+  border-color: #e7b2c2 !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .bg-rose-500\/10 {
+  background: #fff0f4 !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .text-rose-200 {
+  color: #b24a6a !important;
+}
+
+.room-stream-scroll,
+.room-panel-scroll {
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(164, 132, 90, 0.72) rgba(255, 255, 255, 0.06);
+}
+
+.room-stream-scroll::-webkit-scrollbar,
+.room-panel-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+.room-stream-scroll::-webkit-scrollbar-track,
+.room-panel-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+}
+
+.room-stream-scroll::-webkit-scrollbar-thumb,
+.room-panel-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(192, 156, 108, 0.92), rgba(146, 113, 70, 0.92));
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.room-stream-scroll::-webkit-scrollbar-thumb:hover,
+.room-panel-scroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(177, 143, 98, 0.96), rgba(128, 99, 61, 0.96));
+}
+
+:root[data-theme-resolved="light"] .room-page--light .border-white\/10.bg-white\/\[0\.05\],
+:root[data-theme-resolved="light"] .room-page--light .border-white\/10.bg-white\/\[0\.045\],
+:root[data-theme-resolved="light"] .room-page--light .border-white\/10.bg-white\/\[0\.04\] {
+  border-color: #e2d4c2 !important;
+  background: rgba(255, 255, 255, 0.78) !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .border-white\/8.bg-white\/\[0\.03\],
+:root[data-theme-resolved="light"] .room-page--light .border-white\/6.bg-white\/\[0\.03\],
+:root[data-theme-resolved="light"] .room-page--light .border-white\/6.bg-white\/\[0\.02\] {
+  border-color: #e2d4c2 !important;
+  background: rgba(255, 252, 247, 0.82) !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .grid.grid-cols-2.gap-px.bg-white\/6 {
+  background: #eadfce !important;
+}
+
+:root[data-theme-resolved="light"] .room-page--light .shadow-\[0_10px_24px_rgba\(0\,0\,0\,0\.22\)\],
+:root[data-theme-resolved="light"] .room-page--light .shadow-\[0_12px_28px_rgba\(0\,0\,0\,0\.12\)\] {
+  box-shadow:
+    0 16px 32px rgba(120, 89, 47, 0.14),
+    0 1px 0 rgba(255, 255, 255, 0.5) inset !important;
+}
+
 :root[data-theme-resolved="light"] .lobby-page::before,
+:root[data-theme-resolved="light"] .rooms-page::before,
+:root[data-theme-resolved="light"] .community-page::before,
+:root[data-theme-resolved="light"] .activity-page::before,
 :root[data-theme-resolved="light"] .leaderboards-page::before,
-:root[data-theme-resolved="light"] .profile-page::before {
+:root[data-theme-resolved="light"] .profile-page::before,
+:root[data-theme-resolved="light"] .auth-page::before,
+:root[data-theme-resolved="light"] .admin-page::before,
+:root[data-theme-resolved="light"] .room-page::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -104,8 +1316,13 @@ body {
 }
 
 :root[data-theme-resolved="light"] .lobby-page .mx-auto,
+:root[data-theme-resolved="light"] .rooms-page .mx-auto,
+:root[data-theme-resolved="light"] .community-page .mx-auto,
+:root[data-theme-resolved="light"] .activity-page .mx-auto,
 :root[data-theme-resolved="light"] .leaderboards-page .mx-auto,
-:root[data-theme-resolved="light"] .profile-page .mx-auto {
+:root[data-theme-resolved="light"] .profile-page .mx-auto,
+:root[data-theme-resolved="light"] .auth-page .mx-auto,
+:root[data-theme-resolved="light"] .admin-page .mx-auto {
   position: relative;
   z-index: 1;
 }
@@ -113,26 +1330,51 @@ body {
 :root[data-theme-resolved="light"] .lobby-page .rounded-\[24px\],
 :root[data-theme-resolved="light"] .lobby-page .rounded-\[22px\],
 :root[data-theme-resolved="light"] .lobby-page .rounded-\[20px\],
+:root[data-theme-resolved="light"] .rooms-page .rounded-\[24px\],
+:root[data-theme-resolved="light"] .rooms-page .rounded-\[22px\],
+:root[data-theme-resolved="light"] .rooms-page .rounded-\[20px\],
+:root[data-theme-resolved="light"] .community-page .rounded-\[24px\],
+:root[data-theme-resolved="light"] .community-page .rounded-\[22px\],
+:root[data-theme-resolved="light"] .community-page .rounded-\[20px\],
+:root[data-theme-resolved="light"] .activity-page .rounded-\[24px\],
+:root[data-theme-resolved="light"] .activity-page .rounded-\[22px\],
+:root[data-theme-resolved="light"] .activity-page .rounded-\[20px\],
 :root[data-theme-resolved="light"] .leaderboards-page .rounded-\[24px\],
 :root[data-theme-resolved="light"] .leaderboards-page .rounded-\[22px\],
 :root[data-theme-resolved="light"] .leaderboards-page .rounded-\[20px\],
 :root[data-theme-resolved="light"] .profile-page .rounded-\[24px\],
 :root[data-theme-resolved="light"] .profile-page .rounded-\[22px\],
-:root[data-theme-resolved="light"] .profile-page .rounded-\[20px\] {
+:root[data-theme-resolved="light"] .profile-page .rounded-\[20px\],
+:root[data-theme-resolved="light"] .auth-page .rounded-\[24px\],
+:root[data-theme-resolved="light"] .auth-page .rounded-\[22px\],
+:root[data-theme-resolved="light"] .auth-page .rounded-\[20px\],
+:root[data-theme-resolved="light"] .admin-page .rounded-\[24px\],
+:root[data-theme-resolved="light"] .admin-page .rounded-\[22px\],
+:root[data-theme-resolved="light"] .admin-page .rounded-\[20px\] {
   box-shadow:
     0 16px 34px rgba(111, 82, 38, 0.08),
     0 2px 0 rgba(255, 255, 255, 0.38) inset;
 }
 
 :root[data-theme-resolved="light"] .lobby-page h1,
+:root[data-theme-resolved="light"] .rooms-page h1,
+:root[data-theme-resolved="light"] .community-page h1,
+:root[data-theme-resolved="light"] .activity-page h1,
 :root[data-theme-resolved="light"] .leaderboards-page h1,
-:root[data-theme-resolved="light"] .profile-page h1 {
+:root[data-theme-resolved="light"] .profile-page h1,
+:root[data-theme-resolved="light"] .auth-page h1,
+:root[data-theme-resolved="light"] .admin-page h1 {
   letter-spacing: -0.045em;
 }
 
 :root[data-theme-resolved="light"] .lobby-page .text-neutral-400,
+:root[data-theme-resolved="light"] .rooms-page .text-neutral-400,
+:root[data-theme-resolved="light"] .community-page .text-neutral-400,
+:root[data-theme-resolved="light"] .activity-page .text-neutral-400,
 :root[data-theme-resolved="light"] .leaderboards-page .text-neutral-400,
-:root[data-theme-resolved="light"] .profile-page .text-neutral-400 {
+:root[data-theme-resolved="light"] .profile-page .text-neutral-400,
+:root[data-theme-resolved="light"] .auth-page .text-neutral-400,
+:root[data-theme-resolved="light"] .admin-page .text-neutral-400 {
   opacity: 0.92;
 }
 

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useTheme } from "../../hooks/useTheme";
 
 function getStatusText(sessionStatus) {
   if (!sessionStatus) return "Live room";
@@ -11,7 +12,7 @@ function getStatusText(sessionStatus) {
   );
 }
 
-function getStatusTone(sessionStatus) {
+function getStatusTone(sessionStatus, isLight) {
   const value = String(
     sessionStatus?.statusText || sessionStatus?.status || ""
   ).toLowerCase();
@@ -21,18 +22,26 @@ function getStatusTone(sessionStatus) {
     value.includes("active") ||
     value.includes("running")
   ) {
-    return "border-emerald-400/18 bg-emerald-500/10 text-emerald-200";
+    return isLight
+      ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+      : "border-emerald-400/18 bg-emerald-500/10 text-emerald-200";
   }
 
   if (value.includes("ended") || value.includes("closed")) {
-    return "border-amber-400/18 bg-amber-500/10 text-amber-200";
+    return isLight
+      ? "border-amber-300 bg-amber-50 text-amber-800"
+      : "border-amber-400/18 bg-amber-500/10 text-amber-200";
   }
 
   if (value.includes("reconnect") || value.includes("connecting")) {
-    return "border-violet-400/18 bg-violet-500/10 text-violet-200";
+    return isLight
+      ? "border-violet-300 bg-violet-50 text-violet-700"
+      : "border-violet-400/18 bg-violet-500/10 text-violet-200";
   }
 
-  return "border-blue-400/18 bg-blue-500/10 text-blue-200";
+  return isLight
+    ? "border-sky-300 bg-sky-50 text-sky-800"
+    : "border-blue-400/18 bg-blue-500/10 text-blue-200";
 }
 
 function getRoomDescription(room) {
@@ -72,46 +81,65 @@ function getMetaItems(room) {
 }
 
 export default function FeaturedTriviaCard({ room }) {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === "light";
+
   if (!room?.id) return null;
 
   const statusText = getStatusText(room.sessionStatus);
-  const statusTone = getStatusTone(room.sessionStatus);
+  const statusTone = getStatusTone(room.sessionStatus, isLight);
   const description = getRoomDescription(room);
   const metaItems = getMetaItems(room);
+  const runModeLabel =
+    room?.sessionStatus?.runMode === "scheduled"
+      ? "Scheduled windows"
+      : room?.sessionStatus?.runMode === "continuous"
+      ? "Running now"
+      : room?.sessionStatus?.sessionType || "Live competition";
+  const cardClassName = isLight
+    ? "group block rounded-[20px] border border-[#d8c3a0] bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.12),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(245,158,11,0.12),transparent_28%),linear-gradient(180deg,#fffaf1,#f2e4d1)] p-3.5 shadow-[0_18px_36px_rgba(122,84,37,0.14)] transition hover:-translate-y-[1px] hover:border-[#c69a57] hover:shadow-[0_22px_42px_rgba(122,84,37,0.18)] sm:rounded-[24px] sm:p-4 lg:p-5"
+    : "group block rounded-[20px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.12),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-3.5 shadow-[0_16px_34px_rgba(0,0,0,0.14)] transition hover:-translate-y-[1px] hover:border-white/15 hover:bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.14),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.018))] sm:rounded-[24px] sm:p-4 lg:p-5";
+  const featuredBadgeClassName = isLight
+    ? "rounded-full border border-sky-300 bg-white/80 px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] text-sky-800"
+    : "rounded-full border border-blue-400/18 bg-blue-500/10 px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] text-blue-200";
+  const titleClassName = isLight
+    ? "text-[20px] font-semibold tracking-[-0.04em] text-stone-900 sm:text-[24px]"
+    : "text-[20px] font-semibold tracking-[-0.04em] text-white sm:text-[24px]";
+  const descriptionClassName = isLight
+    ? "mt-1.5 max-w-[44rem] text-[13px] leading-6 text-stone-600 sm:text-[14px]"
+    : "mt-1.5 max-w-[44rem] text-[13px] leading-6 text-neutral-400 sm:text-[14px]";
+  const metaClassName = isLight
+    ? "rounded-full border border-stone-200 bg-white/72 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-stone-600"
+    : "rounded-full border border-white/8 bg-black/20 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-neutral-400";
+  const ctaClassName = isLight
+    ? "inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#0f5fa8] transition group-hover:text-[#0b4f8e]"
+    : "inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-200 transition group-hover:text-white";
 
   return (
-    <div className="rounded-[20px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.12),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-3.5 shadow-[0_16px_34px_rgba(0,0,0,0.14)] sm:rounded-[24px] sm:p-4 lg:p-5">
+    <Link to={`/rooms/${room.id}`} className={cardClassName}>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="rounded-full border border-blue-400/18 bg-blue-500/10 px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] text-blue-200">
-              Featured
-            </div>
+            <div className={featuredBadgeClassName}>Main competition</div>
 
             <div
               className={`rounded-full border px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] ${statusTone}`}
             >
               {statusText}
             </div>
+            <div className={metaClassName}>{runModeLabel}</div>
           </div>
 
           <div className="mt-3">
-            <h3 className="text-[20px] font-semibold tracking-[-0.04em] text-white sm:text-[24px]">
-              {room.name || "Featured room"}
-            </h3>
+            <h3 className={titleClassName}>{room.name || "Featured room"}</h3>
 
-            <p className="mt-1.5 max-w-[44rem] text-[13px] leading-6 text-neutral-400 sm:text-[14px]">
-              {description}
-            </p>
+            <p className={descriptionClassName}>{description}</p>
           </div>
 
           {metaItems.length > 0 ? (
             <div className="mt-3 flex flex-wrap gap-2">
               {metaItems.map((item) => (
-                <div
-                  key={item}
-                  className="rounded-full border border-white/8 bg-black/20 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-neutral-400"
-                >
+                <div key={item} className={metaClassName}>
                   {item}
                 </div>
               ))}
@@ -120,15 +148,12 @@ export default function FeaturedTriviaCard({ room }) {
         </div>
 
         <div className="flex shrink-0 items-center gap-2.5">
-          <Link
-            to={`/rooms/${room.id}`}
-            className="inline-flex items-center gap-2 rounded-[16px] bg-[linear-gradient(180deg,rgba(64,156,255,1)_0%,rgba(10,132,255,1)_100%)] px-4 py-2.5 text-[13px] font-semibold text-white shadow-[0_12px_28px_rgba(37,99,235,0.24)] transition hover:-translate-y-[1px] hover:shadow-[0_14px_32px_rgba(37,99,235,0.3)]"
-          >
+          <div className={ctaClassName}>
             Enter room
             <span aria-hidden="true">→</span>
-          </Link>
+          </div>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }

@@ -325,7 +325,7 @@ function ThemeCard({ themePreference, setThemePreference }) {
 export default function ProfilePage() {
   const navigate = useNavigate();
   const { logout, user: authUser } = useAuth();
-  const { themePreference, setThemePreference } = useTheme();
+  const { themePreference, setThemePreference, resolvedTheme } = useTheme();
 
   const [profile, setProfile] = useState(null);
   const [progression, setProgression] = useState(null);
@@ -492,9 +492,21 @@ const isGoogleAccount = loginProvider === "google";
 
 
 
-  console.log("authUser", authUser);
+  const isLight = resolvedTheme === "light";
+  const lightModeUndoFilter = isLight
+    ? {
+        filter:
+          "invert(1) hue-rotate(180deg) saturate(1.08) contrast(1.08) brightness(0.97)",
+      }
+    : undefined;
+
   return (
-    <div className="profile-page min-h-screen bg-neutral-950 text-white">
+    <div
+      className={`profile-page min-h-screen bg-neutral-950 text-white ${
+        isLight ? "profile-page--light" : ""
+      }`}
+      style={lightModeUndoFilter}
+    >
       <div className="mx-auto w-full max-w-[76rem] px-4 py-4 pb-24 sm:px-5 sm:py-7 sm:pb-7 lg:px-6 lg:py-9">
         <AppSectionNav />
 

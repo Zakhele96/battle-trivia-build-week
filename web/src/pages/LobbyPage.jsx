@@ -13,6 +13,7 @@ import {
 import { getLeaderboard } from "../api/leaderboardsApi";
 import { getMyProfile, getMyProfileHistory } from "../api/profileApi";
 import { useAuth } from "../hooks/useAuth";
+import { useTheme } from "../hooks/useTheme";
 import { useMentions } from "../context/MentionContext";
 import MentionInboxCard from "../components/mentions/MentionInboxCard";
 import { getUnreadMentions } from "../api/roomsApi";
@@ -43,6 +44,12 @@ function formatShortDate(value) {
   }).format(date);
 }
 
+function formatPoints(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return "0 pts";
+  return `${numeric} pts`;
+}
+
 function getInitials(value) {
   if (!value) return "P";
 
@@ -52,18 +59,30 @@ function getInitials(value) {
   return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
 }
 
-function SectionHeader({ eyebrow, title, description }) {
+function SectionHeader({ eyebrow, title, description, isLight = false }) {
   return (
     <div className="mb-3 flex flex-wrap items-end justify-between gap-2.5 sm:mb-4">
       <div>
-        <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500 sm:text-[11px]">
+        <div
+          className={`text-[10px] uppercase tracking-[0.18em] sm:text-[11px] ${
+            isLight ? "text-stone-500" : "text-neutral-500"
+          }`}
+        >
           {eyebrow}
         </div>
-        <div className="mt-1 text-[16px] font-semibold tracking-[-0.03em] text-white sm:text-[19px]">
+        <div
+          className={`mt-1 text-[16px] font-semibold tracking-[-0.03em] sm:text-[19px] ${
+            isLight ? "text-stone-900" : "text-white"
+          }`}
+        >
           {title}
         </div>
         {description ? (
-          <div className="mt-1 text-[12px] leading-5 text-neutral-400 sm:mt-1.5 sm:text-[13px]">
+          <div
+            className={`mt-1 text-[12px] leading-5 sm:mt-1.5 sm:text-[13px] ${
+              isLight ? "text-stone-600" : "text-neutral-400"
+            }`}
+          >
             {description}
           </div>
         ) : null}
@@ -72,25 +91,52 @@ function SectionHeader({ eyebrow, title, description }) {
   );
 }
 
-function LobbyHighlightCard({ eyebrow, title, description, accent = "blue" }) {
+function LobbyHighlightCard({
+  eyebrow,
+  title,
+  description,
+  accent = "blue",
+  isLight = false,
+}) {
   const accentClass =
     accent === "amber"
-      ? "border-amber-300/18 bg-amber-400/10"
+      ? isLight
+        ? "border-amber-300 bg-amber-50 text-amber-800"
+        : "border-amber-300/18 bg-amber-400/10"
       : accent === "emerald"
-      ? "border-emerald-300/18 bg-emerald-400/10"
+      ? isLight
+        ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+        : "border-emerald-300/18 bg-emerald-400/10"
+      : isLight
+      ? "border-sky-300 bg-sky-50 text-sky-800"
       : "border-blue-300/18 bg-blue-400/10";
+  const cardClassName = isLight
+    ? "rounded-[18px] border border-[#ddc8a8] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(244,234,218,0.96))] p-3.5 shadow-[0_16px_28px_rgba(114,84,41,0.1)]"
+    : "rounded-[18px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-3.5";
 
   return (
-    <div className="rounded-[18px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-3.5">
+    <div className={cardClassName}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
+          <div
+            className={`text-[10px] uppercase tracking-[0.16em] ${
+              isLight ? "text-stone-500" : "text-neutral-500"
+            }`}
+          >
             {eyebrow}
           </div>
-          <div className="mt-1.5 text-[16px] font-semibold tracking-[-0.03em] text-white">
+          <div
+            className={`mt-1.5 text-[16px] font-semibold tracking-[-0.03em] ${
+              isLight ? "text-stone-900" : "text-white"
+            }`}
+          >
             {title}
           </div>
-          <div className="mt-1 text-[12px] leading-5 text-neutral-400">
+          <div
+            className={`mt-1 text-[12px] leading-5 ${
+              isLight ? "text-stone-600" : "text-neutral-400"
+            }`}
+          >
             {description}
           </div>
         </div>
@@ -105,25 +151,47 @@ function LobbyHighlightCard({ eyebrow, title, description, accent = "blue" }) {
   );
 }
 
-function QuickDestinationCard({ to, eyebrow, title, description }) {
+function QuickDestinationCard({
+  to,
+  eyebrow,
+  title,
+  description,
+  isLight = false,
+}) {
+  const cardClassName = isLight
+    ? "rounded-[18px] border border-[#ddc8a8] bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(243,232,216,0.96))] p-3.5 shadow-[0_16px_28px_rgba(114,84,41,0.1)] transition hover:border-[#cda768] hover:bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(248,239,226,1))] sm:rounded-[20px] sm:p-4"
+    : "rounded-[18px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-3.5 transition hover:border-white/15 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.018))] sm:rounded-[20px] sm:p-4";
   return (
-    <Link
-      to={to}
-      className="rounded-[18px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-3.5 transition hover:border-white/15 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.018))] sm:rounded-[20px] sm:p-4"
-    >
-      <div className="text-[9px] uppercase tracking-[0.16em] text-neutral-500 sm:text-[10px]">
+    <Link to={to} className={cardClassName}>
+      <div
+        className={`text-[9px] uppercase tracking-[0.16em] sm:text-[10px] ${
+          isLight ? "text-stone-500" : "text-neutral-500"
+        }`}
+      >
         {eyebrow}
       </div>
 
-      <div className="mt-1.5 text-[14px] font-semibold tracking-[-0.03em] text-white sm:text-[15px]">
+      <div
+        className={`mt-1.5 text-[14px] font-semibold tracking-[-0.03em] sm:text-[15px] ${
+          isLight ? "text-stone-900" : "text-white"
+        }`}
+      >
         {title}
       </div>
 
-      <div className="mt-1 text-[12px] leading-5 text-neutral-400 sm:text-[13px] sm:leading-5">
+      <div
+        className={`mt-1 text-[12px] leading-5 sm:text-[13px] sm:leading-5 ${
+          isLight ? "text-stone-600" : "text-neutral-400"
+        }`}
+      >
         {description}
       </div>
 
-      <div className="mt-3 inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.14em] text-blue-300/80">
+      <div
+        className={`mt-3 inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.14em] ${
+          isLight ? "text-[#0f5fa8]" : "text-blue-300/80"
+        }`}
+      >
         Open
         <span aria-hidden="true">→</span>
       </div>
@@ -131,14 +199,18 @@ function QuickDestinationCard({ to, eyebrow, title, description }) {
   );
 }
 
-function LeaderCard({ entry }) {
+function LeaderCard({ entry, isLight = false }) {
   const isChampion = entry.rank === 1;
 
   return (
     <div
       className={`rounded-[16px] border p-3 sm:rounded-[18px] sm:p-3.5 ${
         isChampion
-          ? "border-amber-400/20 bg-amber-500/10"
+          ? isLight
+            ? "border-amber-300 bg-amber-50"
+            : "border-amber-400/20 bg-amber-500/10"
+          : isLight
+          ? "border-[#e2d4c2] bg-[rgba(255,252,247,0.88)]"
           : "border-white/8 bg-black/20"
       }`}
     >
@@ -146,27 +218,49 @@ function LeaderCard({ entry }) {
         <span
           className={`rounded-full px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] sm:text-[10px] ${
             isChampion
-              ? "bg-amber-400/15 text-amber-200"
+              ? isLight
+                ? "bg-amber-100 text-amber-800"
+                : "bg-amber-400/15 text-amber-200"
+              : isLight
+              ? "bg-stone-100 text-stone-600"
               : "bg-white/[0.05] text-neutral-400"
           }`}
         >
           #{entry.rank}
         </span>
 
-        {isChampion ? <span aria-hidden="true">👑</span> : null}
+        {isChampion ? (
+          <span aria-hidden="true" className="emoji-native">
+            👑
+          </span>
+        ) : null}
       </div>
 
-      <div className="mt-2.5 truncate text-[13px] font-semibold text-white sm:mt-3 sm:text-sm">
+      <div
+        className={`mt-2.5 truncate text-[13px] font-semibold sm:mt-3 sm:text-sm ${
+          isLight ? "text-stone-900" : "text-white"
+        }`}
+      >
         {entry.displayName || entry.username}
       </div>
 
-      <div className="mt-1 text-[10px] text-neutral-500 sm:text-[11px]">
+      <div
+        className={`mt-1 text-[10px] sm:text-[11px] ${
+          isLight ? "text-stone-500" : "text-neutral-500"
+        }`}
+      >
         @{entry.username}
       </div>
 
       <div
         className={`mt-2.5 text-[13px] font-semibold sm:mt-3 sm:text-sm ${
-          isChampion ? "text-amber-200" : "text-blue-300"
+          isChampion
+            ? isLight
+              ? "text-amber-800"
+              : "text-amber-200"
+            : isLight
+            ? "text-[#0f5fa8]"
+            : "text-blue-300"
         }`}
       >
         {entry.score} pts
@@ -175,43 +269,79 @@ function LeaderCard({ entry }) {
   );
 }
 
-function LeadersPanel({ title, subtitle, entries }) {
+function LeadersPanel({ title, subtitle, entries, isLight = false }) {
   return (
-    <div className="mt-3 rounded-[18px] border border-white/10 bg-white/[0.03] p-3 sm:mt-4 sm:rounded-[22px] sm:p-4">
+    <div
+      className={`mt-3 rounded-[18px] border p-3 sm:mt-4 sm:rounded-[22px] sm:p-4 ${
+        isLight
+          ? "border-[#dcc9aa] bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(243,232,216,0.96))]"
+          : "border-white/10 bg-white/[0.03]"
+      }`}
+    >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500 sm:text-[11px]">
+          <div
+            className={`text-[10px] uppercase tracking-[0.18em] sm:text-[11px] ${
+              isLight ? "text-stone-500" : "text-neutral-500"
+            }`}
+          >
             {title}
           </div>
-          <div className="mt-1 text-[12px] text-neutral-300 sm:text-sm">
+          <div
+            className={`mt-1 text-[12px] sm:text-sm ${
+              isLight ? "text-stone-600" : "text-neutral-300"
+            }`}
+          >
             {subtitle}
           </div>
         </div>
 
-        <div className="rounded-full border border-white/8 bg-white/[0.03] px-3 py-1 text-[9px] font-medium uppercase tracking-[0.16em] text-neutral-400 sm:text-[10px]">
+        <div
+          className={`rounded-full border px-3 py-1 text-[9px] font-medium uppercase tracking-[0.16em] sm:text-[10px] ${
+            isLight
+              ? "border-[#e2d4c2] bg-white/70 text-stone-500"
+              : "border-white/8 bg-white/[0.03] text-neutral-400"
+          }`}
+        >
           Top {entries.length}
         </div>
       </div>
 
       <div className="mt-3 grid gap-2.5 sm:mt-4 sm:grid-cols-3 sm:gap-3">
         {entries.map((entry) => (
-          <LeaderCard key={`${entry.userId}-${entry.rank}`} entry={entry} />
+          <LeaderCard
+            key={`${entry.userId}-${entry.rank}`}
+            entry={entry}
+            isLight={isLight}
+          />
         ))}
       </div>
     </div>
   );
 }
 
-function DashboardHero({ user, isFirstTimeUser }) {
+function DashboardHero({ user, isFirstTimeUser, isLight = false }) {
   const displayName = user?.displayName || user?.username || "Player";
   const greeting = user?.displayName ? `Welcome, ${user.displayName}` : "Welcome";
   const providerLabel =
     user?.authProvider === "google" ? "Google sign-in" : "BTS sign-in";
 
   return (
-    <div className="mb-5 rounded-[24px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.14),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015))] p-4 shadow-[0_18px_40px_rgba(0,0,0,0.16)] sm:mb-7 sm:rounded-[30px] sm:p-5 lg:p-6">
+    <div
+      className={`mb-5 rounded-[24px] border p-4 sm:mb-7 sm:rounded-[30px] sm:p-5 lg:p-6 ${
+        isLight
+          ? "border-[#d8c3a0] bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.14),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(245,158,11,0.1),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.96),rgba(243,231,214,0.98))] shadow-[0_18px_40px_rgba(114,84,41,0.12)]"
+          : "border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.14),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015))] shadow-[0_18px_40px_rgba(0,0,0,0.16)]"
+      }`}
+    >
       <div className="flex items-start gap-3 sm:gap-4">
-        <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full border border-white/10 bg-white/[0.05] sm:h-16 sm:w-16">
+        <div
+          className={`h-14 w-14 shrink-0 overflow-hidden rounded-full border sm:h-16 sm:w-16 ${
+            isLight
+              ? "border-[#e2d4c2] bg-white/80"
+              : "border-white/10 bg-white/[0.05]"
+          }`}
+        >
           {user?.avatarUrl ? (
             <img
               src={user.avatarUrl}
@@ -219,30 +349,56 @@ function DashboardHero({ user, isFirstTimeUser }) {
               className="h-full w-full object-cover"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-base font-semibold text-white sm:text-lg">
+            <div
+              className={`flex h-full w-full items-center justify-center text-base font-semibold sm:text-lg ${
+                isLight ? "text-stone-900" : "text-white"
+              }`}
+            >
               {getInitials(displayName)}
             </div>
           )}
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="text-[10px] uppercase tracking-[0.2em] text-blue-300/70 sm:text-[11px]">
+          <div
+            className={`text-[10px] uppercase tracking-[0.2em] sm:text-[11px] ${
+              isLight ? "text-[#9a6706]" : "text-blue-300/70"
+            }`}
+          >
             BTS dashboard
           </div>
 
-          <div className="mt-1 truncate text-sm font-medium text-neutral-400 sm:text-[15px]">
+          <div
+            className={`mt-1 truncate text-sm font-medium sm:text-[15px] ${
+              isLight ? "text-stone-500" : "text-neutral-400"
+            }`}
+          >
             {displayName}
           </div>
 
-          <div className="mt-1 inline-flex rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] text-neutral-300 sm:text-[10px]">
+          <div
+            className={`mt-1 inline-flex rounded-full border px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] sm:text-[10px] ${
+              isLight
+                ? "border-[#e2d4c2] bg-white/70 text-stone-500"
+                : "border-white/10 bg-white/[0.04] text-neutral-300"
+            }`}
+          >
             {providerLabel}
           </div>
 
-          <h1 className="mt-3 text-[26px] font-semibold tracking-[-0.04em] text-white sm:mt-4 sm:text-[36px]">
+          <h1
+            className={`mt-3 text-[26px] font-semibold tracking-[-0.04em] sm:mt-4 sm:text-[36px] ${
+              isLight ? "text-stone-950" : "text-white"
+            }`}
+          >
             {greeting}
           </h1>
 
-          <p className="mt-2 max-w-[42rem] text-[13px] leading-6 text-neutral-400 sm:mt-3 sm:text-[15px] sm:leading-7">
+          <p
+            className={`mt-2 max-w-[42rem] text-[13px] leading-6 sm:mt-3 sm:text-[15px] sm:leading-7 ${
+              isLight ? "text-stone-500" : "text-neutral-400"
+            }`}
+          >
             {isFirstTimeUser
               ? "You’re all set. Start with the featured competition, explore the rooms, and build your first result."
               : "Start with the featured competition, jump into rooms, check the weekly standings, or head straight to your profile."}
@@ -253,52 +409,273 @@ function DashboardHero({ user, isFirstTimeUser }) {
   );
 }
 
-function LobbyHeroRail({
-  featuredRoom,
-  sessionPodium,
-  currentStanding,
-  unreadMentions,
-}) {
-  const winner = sessionPodium?.winners?.find((entry) => entry.rank === 1) || null;
-  const mentionCount = Array.isArray(unreadMentions) ? unreadMentions.length : 0;
+function WinnerSpotlightCard({ winner, sessionPodium, isLight = false }) {
+  const cardClassName = isLight
+    ? "group block rounded-[22px] border border-[#d7bd8f] bg-[radial-gradient(circle_at_top_left,rgba(251,191,36,0.24),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(59,130,246,0.1),transparent_28%),linear-gradient(180deg,#fff9ef,#f3e3cb)] p-4 shadow-[0_18px_34px_rgba(127,88,35,0.14)] transition hover:-translate-y-[1px] hover:border-[#c79b56] hover:shadow-[0_22px_40px_rgba(127,88,35,0.18)] sm:rounded-[24px] sm:p-5"
+    : "group block rounded-[22px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(245,158,11,0.16),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] p-4 shadow-[0_18px_34px_rgba(0,0,0,0.16)] transition hover:-translate-y-[1px] hover:border-white/15 sm:rounded-[24px] sm:p-5";
+  const eyebrowClassName = isLight
+    ? "text-[10px] uppercase tracking-[0.18em] text-amber-700/80 sm:text-[11px]"
+    : "text-[10px] uppercase tracking-[0.18em] text-amber-200/80 sm:text-[11px]";
+  const titleClassName = isLight
+    ? "mt-1 text-[24px] font-semibold tracking-[-0.04em] text-stone-950 sm:text-[30px]"
+    : "mt-1 text-[24px] font-semibold tracking-[-0.04em] text-white sm:text-[30px]";
+  const bodyClassName = isLight
+    ? "mt-2 text-[13px] leading-6 text-stone-600 sm:text-[14px]"
+    : "mt-2 text-[13px] leading-6 text-neutral-300 sm:text-[14px]";
+  const chipClassName = isLight
+    ? "rounded-full border border-amber-300 bg-white/78 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-amber-800"
+    : "rounded-full border border-amber-300/18 bg-amber-500/10 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-amber-100";
+  const ctaClassName = isLight
+    ? "inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#0f5fa8] transition group-hover:text-[#0b4f8e]"
+    : "inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-200 transition group-hover:text-white";
 
   return (
-    <div className="mb-6 grid gap-3 sm:grid-cols-3 sm:gap-4">
-      <LobbyHighlightCard
-        eyebrow="Featured now"
-        title={featuredRoom?.name || "Battle Trivia"}
-        description={
-          featuredRoom?.sessionStatus?.status === "active"
-            ? "Live session in motion. Jump in while the room is hot."
-            : "This is still the fastest way back into competition."
-        }
-        accent="blue"
-      />
+    <Link
+      to="/leaderboards?mode=battle-trivia&period=previous"
+      className={cardClassName}
+    >
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <div className={eyebrowClassName}>Last winner</div>
+          <div className={titleClassName}>
+            {winner ? winner.displayName || winner.username : "Waiting for a finish"}
+          </div>
+          <div className={bodyClassName}>
+            {winner
+              ? `${winner.score} pts on the latest Battle Trivia finish. The full podium is right below so the result reads instantly.`
+              : "As soon as a session closes, the latest winner will headline the dashboard here."}
+          </div>
+        </div>
 
-      <LobbyHighlightCard
-        eyebrow="Last winner"
-        title={winner ? winner.displayName || winner.username : "Waiting for a finish"}
-        description={
-          winner
-            ? `Won the latest Battle Trivia podium with ${winner.score} pts.`
-            : "As soon as a session closes, the podium will headline the lobby."
-        }
-        accent="amber"
-      />
+        <div className="flex flex-wrap items-center gap-2">
+          <div className={chipClassName}>
+            {sessionPodium?.endedAt ? formatEndedAt(sessionPodium.endedAt) : "Latest result"}
+          </div>
+          <div className={ctaClassName}>
+            Open standings
+            <span aria-hidden="true">→</span>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
 
-      <LobbyHighlightCard
-        eyebrow="Your pulse"
-        title={
-          currentStanding ? `#${currentStanding.rank} this week` : "Still unranked"
-        }
-        description={
-          mentionCount > 0
-            ? `${mentionCount} unread mention${mentionCount === 1 ? "" : "s"} waiting for you.`
-            : "Your mentions inbox is clear and ready."
-        }
-        accent="emerald"
-      />
-    </div>
+function SnapshotOverviewCard({
+  currentStanding,
+  recentResult,
+  bestStreak,
+  isLight = false,
+}) {
+  const cardClassName = isLight
+    ? "group block rounded-[22px] border border-[#d8c3a0] bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.1),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.96),rgba(243,232,216,0.96))] p-4 shadow-[0_16px_30px_rgba(114,84,41,0.12)] transition hover:-translate-y-[1px] hover:border-[#cda768] hover:shadow-[0_20px_36px_rgba(114,84,41,0.16)] sm:rounded-[24px] sm:p-5"
+    : "group block rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015))] p-4 transition hover:-translate-y-[1px] hover:border-white/15 sm:rounded-[24px] sm:p-5";
+  const panelClassName = isLight
+    ? "rounded-[16px] border border-[#e2d4c2] bg-white/78 p-3.5"
+    : "rounded-[16px] border border-white/8 bg-black/20 p-3.5";
+
+  return (
+    <Link to="/profile" className={`block ${cardClassName}`}>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <div
+            className={`text-[10px] uppercase tracking-[0.18em] ${
+              isLight ? "text-stone-500" : "text-neutral-500"
+            }`}
+          >
+            Your snapshot
+          </div>
+          <div
+            className={`mt-1 text-[20px] font-semibold tracking-[-0.04em] sm:text-[24px] ${
+              isLight ? "text-stone-950" : "text-white"
+            }`}
+          >
+            Your recent shape at a glance
+          </div>
+          <div
+            className={`mt-2 max-w-[38rem] text-[13px] leading-6 ${
+              isLight ? "text-stone-600" : "text-neutral-400"
+            }`}
+          >
+            Open profile for the deeper view, but this card keeps your latest result,
+            best streak, and current place easy to scan from the dashboard.
+          </div>
+        </div>
+
+        <div
+          className={`inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] ${
+            isLight ? "text-[#0f5fa8]" : "text-blue-200"
+          }`}
+        >
+          Open profile
+          <span aria-hidden="true">→</span>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        <div className={panelClassName}>
+          <div className={`text-[10px] uppercase tracking-[0.16em] ${isLight ? "text-stone-500" : "text-neutral-500"}`}>
+            Recent result
+          </div>
+          {recentResult ? (
+            <>
+              <div className="mt-2 flex items-start justify-between gap-3">
+                <div
+                  className={`text-[22px] font-semibold tracking-[-0.04em] ${
+                    isLight ? "text-stone-950" : "text-white"
+                  }`}
+                >
+                  {formatPoints(recentResult.score)}
+                </div>
+
+                <div
+                  className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.14em] ${
+                    isLight
+                      ? "border-sky-300 bg-sky-50 text-sky-800"
+                      : "border-blue-400/18 bg-blue-500/10 text-blue-200"
+                  }`}
+                >
+                  #{recentResult.rank}
+                </div>
+              </div>
+
+              <div className={`mt-1 text-[12px] ${isLight ? "text-stone-600" : "text-neutral-400"}`}>
+                {recentResult.title || "Battle Trivia"} · {formatShortDate(recentResult.endedAt)}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className={`mt-2 text-[22px] font-semibold tracking-[-0.04em] ${isLight ? "text-stone-950" : "text-white"}`}>
+                —
+              </div>
+              <div className={`mt-1 text-[12px] ${isLight ? "text-stone-600" : "text-neutral-400"}`}>
+                Play a round to start filling this out.
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className={panelClassName}>
+          <div className={`text-[10px] uppercase tracking-[0.16em] ${isLight ? "text-stone-500" : "text-neutral-500"}`}>
+            Best streak
+          </div>
+          <div className={`mt-2 text-[22px] font-semibold tracking-[-0.04em] ${isLight ? "text-stone-950" : "text-white"}`}>
+            x{bestStreak}
+          </div>
+          <div className={`mt-1 text-[12px] ${isLight ? "text-stone-600" : "text-neutral-400"}`}>
+            {bestStreak > 0
+              ? "Your best run so far."
+              : "No streak recorded yet."}
+          </div>
+        </div>
+
+        <div className={panelClassName}>
+          <div className={`text-[10px] uppercase tracking-[0.16em] ${isLight ? "text-stone-500" : "text-neutral-500"}`}>
+            Current standing
+          </div>
+          <div className={`mt-2 text-[22px] font-semibold tracking-[-0.04em] ${isLight ? "text-stone-950" : "text-white"}`}>
+            {currentStanding ? `#${currentStanding.rank}` : "Unranked"}
+          </div>
+          <div className={`mt-1 text-[12px] ${isLight ? "text-stone-600" : "text-neutral-400"}`}>
+            {currentStanding
+              ? `${currentStanding.score} pts in the combined race.`
+              : "No placement in the current combined board yet."}
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function RecentResultPulseCard({ recentResult, isLight = false }) {
+  const shellClassName = isLight
+    ? "rounded-[18px] border border-[#ddc8a8] bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(243,232,216,0.96))] p-3.5 shadow-[0_16px_28px_rgba(114,84,41,0.1)] transition hover:border-[#cda768] hover:bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(248,239,226,1))] sm:rounded-[20px] sm:p-4"
+    : "rounded-[18px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.015))] p-3.5 transition hover:border-white/15 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.038),rgba(255,255,255,0.018))] sm:rounded-[20px] sm:p-4";
+
+  const statChipClassName = isLight
+    ? "rounded-full border border-sky-300 bg-sky-50 px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] text-sky-800"
+    : "rounded-full border border-blue-400/18 bg-blue-500/10 px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] text-blue-200";
+
+  return (
+    <Link to="/activity" className={`block ${shellClassName}`}>
+      <div className="flex items-center justify-between gap-3">
+        <div
+          className={`text-[10px] uppercase tracking-[0.16em] ${
+            isLight ? "text-stone-500" : "text-neutral-500"
+          }`}
+        >
+          Recent result
+        </div>
+        <div className={statChipClassName}>Review</div>
+      </div>
+
+      {recentResult ? (
+        <>
+          <div className="mt-3 flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div
+                className={`text-[22px] font-semibold tracking-[-0.04em] ${
+                  isLight ? "text-stone-900" : "text-white"
+                }`}
+              >
+                {formatPoints(recentResult.score)}
+              </div>
+              <div
+                className={`mt-1 truncate text-[12px] leading-5 ${
+                  isLight ? "text-stone-600" : "text-neutral-400"
+                }`}
+              >
+                {recentResult.title || "Battle Trivia"}
+              </div>
+            </div>
+
+            <div
+              className={`shrink-0 rounded-full border px-3 py-1 text-[10px] font-medium uppercase tracking-[0.14em] ${
+                isLight
+                  ? "border-[#e2d4c2] bg-white/80 text-stone-700"
+                  : "border-white/10 bg-white/[0.04] text-neutral-300"
+              }`}
+            >
+              #{recentResult.rank}
+            </div>
+          </div>
+
+          <div
+            className={`mt-3 flex items-center justify-between gap-3 text-[12px] ${
+              isLight ? "text-stone-600" : "text-neutral-400"
+            }`}
+          >
+            <span className="truncate">{formatShortDate(recentResult.endedAt)}</span>
+            <span
+              className={`inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.14em] ${
+                isLight ? "text-[#0f5fa8]" : "text-blue-300/80"
+              }`}
+            >
+              Open activity
+              <span aria-hidden="true">→</span>
+            </span>
+          </div>
+        </>
+      ) : (
+        <>
+          <div
+            className={`mt-2.5 text-[20px] font-semibold tracking-[-0.04em] sm:text-[22px] ${
+              isLight ? "text-stone-900" : "text-white"
+            }`}
+          >
+            No result yet
+          </div>
+
+          <div
+            className={`mt-1.5 text-[12px] leading-5 sm:text-[13px] sm:leading-6 ${
+              isLight ? "text-stone-600" : "text-neutral-400"
+            }`}
+          >
+            Jump into the featured room to start building your history.
+          </div>
+        </>
+      )}
+    </Link>
   );
 }
 
@@ -309,21 +686,36 @@ function PulseCard({
   description,
   accent = "blue",
   cta = "View",
+  isLight = false,
 }) {
   const accentClasses =
     accent === "violet"
-      ? "border-violet-400/18 bg-violet-500/10"
+      ? isLight
+        ? "border-violet-300 bg-violet-50 text-violet-800"
+        : "border-violet-400/18 bg-violet-500/10"
       : accent === "emerald"
-      ? "border-emerald-400/18 bg-emerald-500/10"
+      ? isLight
+        ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+        : "border-emerald-400/18 bg-emerald-500/10"
+      : isLight
+      ? "border-sky-300 bg-sky-50 text-sky-800"
       : "border-blue-400/18 bg-blue-500/10";
 
   return (
     <Link
       to={to}
-      className="rounded-[18px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.015))] p-3.5 transition hover:border-white/15 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.038),rgba(255,255,255,0.018))] sm:rounded-[20px] sm:p-4"
+      className={`block rounded-[18px] border p-3.5 transition sm:rounded-[20px] sm:p-4 ${
+        isLight
+          ? "border-[#ddc8a8] bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(243,232,216,0.96))] shadow-[0_16px_28px_rgba(114,84,41,0.1)] hover:border-[#cda768] hover:bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(248,239,226,1))]"
+          : "border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.015))] hover:border-white/15 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.038),rgba(255,255,255,0.018))]"
+      }`}
     >
       <div className="flex items-center justify-between gap-3">
-        <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
+        <div
+          className={`text-[10px] uppercase tracking-[0.16em] ${
+            isLight ? "text-stone-500" : "text-neutral-500"
+          }`}
+        >
           {eyebrow}
         </div>
         <div
@@ -333,11 +725,19 @@ function PulseCard({
         </div>
       </div>
 
-      <div className="mt-2.5 text-[20px] font-semibold tracking-[-0.04em] text-white sm:text-[22px]">
+      <div
+        className={`mt-2.5 text-[20px] font-semibold tracking-[-0.04em] sm:text-[22px] ${
+          isLight ? "text-stone-900" : "text-white"
+        }`}
+      >
         {title}
       </div>
 
-      <div className="mt-1.5 text-[12px] leading-5 text-neutral-400 sm:text-[13px] sm:leading-6">
+      <div
+        className={`mt-1.5 text-[12px] leading-5 sm:text-[13px] sm:leading-6 ${
+          isLight ? "text-stone-600" : "text-neutral-400"
+        }`}
+      >
         {description}
       </div>
     </Link>
@@ -351,25 +751,50 @@ function NextMoveRow({
   to,
   actionLabel,
   accent = "blue",
+  isLight = false,
 }) {
   const accentClasses =
     accent === "violet"
-      ? "border-violet-400/18 bg-violet-500/10 text-violet-200"
+      ? isLight
+        ? "border-violet-300 bg-violet-50 text-violet-800"
+        : "border-violet-400/18 bg-violet-500/10 text-violet-200"
       : accent === "emerald"
-      ? "border-emerald-400/18 bg-emerald-500/10 text-emerald-200"
+      ? isLight
+        ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+        : "border-emerald-400/18 bg-emerald-500/10 text-emerald-200"
+      : isLight
+      ? "border-sky-300 bg-sky-50 text-sky-800"
       : "border-blue-400/18 bg-blue-500/10 text-blue-200";
 
   return (
-    <div className="rounded-[14px] border border-white/8 bg-black/20 px-3 py-2.5 sm:rounded-[16px] sm:px-3.5 sm:py-3">
+    <div
+      className={`rounded-[14px] border px-3 py-2.5 sm:rounded-[16px] sm:px-3.5 sm:py-3 ${
+        isLight
+          ? "border-[#e2d4c2] bg-[rgba(255,252,247,0.86)]"
+          : "border-white/8 bg-black/20"
+      }`}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-[10px] uppercase tracking-[0.14em] text-neutral-500">
+          <div
+            className={`text-[10px] uppercase tracking-[0.14em] ${
+              isLight ? "text-stone-500" : "text-neutral-500"
+            }`}
+          >
             {step}
           </div>
-          <div className="mt-1 text-[13px] font-semibold text-white sm:text-sm">
+          <div
+            className={`mt-1 text-[13px] font-semibold sm:text-sm ${
+              isLight ? "text-stone-900" : "text-white"
+            }`}
+          >
             {title}
           </div>
-          <div className="mt-1 text-[11px] leading-5 text-neutral-400 sm:text-[12px]">
+          <div
+            className={`mt-1 text-[11px] leading-5 sm:text-[12px] ${
+              isLight ? "text-stone-600" : "text-neutral-400"
+            }`}
+          >
             {description}
           </div>
         </div>
@@ -385,27 +810,51 @@ function NextMoveRow({
   );
 }
 
-function NextUpCard({ isFirstTimeUser, featuredRoom }) {
+function NextUpCard({ isFirstTimeUser, featuredRoom, isLight = false }) {
   const featuredLink = featuredRoom ? `/rooms/${featuredRoom.id}` : "/rooms";
 
   return (
-    <div className="rounded-[20px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.028),rgba(255,255,255,0.012))] p-3.5 sm:rounded-[24px] sm:p-4">
+    <div
+      className={`rounded-[20px] border p-3.5 sm:rounded-[24px] sm:p-4 ${
+        isLight
+          ? "border-[#dcc9aa] bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(243,232,216,0.96))] shadow-[0_16px_28px_rgba(114,84,41,0.1)]"
+          : "border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.028),rgba(255,255,255,0.012))]"
+      }`}
+    >
       <div className="flex items-center justify-between gap-3">
         <div>
-          <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
+          <div
+            className={`text-[10px] uppercase tracking-[0.16em] ${
+              isLight ? "text-stone-500" : "text-neutral-500"
+            }`}
+          >
             Next up
           </div>
-          <div className="mt-1.5 text-[15px] font-semibold tracking-[-0.03em] text-white sm:text-[17px]">
+          <div
+            className={`mt-1.5 text-[15px] font-semibold tracking-[-0.03em] sm:text-[17px] ${
+              isLight ? "text-stone-900" : "text-white"
+            }`}
+          >
             {isFirstTimeUser ? "Your first 3 moves" : "Keep momentum going"}
           </div>
         </div>
 
-        <div className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] text-neutral-300">
+        <div
+          className={`rounded-full border px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] ${
+            isLight
+              ? "border-[#e2d4c2] bg-white/70 text-stone-500"
+              : "border-white/10 bg-white/[0.04] text-neutral-300"
+          }`}
+        >
           Quick
         </div>
       </div>
 
-      <div className="mt-2 text-[12px] leading-5 text-neutral-400 sm:text-[13px]">
+      <div
+        className={`mt-2 text-[12px] leading-5 sm:text-[13px] ${
+          isLight ? "text-stone-600" : "text-neutral-400"
+        }`}
+      >
         {isFirstTimeUser
           ? "Start cleanly and let the app begin to populate around your activity."
           : "Use the dashboard as a control point, then move straight into what matters."}
@@ -421,6 +870,7 @@ function NextUpCard({ isFirstTimeUser, featuredRoom }) {
               to={featuredLink}
               actionLabel="Play"
               accent="blue"
+              isLight={isLight}
             />
             <NextMoveRow
               step="Step 2"
@@ -429,6 +879,7 @@ function NextUpCard({ isFirstTimeUser, featuredRoom }) {
               to="/leaderboards?mode=combined&period=current"
               actionLabel="View"
               accent="violet"
+              isLight={isLight}
             />
             <NextMoveRow
               step="Step 3"
@@ -437,6 +888,7 @@ function NextUpCard({ isFirstTimeUser, featuredRoom }) {
               to="/profile"
               actionLabel="Edit"
               accent="emerald"
+              isLight={isLight}
             />
           </>
         ) : (
@@ -448,6 +900,7 @@ function NextUpCard({ isFirstTimeUser, featuredRoom }) {
               to={featuredLink}
               actionLabel="Open"
               accent="blue"
+              isLight={isLight}
             />
             <NextMoveRow
               step="Track"
@@ -456,6 +909,7 @@ function NextUpCard({ isFirstTimeUser, featuredRoom }) {
               to="/activity"
               actionLabel="Review"
               accent="violet"
+              isLight={isLight}
             />
             <NextMoveRow
               step="Compare"
@@ -464,6 +918,7 @@ function NextUpCard({ isFirstTimeUser, featuredRoom }) {
               to="/leaderboards?mode=combined&period=current"
               actionLabel="Compare"
               accent="emerald"
+              isLight={isLight}
             />
           </>
         )}
@@ -535,6 +990,7 @@ function NextUpCard({ isFirstTimeUser, featuredRoom }) {
 
 export default function LobbyPage() {
   const { user } = useAuth();
+  const { resolvedTheme } = useTheme();
   const { syncRoomsFromPayload, mergeRooms } = useMentions();
 
   const [rawRooms, setRawRooms] = useState([]);
@@ -671,6 +1127,8 @@ export default function LobbyPage() {
   const showPodium =
     !!sessionPodium?.hasPodium && sessionPodium?.winners?.length > 0;
   const showCurrentLeaders = !showPodium && currentLeaders.length > 0;
+  const latestWinner =
+    sessionPodium?.winners?.find((entry) => entry.rank === 1) || null;
 
   const combinedLeadersPreview = useMemo(
     () => combinedBoardRows.slice(0, 3),
@@ -690,29 +1148,28 @@ export default function LobbyPage() {
     !currentStanding &&
     bestStreak === 0 &&
     totalCorrectAnswers === 0;
+  const isLight = resolvedTheme === "light";
+  const lightModeUndoFilter = isLight
+    ? {
+        filter:
+          "invert(1) hue-rotate(180deg) saturate(1.08) contrast(1.08) brightness(0.97)",
+      }
+    : undefined;
 
   return (
-    <div className="lobby-page min-h-screen bg-neutral-950 text-white">
+    <div
+      className={`lobby-page min-h-screen bg-neutral-950 text-white ${
+        isLight ? "lobby-page--light" : ""
+      }`}
+      style={lightModeUndoFilter}
+    >
       <div className="mx-auto w-full max-w-[76rem] px-4 py-4 pb-24 sm:px-5 sm:py-7 sm:pb-7 lg:px-6 lg:py-9">
         <AppSectionNav />
-        <DashboardHero user={user} isFirstTimeUser={isFirstTimeUser} />
-        <LobbyHeroRail
-          featuredRoom={featuredRoom}
-          sessionPodium={sessionPodium}
-          currentStanding={currentStanding}
-          unreadMentions={unreadMentions}
+        <DashboardHero
+          user={user}
+          isFirstTimeUser={isFirstTimeUser}
+          isLight={isLight}
         />
-
-        <MentionInboxCard
-          title="Unread mentions"
-          description="Open a mention and jump into the exact message instead of just clearing a room badge."
-          items={unreadMentions}
-        />
-        {/* <MentionSummaryCard
-          roomsWithUnreadMentions={roomsWithUnreadMentions}
-          totalUnreadMentions={totalUnreadMentions}
-        /> */}
-
         {error ? (
           <div className="mb-5 rounded-[20px] border border-red-900/35 bg-red-950/25 px-4 py-3 text-sm text-red-300/90 sm:mb-6 sm:rounded-[22px]">
             {error}
@@ -725,6 +1182,55 @@ export default function LobbyPage() {
           </div>
         ) : (
           <>
+            <section className="mb-6 sm:mb-8">
+              <WinnerSpotlightCard
+                winner={latestWinner}
+                sessionPodium={sessionPodium}
+                isLight={isLight}
+              />
+
+              {showPodium ? (
+                <WinnersPodiumCard
+                  title="Latest Battle Trivia winners"
+                  subtitle={`Finished ${formatEndedAt(
+                    sessionPodium.endedAt
+                  )}. First, second, and third are now front and center in the dashboard.`}
+                  winners={sessionPodium.winners}
+                  to="/leaderboards?mode=battle-trivia&period=previous"
+                />
+              ) : showCurrentLeaders ? (
+                <LeadersPanel
+                  title="Current Battle Trivia leaders"
+                  subtitle="Live standings for this week"
+                  entries={currentLeaders}
+                  isLight={isLight}
+                />
+              ) : null}
+            </section>
+
+            {featuredRoom ? (
+              <section className="mb-6 sm:hidden">
+                <SectionHeader
+                  eyebrow="Battle Trivia"
+                  title="Main competition"
+                  description="Jump straight into the featured room from the dashboard."
+                  isLight={isLight}
+                />
+
+                <div className="grid gap-4">
+                  <FeaturedTriviaCard room={featuredRoom} />
+                </div>
+              </section>
+            ) : null}
+
+            <div className="hidden sm:block">
+              <MentionInboxCard
+                title="Unread mentions"
+                description="Open a mention and jump into the exact message instead of just clearing a room badge."
+                items={unreadMentions}
+              />
+            </div>
+
             <section className="mb-7 sm:mb-9">
               <SectionHeader
                 eyebrow="Personal"
@@ -732,13 +1238,26 @@ export default function LobbyPage() {
                 description={
                   isFirstTimeUser
                     ? "A cleaner first-time experience: start playing, complete your profile, and watch your results appear here."
-                    : "A quick pulse on your recent result, streak, and current standing."
+                    : "One clean clickable snapshot instead of three separate mini-cards."
                 }
+                isLight={isLight}
               />
+
+              {!isFirstTimeUser ? (
+                <div className="mb-3 sm:mb-4">
+                  <SnapshotOverviewCard
+                    currentStanding={currentStanding}
+                    recentResult={recentResult}
+                    bestStreak={bestStreak}
+                    isLight={isLight}
+                  />
+                </div>
+              ) : null}
 
               <div className="grid gap-3 sm:gap-4 lg:grid-cols-3">
                 {isFirstTimeUser ? (
                   <>
+                    <div className="hidden sm:block">
                     <PulseCard
                       to={featuredRoom ? `/rooms/${featuredRoom.id}` : "/rooms"}
                       eyebrow="Step 1"
@@ -746,8 +1265,11 @@ export default function LobbyPage() {
                       description="Enter the featured room and answer a few questions to start building history."
                       accent="blue"
                       cta="Start"
+                      isLight={isLight}
                     />
+                    </div>
 
+                    <div className="hidden sm:block">
                     <PulseCard
                       to="/rooms"
                       eyebrow="Step 2"
@@ -755,8 +1277,11 @@ export default function LobbyPage() {
                       description="Browse the competitive spaces and find the rooms you want to return to."
                       accent="violet"
                       cta="Browse"
+                      isLight={isLight}
                     />
+                    </div>
 
+                    <div className="hidden sm:block">
                     <PulseCard
                       to="/profile"
                       eyebrow="Step 3"
@@ -764,28 +1289,20 @@ export default function LobbyPage() {
                       description="Update your display name and account details so the app feels more personal."
                       accent="emerald"
                       cta="Edit"
+                      isLight={isLight}
                     />
+                    </div>
                   </>
                 ) : (
                   <>
-                    <PulseCard
-                      to="/activity"
-                      eyebrow="Recent result"
-                      title={
-                        recentResult
-                          ? `#${recentResult.rank} · ${recentResult.score} pts`
-                          : "No result yet"
-                      }
-                      description={
-                        recentResult
-                          ? `${recentResult.title || "Battle Trivia"} · ${formatShortDate(
-                              recentResult.endedAt
-                            )}`
-                          : "Jump into the featured room to start building your history."
-                      }
-                      accent="blue"
+                    <div className="hidden">
+                    <RecentResultPulseCard
+                      recentResult={recentResult}
+                      isLight={isLight}
                     />
+                    </div>
 
+                    <div className="hidden">
                     <PulseCard
                       to="/profile"
                       eyebrow="Best streak"
@@ -796,8 +1313,11 @@ export default function LobbyPage() {
                           : "No streak recorded yet — start a run and build momentum."
                       }
                       accent="violet"
+                      isLight={isLight}
                     />
+                    </div>
 
+                    <div className="hidden">
                     <PulseCard
                       to="/leaderboards?mode=combined&period=current"
                       eyebrow="Current standing"
@@ -808,48 +1328,35 @@ export default function LobbyPage() {
                           : "You are not placed in the current combined standings yet."
                       }
                       accent="emerald"
+                      isLight={isLight}
                     />
+                    </div>
                   </>
                 )}
               </div>
             </section>
 
             {featuredRoom ? (
-              <section className="mb-6 sm:mb-8">
+              <section className="hidden sm:block sm:mb-8">
                 <SectionHeader
-                  eyebrow="Featured"
+                  eyebrow="Battle Trivia"
                   title="Main competition"
-                  description="The headline room sits beside the newest finish, so the lobby feels more like a live stage than a stack of cards."
+                  description="A big direct entry into the main room, with live state and run mode visible before you jump in."
+                  isLight={isLight}
                 />
 
-                <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr] xl:items-start">
+                <div className="grid gap-4">
                   <FeaturedTriviaCard room={featuredRoom} />
-
-                  {showPodium ? (
-                    <WinnersPodiumCard
-                      title="Latest Battle Trivia winners"
-                      subtitle={`Finished ${formatEndedAt(
-                        sessionPodium.endedAt
-                      )}. First, second, and third are now front and center in the lobby.`}
-                      winners={sessionPodium.winners}
-                      to="/leaderboards?mode=battle-trivia&period=previous"
-                    />
-                  ) : showCurrentLeaders ? (
-                    <LeadersPanel
-                      title="Current Battle Trivia leaders"
-                      subtitle="Live standings for this week"
-                      entries={currentLeaders}
-                    />
-                  ) : null}
                 </div>
               </section>
             ) : null}
 
-            <section className="mb-7 sm:mb-9">
+            <section className="hidden sm:block sm:mb-9">
               <SectionHeader
                 eyebrow="Explore"
-                title="Go where you need to go"
-                description="Keep the dashboard short and move into dedicated sections."
+                title="Keep exploring"
+                description="Use the dashboard like a launchpad and move straight into the part of the app you want."
+                isLight={isLight}
               />
 
               <div className="grid gap-3 lg:grid-cols-[1.02fr_0.98fr]">
@@ -857,21 +1364,24 @@ export default function LobbyPage() {
                   <QuickDestinationCard
                     to="/rooms"
                     eyebrow="Rooms"
-                    title="Game rooms"
-                    description="Battle Trivia, Word Scramble, and other competitive spaces."
+                    title="Open all rooms"
+                    description="Jump across Battle Trivia, Word Scramble, and every other live space."
+                    isLight={isLight}
                   />
 
                   <QuickDestinationCard
                     to="/community"
                     eyebrow="Community"
-                    title="Community spaces"
-                    description="General chat rooms and social spaces outside competition."
+                    title="Join the community"
+                    description="Move into social rooms, side conversations, and the lighter side of the app."
+                    isLight={isLight}
                   />
                 </div>
 
                 <NextUpCard
                   isFirstTimeUser={isFirstTimeUser}
                   featuredRoom={featuredRoom}
+                  isLight={isLight}
                 />
               </div>
             </section>
@@ -881,6 +1391,7 @@ export default function LobbyPage() {
                 eyebrow="Standings"
                 title="Weekly race"
                 description="The lobby stays lighter now: one live combined snapshot here, then the full leaderboard page when you want the full breakdown."
+                isLight={isLight}
               />
 
               <div className="grid gap-3 sm:gap-4 lg:grid-cols-[1.2fr_0.8fr]">
@@ -898,6 +1409,7 @@ export default function LobbyPage() {
                     eyebrow="Winners archive"
                     title="See recent Battle Trivia results"
                     description="Open the leaderboard page to review completed sessions and full rankings beyond the podium."
+                    isLight={isLight}
                   />
 
                   <QuickDestinationCard
@@ -909,6 +1421,7 @@ export default function LobbyPage() {
                       wordScrambleLeaders[0]?.username ||
                       "Live players"
                     } and the rest of the field are still climbing this week's board.`}
+                    isLight={isLight}
                   />
                 </div>
               </div>

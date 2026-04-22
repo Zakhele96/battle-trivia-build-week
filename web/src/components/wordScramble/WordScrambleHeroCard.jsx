@@ -38,16 +38,37 @@ export default function WordScrambleHeroCard({
   phase = "waiting",
   timeLeft = 0,
   winners = [],
+  compact = false,
 }) {
   const isActive = phase === "active";
   const isReveal = phase === "reveal";
 
   const showHint = !!hint && (isReveal || (isActive && timeLeft <= 10));
   const shouldBlinkWord = isActive && timeLeft > 10;
+  const liveStateLabel = isReveal
+    ? "Live state"
+    : showHint
+    ? "Hint"
+    : "Live state";
+  const liveStateBody = isReveal
+    ? "Waiting for the next round."
+    : showHint
+    ? hint
+    : isActive
+    ? "Guess before the timer hits zero."
+    : "Waiting for the next word.";
+  const liveStateBodyClass = isReveal
+    ? "text-neutral-300"
+    : showHint
+    ? "text-neutral-200"
+    : "text-neutral-300";
+  const liveStateShellClass = "border-white/8 bg-black/20";
 
   return (
     <div
-      className={`relative overflow-hidden rounded-[24px] border shadow-[0_24px_60px_rgba(0,0,0,0.24)] sm:rounded-[28px] ${
+      className={`relative overflow-hidden border shadow-[0_24px_60px_rgba(0,0,0,0.24)] ${
+        compact ? "rounded-[20px] sm:rounded-[22px]" : "rounded-[24px] sm:rounded-[28px]"
+      } ${
         isReveal
           ? "border-emerald-400/20 bg-[radial-gradient(circle_at_top_left,rgba(52,211,153,0.14),transparent_28%),linear-gradient(135deg,rgba(10,10,11,1)_0%,rgba(16,24,20,1)_50%,rgba(10,10,11,1)_100%)]"
           : "border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(168,85,247,0.14),transparent_30%),linear-gradient(135deg,rgba(10,10,11,1)_0%,rgba(24,24,39,0.98)_55%,rgba(10,10,11,1)_100%)]"
@@ -56,7 +77,7 @@ export default function WordScrambleHeroCard({
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_18%,transparent_82%,rgba(255,255,255,0.02))]" />
       <div className="pointer-events-none h-px bg-white/10" />
 
-      <div className="relative p-3.5 sm:p-4 lg:p-5">
+      <div className={`relative ${compact ? "p-3 sm:p-3.5" : "p-3.5 sm:p-4 lg:p-5"}`}>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
@@ -85,15 +106,15 @@ export default function WordScrambleHeroCard({
                     : "bg-white/[0.05] text-neutral-400"
                 }`}
               >
-                {isActive
-                  ? "Live now"
-                  : isReveal
-                  ? "Reveal"
-                  : "Waiting"}
+                {isActive ? "Live now" : isReveal ? "Reveal" : "Waiting"}
               </span>
             </div>
 
-            <div className="mt-3 text-[10px] uppercase tracking-[0.2em] text-violet-200/70">
+            <div
+              className={`uppercase tracking-[0.2em] text-violet-200/70 ${
+                compact ? "mt-2 text-[9px]" : "mt-3 text-[10px]"
+              }`}
+            >
               {isActive
                 ? "Unscramble the word"
                 : isReveal
@@ -112,19 +133,19 @@ export default function WordScrambleHeroCard({
             ) : null}
 
             <div
-              className={`relative min-w-[96px] rounded-[20px] border px-4 py-2 text-center shadow-lg shadow-black/20 backdrop-blur-md sm:min-w-[112px] ${getTimerShellClass(
-                timeLeft,
-                phase
-              )}`}
+              className={`relative rounded-[18px] border text-center shadow-lg shadow-black/20 backdrop-blur-md ${
+                compact
+                  ? "min-w-[82px] px-3 py-1.5 sm:min-w-[92px]"
+                  : "min-w-[96px] px-4 py-2 sm:min-w-[112px]"
+              } ${getTimerShellClass(timeLeft, phase)}`}
             >
               <div className="text-[8px] uppercase tracking-[0.18em] text-neutral-400">
                 Timer
               </div>
               <div
-                className={`mt-1 text-[26px] font-bold leading-none tracking-[-0.04em] tabular-nums sm:text-[30px] ${getTimerTone(
-                  timeLeft,
-                  phase
-                )}`}
+                className={`mt-1 font-bold leading-none tracking-[-0.04em] tabular-nums ${
+                  compact ? "text-[22px] sm:text-[24px]" : "text-[26px] sm:text-[30px]"
+                } ${getTimerTone(timeLeft, phase)}`}
               >
                 {isActive ? timeLeft : 0}
               </div>
@@ -132,10 +153,18 @@ export default function WordScrambleHeroCard({
           </div>
         </div>
 
-        <div className="mt-4 rounded-[22px] border border-white/8 bg-black/20 px-3.5 py-4 sm:px-4 sm:py-5">
+        <div
+          className={`rounded-[20px] border border-white/8 bg-black/20 ${
+            compact ? "mt-3 px-3 py-3 sm:px-3.5 sm:py-3.5" : "mt-4 px-3.5 py-4 sm:px-4 sm:py-5"
+          }`}
+        >
           <div className="overflow-x-auto">
             <div
-              className={`min-w-max text-center font-mono text-[24px] font-semibold uppercase tracking-[0.18em] text-white sm:text-[32px] lg:text-[38px] ${
+              className={`min-w-max text-center font-mono font-semibold uppercase ${
+                compact
+                  ? "text-[20px] tracking-[0.14em] sm:text-[24px] lg:text-[30px]"
+                  : "text-[24px] tracking-[0.18em] sm:text-[32px] lg:text-[38px]"
+              } ${isReveal ? "text-emerald-100" : "text-white"} ${
                 shouldBlinkWord ? "animate-pulse" : ""
               }`}
             >
@@ -144,26 +173,36 @@ export default function WordScrambleHeroCard({
           </div>
         </div>
 
-        {showHint ? (
-          <div className="mt-3 rounded-[18px] border border-white/8 bg-white/[0.03] px-3.5 py-3 text-sm text-neutral-400">
-            Hint: <span className="text-neutral-200">{hint}</span>
+        <div
+          className={`rounded-[18px] border ${liveStateShellClass} ${
+            compact ? "mt-2.5 px-3 py-2.5" : "mt-3 px-3.5 py-3"
+          }`}
+        >
+          <div className="text-[9px] uppercase tracking-[0.16em] text-neutral-500">
+            {liveStateLabel}
           </div>
-        ) : null}
-
-        {isReveal && answerWord ? (
-          <div className="mt-3 rounded-[18px] border border-emerald-500/20 bg-emerald-500/10 px-3.5 py-3">
-            <div className="text-[10px] uppercase tracking-[0.16em] text-emerald-200/80">
-              Full answer
-            </div>
-            <div className="mt-1 text-sm font-semibold text-emerald-100 sm:text-base">
-              {answerWord}
-            </div>
+          <div
+            className={`mt-1 font-medium ${
+              compact ? "text-[12px]" : "text-[12px]"
+            } ${liveStateBodyClass}`}
+          >
+            {showHint && !isReveal ? (
+              <>
+                Hint: <span className="font-semibold">{liveStateBody}</span>
+              </>
+            ) : (
+              liveStateBody
+            )}
           </div>
-        ) : null}
+        </div>
 
         {winners?.length > 0 ? (
-          <div className="mt-4">
-            <div className="mb-2 text-[10px] uppercase tracking-[0.16em] text-neutral-500">
+          <div className={compact ? "mt-3" : "mt-4"}>
+            <div
+              className={`uppercase tracking-[0.16em] text-neutral-500 ${
+                compact ? "mb-1.5 text-[9px]" : "mb-2 text-[10px]"
+              }`}
+            >
               Round winners
             </div>
 
@@ -188,7 +227,7 @@ export default function WordScrambleHeroCard({
                   </span>
 
                   {winner.rank === 1 ? (
-                    <span aria-hidden="true" className="text-[10px]">
+                    <span aria-hidden="true" className="emoji-native text-[10px]">
                       👑
                     </span>
                   ) : null}
@@ -204,20 +243,7 @@ export default function WordScrambleHeroCard({
               ))}
             </div>
           </div>
-        ) : (
-          <div className="mt-4 rounded-[18px] border border-white/8 bg-black/20 px-3.5 py-3">
-            <div className="text-[9px] uppercase tracking-[0.16em] text-neutral-500">
-              Live state
-            </div>
-            <div className="mt-1 text-[12px] font-medium text-neutral-300">
-              {isActive
-                ? "Guess before the timer hits zero."
-                : isReveal
-                ? "Round complete."
-                : "Waiting for the next word."}
-            </div>
-          </div>
-        )}
+        ) : null}
       </div>
     </div>
   );

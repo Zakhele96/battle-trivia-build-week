@@ -6,6 +6,7 @@ import AppSectionNav from "../components/layout/AppSectionNav";
 import MentionInboxCard from "../components/mentions/MentionInboxCard";
 import { getRooms, getUnreadMentions } from "../api/roomsApi";
 import { useMentions } from "../context/MentionContext";
+import { useTheme } from "../hooks/useTheme";
 
 function SectionHeader({ eyebrow, title, description, action }) {
   return (
@@ -34,6 +35,7 @@ function SectionHeader({ eyebrow, title, description, action }) {
 // }
 
 export default function CommunityPage() {
+  const { resolvedTheme } = useTheme();
   const [rawRooms, setRawRooms] = useState([]);
   const [unreadMentions, setUnreadMentions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -114,9 +116,21 @@ export default function CommunityPage() {
   // }, [roomsWithUnreadMentions]);
 
   // const priorityRoom = roomsWithUnreadMentions[0] || null;
+  const isLight = resolvedTheme === "light";
+  const lightModeUndoFilter = isLight
+    ? {
+        filter:
+          "invert(1) hue-rotate(180deg) saturate(1.08) contrast(1.08) brightness(0.97)",
+      }
+    : undefined;
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white">
+    <div
+      className={`community-page min-h-screen bg-neutral-950 text-white ${
+        isLight ? "community-page--light" : ""
+      }`}
+      style={lightModeUndoFilter}
+    >
       <div className="mx-auto w-full max-w-[76rem] px-4 py-4 pb-24 sm:px-5 sm:py-7 sm:pb-7 lg:px-6 lg:py-9">
         <AppSectionNav />
 

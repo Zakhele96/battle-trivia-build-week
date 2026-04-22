@@ -4,6 +4,7 @@ import { getLeaderboard } from "../api/leaderboardsApi";
 import AppTopBar from "../components/layout/AppTopBar";
 import AppSectionNav from "../components/layout/AppSectionNav";
 import { useAuth } from "../hooks/useAuth";
+import { useTheme } from "../hooks/useTheme";
 
 const MODES = [
   { key: "combined", label: "Combined" },
@@ -305,6 +306,7 @@ function MobileLeaderboardCard({
 
 export default function LeaderboardsPage() {
   const { user } = useAuth();
+  const { resolvedTheme } = useTheme();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const mode = searchParams.get("mode") || "combined";
@@ -371,9 +373,21 @@ export default function LeaderboardsPage() {
       period: nextPeriod,
     });
   };
+  const isLight = resolvedTheme === "light";
+  const lightModeUndoFilter = isLight
+    ? {
+        filter:
+          "invert(1) hue-rotate(180deg) saturate(1.08) contrast(1.08) brightness(0.97)",
+      }
+    : undefined;
 
   return (
-    <div className="leaderboards-page min-h-screen bg-neutral-950 text-white">
+    <div
+      className={`leaderboards-page min-h-screen bg-neutral-950 text-white ${
+        isLight ? "leaderboards-page--light" : ""
+      }`}
+      style={lightModeUndoFilter}
+    >
       <div className="mx-auto w-full max-w-[76rem] px-4 py-6 pb-24 sm:px-5 sm:py-8 sm:pb-8 lg:px-6 lg:py-10">
         <AppSectionNav />
 

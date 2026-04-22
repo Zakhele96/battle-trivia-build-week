@@ -3,10 +3,23 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { googleLogin, login as loginRequest } from "../api/authApi";
 import GoogleAuthButton from "../components/auth/GoogleAuthButton";
 import { useAuth } from "../hooks/useAuth";
+import { useTheme } from "../hooks/useTheme";
 
-function AuthShell({ title, description, children, footer }) {
+function AuthShell({ title, description, children, footer, isLight }) {
+  const lightModeUndoFilter = isLight
+    ? {
+        filter:
+          "invert(1) hue-rotate(180deg) saturate(1.08) contrast(1.08) brightness(0.97)",
+      }
+    : undefined;
+
   return (
-    <div className="min-h-screen overflow-x-hidden bg-neutral-950 text-white">
+    <div
+      className={`auth-page min-h-screen overflow-x-hidden bg-neutral-950 text-white ${
+        isLight ? "auth-page--light" : ""
+      }`}
+      style={lightModeUndoFilter}
+    >
       <div className="mx-auto flex min-h-screen w-full max-w-[78rem] items-start px-3 py-[max(0.85rem,env(safe-area-inset-top))] pb-6 sm:px-6 sm:py-6 lg:items-center lg:px-8">
         <div className="grid w-full min-w-0 gap-4 sm:gap-5 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8">
           <div className="overflow-hidden rounded-[24px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.14),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(168,85,247,0.1),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] px-4 py-4 shadow-[0_18px_40px_rgba(0,0,0,0.18)] sm:hidden">
@@ -93,6 +106,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
+  const { resolvedTheme } = useTheme();
 
   const [form, setForm] = useState({
     emailOrUsername: "",
@@ -144,6 +158,7 @@ export default function LoginPage() {
 
   return (
     <AuthShell
+      isLight={resolvedTheme === "light"}
       title="Welcome back"
       description="Sign in with your BTS account or continue with Google to jump straight back into the rooms."
       footer={
