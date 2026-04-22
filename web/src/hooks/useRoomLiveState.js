@@ -224,19 +224,32 @@ export default function useRoomLiveState({
       return;
     }
 
+    let timeoutId = null;
+
     const updateTimeLeft = () => {
       const endsAtMs = roundEndsAt.getTime();
       const nowMs = Date.now();
-      const seconds = Math.max(0, Math.ceil((endsAtMs - nowMs) / 1000));
+      const msRemaining = Math.max(0, endsAtMs - nowMs);
+      const seconds = Math.max(0, Math.ceil(msRemaining / 1000));
       setTimeLeft(seconds);
+
+      if (msRemaining <= 0) {
+        return;
+      }
+
+      const nextBoundaryDelay = msRemaining % 1000 || 1000;
+      timeoutId = window.setTimeout(
+        updateTimeLeft,
+        Math.max(24, nextBoundaryDelay)
+      );
     };
 
     updateTimeLeft();
 
-    const intervalId = window.setInterval(updateTimeLeft, 1000);
-
     return () => {
-      window.clearInterval(intervalId);
+      if (timeoutId) {
+        window.clearTimeout(timeoutId);
+      }
     };
   }, [roundEndsAt]);
 
