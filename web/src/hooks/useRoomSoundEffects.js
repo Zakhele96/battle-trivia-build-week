@@ -60,6 +60,7 @@ export default function useRoomSoundEffects({
   const playedScrambleCorrectKeyRef = useRef("");
   const playedMentionKeyRef = useRef("");
   const playedTimerCueKeysRef = useRef(new Set());
+  const activeTimerIdsRef = useRef(new Set());
 
   const ensureAudioContext = useCallback(() => {
     if (audioContextRef.current) return audioContextRef.current;
@@ -73,6 +74,13 @@ export default function useRoomSoundEffects({
     } catch {
       return null;
     }
+  }, []);
+
+  const clearScheduledChimes = useCallback(() => {
+    activeTimerIdsRef.current.forEach((timerId) => {
+      window.clearTimeout(timerId);
+    });
+    activeTimerIdsRef.current.clear();
   }, []);
 
   useEffect(() => {
@@ -270,6 +278,8 @@ export default function useRoomSoundEffects({
       if (delayMs <= 0) return;
 
       const timerId = window.setTimeout(() => {
+        activeTimerIdsRef.current.delete(timerId);
+
         if (playedTimerCueKeysRef.current.has(key)) return;
 
         playedTimerCueKeysRef.current.add(key);
@@ -277,10 +287,14 @@ export default function useRoomSoundEffects({
       }, delayMs);
 
       timerIds.push(timerId);
+      activeTimerIdsRef.current.add(timerId);
     });
 
     return () => {
-      timerIds.forEach((timerId) => window.clearTimeout(timerId));
+      timerIds.forEach((timerId) => {
+        window.clearTimeout(timerId);
+        activeTimerIdsRef.current.delete(timerId);
+      });
     };
   }, [
     currentRoundId,
@@ -324,6 +338,17 @@ export default function useRoomSoundEffects({
     wordScrambleState?.roundId,
     wordScrambleState?.timeLeft,
   ]);
+
+  useEffect(() => {
+    if (isBattleTrivia) return;
+    clearScheduledChimes();
+  }, [clearScheduledChimes, isBattleTrivia]);
+
+  useEffect(() => {
+    return () => {
+      clearScheduledChimes();
+    };
+  }, [clearScheduledChimes]);
 
   useEffect(() => {
     if (!isChatRoom || !Array.isArray(mentionToasts) || mentionToasts.length === 0) {
