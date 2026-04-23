@@ -67,17 +67,44 @@ function formatMutedUntil(value) {
   });
 }
 
+function isKeyboardTarget(element) {
+  if (!element || element === document.body) return false;
+
+  const tagName = element.tagName?.toLowerCase();
+  return (
+    tagName === "textarea" ||
+    tagName === "select" ||
+    (tagName === "input" &&
+      !["button", "checkbox", "file", "radio", "range", "submit"].includes(
+        String(element.type || "").toLowerCase()
+      )) ||
+    element.isContentEditable === true
+  );
+}
+
 function getViewportState() {
   if (typeof window === "undefined") {
     return { height: 0, offsetTop: 0, layoutHeight: 0, width: 0 };
   }
 
   const vv = window.visualViewport;
+  const activeElement = document.activeElement;
+  const hasKeyboardFocus = isKeyboardTarget(activeElement);
+  const visualHeight = Math.round(vv?.height || 0);
+  const windowHeight = Math.round(window.innerHeight || 0);
+  const documentHeight = Math.round(
+    document.documentElement?.clientHeight || 0
+  );
+  const layoutHeight = Math.max(windowHeight, documentHeight, visualHeight);
+  const measuredHeight = visualHeight || windowHeight || documentHeight || 0;
+  const height = hasKeyboardFocus
+    ? measuredHeight
+    : Math.max(measuredHeight, layoutHeight);
 
   return {
-    height: Math.round(vv?.height || window.innerHeight || 0),
-    offsetTop: Math.round(vv?.offsetTop || 0),
-    layoutHeight: Math.round(window.innerHeight || 0),
+    height,
+    offsetTop: hasKeyboardFocus ? Math.round(vv?.offsetTop || 0) : 0,
+    layoutHeight,
     width: Math.round(vv?.width || window.innerWidth || 0),
   };
 }
@@ -727,21 +754,75 @@ const {
   }, [room, roomId, canModerateChat]);
 
   useEffect(() => {
+    let frameId = 0;
+    const timeoutIds = new Set();
+
     const updateViewportState = () => {
       setViewportState(getViewportState());
+    };
+
+    const scheduleViewportUpdate = (delay = 0) => {
+      if (delay > 0) {
+        const timeoutId = window.setTimeout(() => {
+          timeoutIds.delete(timeoutId);
+          scheduleViewportUpdate();
+        }, delay);
+
+        timeoutIds.add(timeoutId);
+        return;
+      }
+
+      if (frameId) {
+        window.cancelAnimationFrame(frameId);
+      }
+
+      frameId = window.requestAnimationFrame(() => {
+        frameId = 0;
+        updateViewportState();
+      });
+    };
+
+    const settleViewportAfterKeyboardChange = () => {
+      scheduleViewportUpdate();
+      scheduleViewportUpdate(80);
+      scheduleViewportUpdate(180);
+      scheduleViewportUpdate(360);
     };
 
     updateViewportState();
 
     const vv = window.visualViewport;
-    window.addEventListener("resize", updateViewportState);
-    vv?.addEventListener("resize", updateViewportState);
-    vv?.addEventListener("scroll", updateViewportState);
+    window.addEventListener("resize", scheduleViewportUpdate);
+    window.addEventListener("orientationchange", settleViewportAfterKeyboardChange);
+    window.addEventListener("focusin", settleViewportAfterKeyboardChange);
+    window.addEventListener("focusout", settleViewportAfterKeyboardChange);
+    window.addEventListener("pageshow", settleViewportAfterKeyboardChange);
+    document.addEventListener("visibilitychange", settleViewportAfterKeyboardChange);
+    vv?.addEventListener("resize", scheduleViewportUpdate);
+    vv?.addEventListener("scroll", scheduleViewportUpdate);
 
     return () => {
-      window.removeEventListener("resize", updateViewportState);
-      vv?.removeEventListener("resize", updateViewportState);
-      vv?.removeEventListener("scroll", updateViewportState);
+      if (frameId) {
+        window.cancelAnimationFrame(frameId);
+      }
+
+      timeoutIds.forEach((timeoutId) => window.clearTimeout(timeoutId));
+      timeoutIds.clear();
+
+      window.removeEventListener("resize", scheduleViewportUpdate);
+      window.removeEventListener(
+        "orientationchange",
+        settleViewportAfterKeyboardChange
+      );
+      window.removeEventListener("focusin", settleViewportAfterKeyboardChange);
+      window.removeEventListener("focusout", settleViewportAfterKeyboardChange);
+      window.removeEventListener("pageshow", settleViewportAfterKeyboardChange);
+      document.removeEventListener(
+        "visibilitychange",
+        settleViewportAfterKeyboardChange
+      );
+      vv?.removeEventListener("resize", scheduleViewportUpdate);
+      vv?.removeEventListener("scroll", scheduleViewportUpdate);
     };
   }, []);
 
