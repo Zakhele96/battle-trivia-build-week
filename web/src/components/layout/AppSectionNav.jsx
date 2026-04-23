@@ -1,4 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
+import { createPortal } from "react-dom";
 import { useMentions } from "../../context/MentionContext";
 import { useTheme } from "../../hooks/useTheme";
 
@@ -195,47 +196,11 @@ export default function AppSectionNav() {
     ? "rounded-[24px] border border-[#ddc8a8] bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(245,234,216,0.96))] p-2.5 shadow-[0_18px_34px_rgba(114,84,41,0.12)]"
     : "rounded-[24px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.08),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-2.5 shadow-[0_18px_36px_rgba(0,0,0,0.16)]";
   const mobileShellClassName = isLight
-    ? "pointer-events-auto border-t border-[#d9c7aa] bg-[#f6ebd9]/96 px-2 pt-2 pb-[max(0.55rem,env(safe-area-inset-bottom))] shadow-[0_-12px_28px_rgba(114,84,41,0.14)] backdrop-blur-xl supports-[backdrop-filter]:bg-[#f6ebd9]/88"
+    ? "pointer-events-auto border-t border-[#d9c7aa] bg-[#f6ebd9] px-2 pt-2 pb-[max(0.55rem,env(safe-area-inset-bottom))] shadow-[0_-12px_28px_rgba(114,84,41,0.16)]"
     : "pointer-events-auto border-t border-white/10 bg-neutral-950/96 px-2 pt-2 pb-[max(0.55rem,env(safe-area-inset-bottom))] shadow-[0_-14px_34px_rgba(0,0,0,0.3)] backdrop-blur-xl supports-[backdrop-filter]:bg-neutral-950/88";
 
-  return (
-    <>
-      <div className="mb-5 hidden sm:block sm:mb-6">
-        <div className={desktopShellClassName}>
-          <div className="flex gap-2 overflow-x-auto">
-            {DESKTOP_ITEMS.map((item) => {
-              const Icon = item.icon;
-              const active = isItemActive(item, location.pathname);
-              const itemClassName = active
-                ? isLight
-                  ? "border border-sky-300 bg-white text-stone-900 shadow-[0_10px_22px_rgba(59,130,246,0.12)]"
-                  : "border border-blue-400/20 bg-[linear-gradient(180deg,rgba(32,63,120,0.46),rgba(18,23,35,0.88))] text-white shadow-[0_10px_24px_rgba(37,99,235,0.14)]"
-                : isLight
-                ? "border border-transparent bg-white/56 text-stone-700 hover:border-stone-200 hover:bg-white"
-                : "border border-transparent bg-white/[0.03] text-neutral-300 hover:border-white/10 hover:bg-white/[0.05]";
-
-              return (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  end={item.exact}
-                  className={`inline-flex shrink-0 items-center gap-3 rounded-[18px] px-3.5 py-2.5 text-[12px] font-medium transition sm:px-4 sm:text-sm ${itemClassName}`}
-                >
-                  <NavIconShell active={active} isLight={isLight}>
-                    <Icon />
-                  </NavIconShell>
-                  <span className="tracking-[0.01em]">{item.label}</span>
-                  {item.showMentionBadge ? (
-                    <MentionBadge count={totalUnreadMentions} isLight={isLight} />
-                  ) : null}
-                </NavLink>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 sm:hidden [backface-visibility:hidden] [transform:translateZ(0)] [will-change:transform]">
+  const mobileNav = (
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 isolate sm:hidden [backface-visibility:hidden] [contain:paint] [transform:translateZ(0)] [will-change:transform]">
         <div className={mobileShellClassName}>
           <div className="mx-auto max-w-[38rem]">
             <div className="grid grid-cols-5 gap-1.5">
@@ -279,6 +244,46 @@ export default function AppSectionNav() {
           </div>
         </div>
       </div>
+  );
+
+  return (
+    <>
+      <div className="mb-5 hidden sm:block sm:mb-6">
+        <div className={desktopShellClassName}>
+          <div className="flex gap-2 overflow-x-auto">
+            {DESKTOP_ITEMS.map((item) => {
+              const Icon = item.icon;
+              const active = isItemActive(item, location.pathname);
+              const itemClassName = active
+                ? isLight
+                  ? "border border-sky-300 bg-white text-stone-900 shadow-[0_10px_22px_rgba(59,130,246,0.12)]"
+                  : "border border-blue-400/20 bg-[linear-gradient(180deg,rgba(32,63,120,0.46),rgba(18,23,35,0.88))] text-white shadow-[0_10px_24px_rgba(37,99,235,0.14)]"
+                : isLight
+                ? "border border-transparent bg-white/56 text-stone-700 hover:border-stone-200 hover:bg-white"
+                : "border border-transparent bg-white/[0.03] text-neutral-300 hover:border-white/10 hover:bg-white/[0.05]";
+
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.exact}
+                  className={`inline-flex shrink-0 items-center gap-3 rounded-[18px] px-3.5 py-2.5 text-[12px] font-medium transition sm:px-4 sm:text-sm ${itemClassName}`}
+                >
+                  <NavIconShell active={active} isLight={isLight}>
+                    <Icon />
+                  </NavIconShell>
+                  <span className="tracking-[0.01em]">{item.label}</span>
+                  {item.showMentionBadge ? (
+                    <MentionBadge count={totalUnreadMentions} isLight={isLight} />
+                  ) : null}
+                </NavLink>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {createPortal(mobileNav, document.body)}
     </>
   );
 }

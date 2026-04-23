@@ -248,7 +248,30 @@ function SignInMethodCard({ isGoogleAccount }) {
   );
 }
 
-function ThemeCard({ themePreference, setThemePreference }) {
+function ChoiceIndicator({ active, isLight = false }) {
+  return (
+    <span
+      className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition ${
+        active
+          ? isLight
+            ? "border-sky-400 bg-sky-50 shadow-[0_0_0_3px_rgba(14,116,144,0.08)]"
+            : "border-blue-300/50 bg-blue-400/18 shadow-[0_0_0_3px_rgba(96,165,250,0.08)]"
+          : isLight
+          ? "border-[#d6c2a4] bg-white/70"
+          : "border-white/12 bg-white/[0.03]"
+      }`}
+      aria-hidden="true"
+    >
+      <span
+        className={`h-2.5 w-2.5 rounded-full transition ${
+          active ? (isLight ? "bg-sky-600" : "bg-blue-100") : "bg-transparent"
+        }`}
+      />
+    </span>
+  );
+}
+
+function ThemeCard({ themePreference, setThemePreference, isLight = false }) {
   const options = [
     {
       value: "system",
@@ -276,7 +299,7 @@ function ThemeCard({ themePreference, setThemePreference }) {
         </div>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-3" role="radiogroup" aria-label="Theme preference">
         {options.map((option) => {
           const active = themePreference === option.value;
 
@@ -284,6 +307,8 @@ function ThemeCard({ themePreference, setThemePreference }) {
             <button
               key={option.value}
               type="button"
+              role="radio"
+              aria-checked={active}
               onClick={() => setThemePreference(option.value)}
               className={`w-full rounded-[16px] border px-4 py-3 text-left transition ${
                 active
@@ -301,19 +326,7 @@ function ThemeCard({ themePreference, setThemePreference }) {
                   </div>
                 </div>
 
-                <div
-                  className={`mt-0.5 h-5 w-5 shrink-0 rounded-full border ${
-                    active
-                      ? "border-blue-300/30 bg-blue-400/18"
-                      : "border-white/12 bg-white/[0.03]"
-                  }`}
-                >
-                  <div
-                    className={`m-auto mt-[3px] h-2.5 w-2.5 rounded-full ${
-                      active ? "bg-blue-100" : "bg-transparent"
-                    }`}
-                  />
-                </div>
+                <ChoiceIndicator active={active} isLight={isLight} />
               </div>
             </button>
           );
@@ -328,11 +341,14 @@ function PreferenceToggle({
   description,
   active,
   onToggle,
+  isLight = false,
   accentClass = "border-blue-300/22 bg-blue-500/10",
 }) {
   return (
     <button
       type="button"
+      role="switch"
+      aria-checked={active}
       onClick={() => onToggle(!active)}
       className={`w-full rounded-[16px] border px-4 py-3 text-left transition ${
         active
@@ -348,19 +364,7 @@ function PreferenceToggle({
           </div>
         </div>
 
-        <div
-          className={`mt-0.5 h-5 w-5 shrink-0 rounded-full border ${
-            active
-              ? "border-blue-300/30 bg-blue-400/18"
-              : "border-white/12 bg-white/[0.03]"
-          }`}
-        >
-          <div
-            className={`m-auto mt-[3px] h-2.5 w-2.5 rounded-full ${
-              active ? "bg-blue-100" : "bg-transparent"
-            }`}
-          />
-        </div>
+        <ChoiceIndicator active={active} isLight={isLight} />
       </div>
     </button>
   );
@@ -371,6 +375,7 @@ function SoundCard({
   timerWarningsEnabled,
   setSoundEffectsEnabled,
   setTimerWarningsEnabled,
+  isLight = false,
 }) {
   return (
     <div className="rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-4 sm:rounded-[24px] sm:p-5">
@@ -388,6 +393,7 @@ function SoundCard({
           description="Play a soft chime when you answer correctly in Battle Trivia or solve a Word Scramble round."
           active={soundEffectsEnabled}
           onToggle={setSoundEffectsEnabled}
+          isLight={isLight}
         />
 
         <PreferenceToggle
@@ -395,6 +401,7 @@ function SoundCard({
           description="Play subtle end-of-round cues in the final seconds so you can react faster on mobile."
           active={timerWarningsEnabled}
           onToggle={setTimerWarningsEnabled}
+          isLight={isLight}
         />
       </div>
     </div>
@@ -770,12 +777,14 @@ const isGoogleAccount = loginProvider === "google";
                   <ThemeCard
                     themePreference={themePreference}
                     setThemePreference={setThemePreference}
+                    isLight={isLight}
                   />
                   <SoundCard
                     soundEffectsEnabled={soundEffectsEnabled}
                     timerWarningsEnabled={timerWarningsEnabled}
                     setSoundEffectsEnabled={setSoundEffectsEnabled}
                     setTimerWarningsEnabled={setTimerWarningsEnabled}
+                    isLight={isLight}
                   />
                 </div>
               ) : (
@@ -784,12 +793,14 @@ const isGoogleAccount = loginProvider === "google";
                   <ThemeCard
                     themePreference={themePreference}
                     setThemePreference={setThemePreference}
+                    isLight={isLight}
                   />
                   <SoundCard
                     soundEffectsEnabled={soundEffectsEnabled}
                     timerWarningsEnabled={timerWarningsEnabled}
                     setSoundEffectsEnabled={setSoundEffectsEnabled}
                     setTimerWarningsEnabled={setTimerWarningsEnabled}
+                    isLight={isLight}
                   />
                 </div>
               )}
