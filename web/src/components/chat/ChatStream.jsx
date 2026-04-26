@@ -258,7 +258,7 @@ export default function ChatStream({
     <div
       ref={containerRef}
       onScroll={onScroll}
-      className={`room-stream-scroll min-h-0 flex-1 overflow-y-auto scroll-smooth ${
+      className={`room-stream-scroll h-full min-h-0 flex-1 overflow-y-auto scroll-smooth ${
         variant === "general-chat"
           ? "bg-[radial-gradient(circle_at_top_left,rgba(10,132,255,0.08),transparent_26%),radial-gradient(circle_at_top_right,rgba(16,185,129,0.06),transparent_24%),linear-gradient(180deg,#070809_0%,#0a0a0a_24%,#090909_100%)]"
           : "bg-[linear-gradient(180deg,#090909_0%,#0a0a0a_24%,#090909_100%)]"

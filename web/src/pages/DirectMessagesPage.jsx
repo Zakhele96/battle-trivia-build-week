@@ -13,6 +13,55 @@ import { useDirectMessages } from "../context/DirectMessagesContext";
 import { useAuth } from "../hooks/useAuth";
 import { useTheme } from "../hooks/useTheme";
 
+function applyOptimisticReaction(messages, messageId, emoji) {
+  return messages.map((message) => {
+    if (message.id !== messageId) return message;
+
+    const existingReactions = Array.isArray(message.reactions) ? message.reactions : [];
+    const targetReaction = existingReactions.find((reaction) => reaction.emoji === emoji);
+
+    let nextReactions;
+
+    if (targetReaction?.reactedByMe) {
+      nextReactions = existingReactions
+        .map((reaction) =>
+          reaction.emoji === emoji
+            ? {
+                ...reaction,
+                count: Math.max(0, Number(reaction.count || 0) - 1),
+                reactedByMe: false,
+              }
+            : reaction
+        )
+        .filter((reaction) => Number(reaction.count || 0) > 0);
+    } else if (targetReaction) {
+      nextReactions = existingReactions.map((reaction) =>
+        reaction.emoji === emoji
+          ? {
+              ...reaction,
+              count: Number(reaction.count || 0) + 1,
+              reactedByMe: true,
+            }
+          : reaction
+      );
+    } else {
+      nextReactions = [
+        ...existingReactions,
+        {
+          emoji,
+          count: 1,
+          reactedByMe: true,
+        },
+      ];
+    }
+
+    return {
+      ...message,
+      reactions: nextReactions,
+    };
+  });
+}
+
 function formatPresence(conversation) {
   if (!conversation) return "";
   if (conversation.isOnline) return "Online now";
@@ -450,14 +499,21 @@ export default function DirectMessagesPage() {
         throw new Error("DM connection is not ready yet.");
       }
 
-      await connection.invoke(
-        "ToggleDirectMessageReaction",
-        selectedConversationId,
-        messageId,
-        emoji
-      );
+      setMessages((previous) => applyOptimisticReaction(previous, messageId, emoji));
+
+      try {
+        await connection.invoke(
+          "ToggleDirectMessageReaction",
+          selectedConversationId,
+          messageId,
+          emoji
+        );
+      } catch (error) {
+        loadMessages(selectedConversationId).catch(() => null);
+        throw error;
+      }
     },
-    [connectionStatus, selectedConversationId]
+    [connectionStatus, loadMessages, selectedConversationId]
   );
 
   const handleSend = async (event) => {
@@ -751,9 +807,28 @@ export default function DirectMessagesPage() {
                 <button
                   type="submit"
                   disabled={!selectedConversation || !messageText.trim()}
-                  className="rounded-[20px] bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex h-[3.2rem] w-[3.2rem] items-center justify-center rounded-[20px] bg-blue-600 text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+                  aria-label="Send message"
                 >
-                  Send
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    className="h-5 w-5"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M4.75 19.25L19.25 12L4.75 4.75L7.25 12L4.75 19.25Z"
+                      className="stroke-current"
+                      strokeWidth="1.8"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M7.25 12H13.75"
+                      className="stroke-current"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                    />
+                  </svg>
                 </button>
               </div>
             </form>
