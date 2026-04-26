@@ -156,7 +156,7 @@ function FriendStarterRow({ friend, onStart }) {
     <button
       type="button"
       onClick={() => onStart?.(friend)}
-      className="flex w-full items-center gap-3 rounded-[18px] border border-white/8 bg-black/20 px-3 py-3 text-left transition hover:border-white/12 hover:bg-white/[0.05]"
+      className="flex w-full min-w-0 items-center gap-3 overflow-hidden rounded-[18px] border border-white/8 bg-black/20 px-3 py-3 text-left transition hover:border-white/12 hover:bg-white/[0.05]"
     >
       <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.2),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] text-sm font-semibold text-white">
         {(friend.displayName || friend.username || "U").charAt(0).toUpperCase()}
@@ -167,28 +167,36 @@ function FriendStarterRow({ friend, onStart }) {
         />
       </div>
 
-      <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="truncate text-sm font-medium text-white">
-              {friend.displayName || friend.username}
+      <div className="min-w-0 flex-1 overflow-hidden">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1 overflow-hidden">
+            <div className="flex min-w-0 items-center gap-2">
+              <div className="truncate text-sm font-medium text-white">
+                {friend.displayName || friend.username}
+              </div>
+              {friend.conversation?.unreadCount > 0 ? (
+                <div className="inline-flex shrink-0 rounded-full border border-blue-300/18 bg-blue-400/10 px-2 py-0.5 text-[10px] font-semibold text-blue-100">
+                  {friend.conversation.unreadCount}
+                </div>
+              ) : null}
             </div>
-            <div className="mt-1 text-[11px] text-neutral-500">@{friend.username}</div>
+            <div className="mt-1 truncate text-[11px] text-neutral-500">
+              @{friend.username}
+            </div>
           </div>
 
-          <div className="shrink-0 text-right">
+          <div className="hidden shrink-0 text-right sm:block">
             {lastSeen ? (
-              <div className="text-[10px] text-neutral-500">{lastSeen}</div>
-            ) : null}
-            {friend.conversation?.unreadCount > 0 ? (
-              <div className="mt-1 inline-flex rounded-full border border-blue-300/18 bg-blue-400/10 px-2 py-0.5 text-[10px] font-semibold text-blue-100">
-                {friend.conversation.unreadCount}
+              <div className="max-w-full truncate text-[10px] text-neutral-500">
+                {lastSeen}
               </div>
             ) : null}
           </div>
         </div>
 
-        <div className="mt-2 truncate text-[12px] text-neutral-400">{preview}</div>
+        <div className="mt-2 block max-w-[11rem] min-w-0 truncate text-[12px] text-neutral-400 sm:max-w-none">
+          {preview}
+        </div>
       </div>
     </button>
   );
@@ -250,6 +258,24 @@ export default function DirectMessagesPage() {
   const containerRef = useRef(null);
   const connectionRef = useRef(null);
   const joinedConversationIdRef = useRef("");
+
+  const scrollToLatestMessage = useCallback((behavior = "auto") => {
+    const node = containerRef.current;
+    if (!node) return;
+
+    const scrollToBottom = () => {
+      node.scrollTop = node.scrollHeight;
+      node.scrollTo({
+        top: node.scrollHeight,
+        behavior,
+      });
+    };
+
+    requestAnimationFrame(() => {
+      scrollToBottom();
+      requestAnimationFrame(scrollToBottom);
+    });
+  }, []);
 
   const selectedConversationId = searchParams.get("conversationId") || "";
 
@@ -542,6 +568,7 @@ export default function DirectMessagesPage() {
 
       setMessageText("");
       setReplyingToMessage(null);
+      scrollToLatestMessage();
     } catch (err) {
       setSendError(err?.message || "Could not send message.");
     }

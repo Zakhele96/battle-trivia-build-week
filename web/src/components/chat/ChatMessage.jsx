@@ -119,7 +119,7 @@ function ReplyPreview({ message, isMine, onJumpToMessage }) {
     <button
       type="button"
       onClick={() => onJumpToMessage?.(message.replyToMessageId)}
-      className={`mb-2 rounded-[14px] border px-3 py-2 text-left transition ${
+      className={`mb-1.5 w-full rounded-[14px] border px-3 py-2 text-left transition ${
         isMine
           ? "border-white/14 bg-white/10 hover:bg-white/14"
           : "border-white/8 bg-white/[0.04] hover:bg-white/[0.06]"
@@ -350,7 +350,7 @@ export default function ChatMessage({
   const canUnpinMessage = isAdmin && typeof onUnpinMessage === "function";
 
   const bubbleBase =
-    "inline-flex min-w-[5.5rem] max-w-[88%] sm:max-w-[76%] lg:max-w-[40rem] flex-col px-2.5 pb-2 pt-2.5 shadow-[0_8px_20px_rgba(0,0,0,0.14)] transition-all duration-200";
+    "flex min-w-[5.5rem] w-fit max-w-[78%] sm:max-w-[72%] lg:max-w-[40rem] flex-col px-2.5 pb-2 pt-2.5 shadow-[0_8px_20px_rgba(0,0,0,0.14)] transition-all duration-200";
 
   const mineStyles = isMessageFromModerator
     ? "bg-[linear-gradient(180deg,rgba(88,101,242,1)_0%,rgba(64,78,237,1)_100%)] text-white ring-1 ring-violet-300/25"
@@ -497,24 +497,26 @@ export default function ChatMessage({
     <div
       ref={messageNodeRef}
       id={`message-${message.id}`}
-      className={`${groupedWithPrevious ? "mt-1" : "mt-3 sm:mt-4"} flex ${
+      className={`${groupedWithPrevious ? "mt-1" : "mt-3 sm:mt-4"} flex w-full ${
         isMine ? "justify-end" : "justify-start"
       }`}
     >
       <div
-        className={`group relative flex w-fit max-w-full flex-col ${
+        className={`group relative flex w-full max-w-full flex-col ${
           isMine ? "items-end" : "items-start"
         }`}
         ref={menuRef}
       >
-        <div className="relative max-w-full">
+        <div className={`relative flex max-w-full flex-col ${isMine ? "items-end" : "items-start"}`}>
           <button
             type="button"
             onClick={() => {
               setMenuOpen((prev) => !prev);
               setPickerOpen(false);
             }}
-            className="absolute -right-2 -top-2 z-[3] hidden rounded-full border border-white/10 bg-black/60 px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-neutral-200 backdrop-blur-sm transition hover:bg-black/72 hover:text-white sm:inline-flex sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
+            className={`absolute -top-2 z-[3] hidden rounded-full border border-white/10 bg-black/60 px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-neutral-200 backdrop-blur-sm transition hover:bg-black/72 hover:text-white sm:inline-flex sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100 ${
+              isMine ? "-right-2" : "-left-2"
+            }`}
           >
             •••
           </button>
@@ -701,7 +703,7 @@ export default function ChatMessage({
               </div>
             </div>
           ) : (
-            <div className="break-words whitespace-pre-wrap text-[14px] leading-[1.5]">
+            <div className="break-words whitespace-pre-wrap [overflow-wrap:anywhere] text-[14px] leading-[1.5]">
               {renderMessageText(message.messageText, currentUsername, {
                 vivid: usesVividBubble,
               })}
