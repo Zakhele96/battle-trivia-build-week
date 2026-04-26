@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
+const LONG_PRESS_MS = 420;
+
 const REACTION_OPTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏", "🔥"];
 
 function formatTime(value) {
@@ -263,6 +265,7 @@ export default function ChatMessage({
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(message.messageText || "");
   const menuRef = useRef(null);
+  const longPressTimerRef = useRef(null);
 
   const isSystem = message.messageType === "system";
   const isMine = message.userId === currentUserId;
@@ -347,7 +350,7 @@ export default function ChatMessage({
   const canUnpinMessage = isAdmin && typeof onUnpinMessage === "function";
 
   const bubbleBase =
-    "inline-flex min-w-[8rem] max-w-[90%] sm:max-w-[80%] lg:max-w-[44rem] flex-col px-3 pb-2.5 pt-3 shadow-[0_8px_20px_rgba(0,0,0,0.14)] transition-all duration-200";
+    "inline-flex min-w-[5.5rem] max-w-[88%] sm:max-w-[76%] lg:max-w-[40rem] flex-col px-2.5 pb-2 pt-2.5 shadow-[0_8px_20px_rgba(0,0,0,0.14)] transition-all duration-200";
 
   const mineStyles = isMessageFromModerator
     ? "bg-[linear-gradient(180deg,rgba(88,101,242,1)_0%,rgba(64,78,237,1)_100%)] text-white ring-1 ring-violet-300/25"
@@ -472,6 +475,21 @@ export default function ChatMessage({
     }
   }
 
+  function clearLongPressTimer() {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }
+
+  function startLongPressMenu() {
+    clearLongPressTimer();
+    longPressTimerRef.current = setTimeout(() => {
+      setMenuOpen(true);
+      setPickerOpen(false);
+    }, LONG_PRESS_MS);
+  }
+
   const editedLabel =
     message.isEdited || message.editedAt ? " · edited" : "";
 
@@ -496,13 +514,15 @@ export default function ChatMessage({
               setMenuOpen((prev) => !prev);
               setPickerOpen(false);
             }}
-            className="absolute right-2 top-2 z-[1] rounded-full border border-white/10 bg-black/55 px-2.5 py-1 text-[9px] uppercase tracking-[0.14em] text-neutral-200 opacity-100 backdrop-blur-sm transition hover:bg-black/72 hover:text-white sm:px-2 sm:py-0.5 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
+            className="absolute -right-2 -top-2 z-[3] hidden rounded-full border border-white/10 bg-black/60 px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-neutral-200 backdrop-blur-sm transition hover:bg-black/72 hover:text-white sm:inline-flex sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
           >
             •••
           </button>
 
           {menuOpen ? (
-            <div className="absolute right-0 top-[calc(100%+0.5rem)] z-[2] w-44 max-w-[calc(100vw-1rem)] rounded-2xl border border-white/10 bg-neutral-900 p-1.5 shadow-xl shadow-black/30">
+            <div className={`absolute z-[4] w-44 max-w-[calc(100vw-1rem)] rounded-2xl border border-white/10 bg-neutral-900 p-1.5 shadow-xl shadow-black/30 ${
+              isMine ? "right-0 top-[calc(100%+0.5rem)]" : "left-0 top-[calc(100%+0.5rem)]"
+            }`}>
               <button
                 type="button"
                 onClick={() => {
@@ -586,7 +606,9 @@ export default function ChatMessage({
           ) : null}
 
           {pickerOpen ? (
-            <div className="absolute right-0 top-[calc(100%+0.5rem)] z-[2] max-w-[calc(100vw-1rem)] overflow-x-auto rounded-full border border-white/10 bg-neutral-950/96 px-2 py-1.5 shadow-[0_18px_40px_rgba(0,0,0,0.34)] backdrop-blur-xl">
+            <div className={`absolute z-[4] max-w-[calc(100vw-1rem)] overflow-x-auto rounded-full border border-white/10 bg-neutral-950/96 px-2 py-1.5 shadow-[0_18px_40px_rgba(0,0,0,0.34)] backdrop-blur-xl ${
+              isMine ? "right-0 bottom-[calc(100%+0.5rem)]" : "left-0 bottom-[calc(100%+0.5rem)]"
+            }`}>
               <div className="flex min-w-max items-center gap-1">
                 {REACTION_OPTIONS.map((emoji) => {
                   const isSelected = currentUserReaction === emoji;
@@ -611,19 +633,21 @@ export default function ChatMessage({
           ) : null}
 
           <div
+            onTouchStart={startLongPressMenu}
+            onTouchEnd={clearLongPressTimer}
+            onTouchMove={clearLongPressTimer}
+            onTouchCancel={clearLongPressTimer}
             className={`${bubbleBase} ${roundedClass} ${
               isMine ? mineStyles : theirsStyles
             }`}
           >
           {!groupedWithPrevious ? (
             <div className="mb-1.5 flex flex-wrap items-center gap-2">
-              {!isMine ? (
-                <div
-                  className={`text-[10px] font-semibold tracking-[0.01em] ${senderTextClass}`}
-                >
-                  {message.displayName || message.username || "Unknown"}
-                </div>
-              ) : null}
+              <div
+                className={`text-[10px] font-semibold tracking-[0.01em] ${senderTextClass}`}
+              >
+                {isMine ? "You" : message.displayName || message.username || "Unknown"}
+              </div>
 
               {isMessageFromModerator ? (
                 <span className="rounded-full border border-violet-300/20 bg-violet-300/12 px-2 py-[2px] text-[9px] font-semibold uppercase tracking-[0.14em] text-violet-100">
@@ -686,7 +710,7 @@ export default function ChatMessage({
 
           {!groupedWithNext ? (
             <div
-              className={`mt-1.5 text-[10px] font-medium ${timestampTextClass}`}
+              className={`mt-1 text-[10px] font-medium ${timestampTextClass}`}
             >
               {formatTime(message.sentAt)}
               {editedLabel}

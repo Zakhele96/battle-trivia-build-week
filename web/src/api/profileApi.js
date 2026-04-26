@@ -26,3 +26,8 @@ export async function getMyProgression() {
   const { data } = await api.get("/profile/progression");
   return data;
 }
+
+export async function getMyMissions() {
+  const { data } = await api.get("/profile/missions");
+  return data;
+}

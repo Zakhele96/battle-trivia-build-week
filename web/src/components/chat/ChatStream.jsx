@@ -6,35 +6,35 @@ const GENERAL_CHAT_BUBBLE_TONES = [
     id: "teal",
     bubbleClass:
       "border border-cyan-300/18 bg-[linear-gradient(180deg,rgba(19,78,74,0.98),rgba(17,94,89,0.98))] text-white shadow-[0_10px_24px_rgba(0,0,0,0.18)]",
-    senderClass: "text-white/88",
+    senderClass: "text-cyan-200",
     timestampClass: "text-white/72",
   },
   {
     id: "plum",
     bubbleClass:
       "border border-fuchsia-300/16 bg-[linear-gradient(180deg,rgba(88,28,135,0.98),rgba(107,33,168,0.98))] text-white shadow-[0_10px_24px_rgba(0,0,0,0.18)]",
-    senderClass: "text-white/88",
+    senderClass: "text-fuchsia-200",
     timestampClass: "text-white/72",
   },
   {
     id: "slate",
     bubbleClass:
       "border border-sky-200/14 bg-[linear-gradient(180deg,rgba(30,41,59,0.98),rgba(37,99,235,0.78))] text-white shadow-[0_10px_24px_rgba(0,0,0,0.18)]",
-    senderClass: "text-white/88",
+    senderClass: "text-sky-200",
     timestampClass: "text-white/72",
   },
   {
     id: "forest",
     bubbleClass:
       "border border-emerald-300/16 bg-[linear-gradient(180deg,rgba(20,83,45,0.98),rgba(22,101,52,0.98))] text-white shadow-[0_10px_24px_rgba(0,0,0,0.18)]",
-    senderClass: "text-white/88",
+    senderClass: "text-emerald-200",
     timestampClass: "text-white/72",
   },
   {
     id: "rose",
     bubbleClass:
       "border border-rose-300/16 bg-[linear-gradient(180deg,rgba(127,29,29,0.98),rgba(159,18,57,0.96))] text-white shadow-[0_10px_24px_rgba(0,0,0,0.18)]",
-    senderClass: "text-white/88",
+    senderClass: "text-rose-200",
     timestampClass: "text-white/72",
   },
 ];

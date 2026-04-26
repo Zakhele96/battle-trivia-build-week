@@ -127,6 +127,25 @@ function AlertsIcon() {
   );
 }
 
+function MessagesIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
+      <path
+        d="M5 6.5C5 5.67 5.67 5 6.5 5H17.5C18.33 5 19 5.67 19 6.5V13.5C19 14.33 18.33 15 17.5 15H11.6L8.25 18.1C7.28 19 5.75 18.31 5.75 16.99V15H6.5C5.67 15 5 14.33 5 13.5V6.5Z"
+        className="stroke-current"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M8 9.5H16M8 12H13.5"
+        className="stroke-current"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 function ProfileIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
@@ -148,6 +167,7 @@ function ProfileIcon() {
 const DESKTOP_ITEMS = [
   { to: "/", label: "Dashboard", exact: true, icon: DashboardIcon },
   { to: "/rooms", label: "Rooms", icon: RoomsIcon },
+  { to: "/messages", label: "Messages", icon: MessagesIcon },
   { to: "/alerts", label: "Alerts", icon: AlertsIcon },
   { to: "/squads", label: "Squads", icon: SquadsIcon },
   {
@@ -169,6 +189,7 @@ const DESKTOP_ITEMS = [
 const MOBILE_ITEMS = [
   { to: "/", label: "Dashboard", exact: true, icon: DashboardIcon },
   { to: "/rooms", label: "Rooms", icon: RoomsIcon },
+  { to: "/messages", label: "Messages", icon: MessagesIcon },
   { to: "/alerts", label: "Alerts", icon: AlertsIcon },
   { to: "/squads", label: "Squads", icon: SquadsIcon },
   {
@@ -271,7 +292,8 @@ export default function AppSectionNav() {
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 isolate sm:hidden [backface-visibility:hidden] [contain:paint] [transform:translateZ(0)] [will-change:transform]">
         <div className={mobileShellClassName}>
           <div className="mx-auto max-w-[38rem]">
-            <div className="grid grid-cols-7 gap-1.5">
+            <div className="-mx-1 overflow-x-auto px-1 pb-0.5">
+              <div className="flex min-w-max gap-1.5">
               {MOBILE_ITEMS.map((item) => {
                 const Icon = item.icon;
                 const active = isItemActive(item, location.pathname);
@@ -288,7 +310,7 @@ export default function AppSectionNav() {
                     key={item.to}
                     to={item.to}
                     end={item.exact}
-                    className={`relative flex min-h-[4.45rem] touch-manipulation flex-col items-center justify-center gap-1.5 rounded-[18px] px-1.5 py-2 text-[10px] font-medium transition ${itemClassName}`}
+                    className={`relative flex min-h-[4.25rem] min-w-[4.9rem] touch-manipulation flex-col items-center justify-center gap-1.5 rounded-[18px] px-2 py-2 text-[10px] font-medium transition ${itemClassName}`}
                   >
                     <div className="relative">
                       <NavIconShell active={active} isLight={isLight} mobile>
@@ -318,6 +340,7 @@ export default function AppSectionNav() {
                   </NavLink>
                 );
               })}
+              </div>
             </div>
           </div>
         </div>

@@ -15,15 +15,18 @@ public sealed class ProfileController : ControllerBase
     private readonly IUserRepository _userRepository;
     private readonly ProfileService _profileService;
     private readonly ProgressionService _progressionService;
+    private readonly ProfileMissionService _profileMissionService;
 
     public ProfileController(
         IUserRepository userRepository,
         ProfileService profileService,
-        ProgressionService progressionService)
+        ProgressionService progressionService,
+        ProfileMissionService profileMissionService)
     {
         _userRepository = userRepository;
         _profileService = profileService;
         _progressionService = progressionService;
+        _profileMissionService = profileMissionService;
     }
 
     [HttpGet("me")]
@@ -49,6 +52,17 @@ public sealed class ProfileController : ControllerBase
 
         var progression = await _progressionService.GetForUserAsync(userId.Value);
         return Ok(progression);
+    }
+
+    [HttpGet("missions")]
+    public async Task<IActionResult> GetMissions()
+    {
+        var userId = GetUserId();
+        if (!userId.HasValue)
+            return Unauthorized();
+
+        var missions = await _profileMissionService.GetForUserAsync(userId.Value);
+        return Ok(missions);
     }
 
     [HttpPut]

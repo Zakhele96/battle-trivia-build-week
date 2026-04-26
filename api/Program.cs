@@ -82,6 +82,10 @@ builder.Services.AddScoped<IProfileProgressionRepository, ProfileProgressionRepo
 builder.Services.AddScoped<ILeaderboardSponsorRepository, LeaderboardSponsorRepository>();
 builder.Services.AddScoped<IGrowthRepository, GrowthRepository>();
 builder.Services.AddScoped<ISquadRepository, SquadRepository>();
+builder.Services.AddScoped<IChallengeInviteRepository, ChallengeInviteRepository>();
+builder.Services.AddScoped<IFriendRepository, FriendRepository>();
+builder.Services.AddScoped<IDirectMessageRepository, DirectMessageRepository>();
+builder.Services.AddScoped<IUserPresenceRepository, UserPresenceRepository>();
 
 builder.Services.AddScoped<IWordScrambleSessionRepository, WordScrambleSessionRepository>();
 builder.Services.AddScoped<IWordScrambleRoundRepository, WordScrambleRoundRepository>();
@@ -132,6 +136,15 @@ builder.Services.AddScoped<GrowthSchemaService>();
 builder.Services.AddScoped<GrowthAnalyticsService>();
 builder.Services.AddScoped<SquadSchemaService>();
 builder.Services.AddScoped<SquadService>();
+builder.Services.AddScoped<ChallengeInviteSchemaService>();
+builder.Services.AddScoped<ChallengeInviteService>();
+builder.Services.AddScoped<AchievementSchemaService>();
+builder.Services.AddScoped<FriendSchemaService>();
+builder.Services.AddScoped<FriendService>();
+builder.Services.AddScoped<ProfileMissionService>();
+builder.Services.AddScoped<DirectMessageSchemaService>();
+builder.Services.AddScoped<DirectMessageService>();
+builder.Services.AddSingleton<UserPresenceService>();
 
 builder.Services.AddHostedService<BattleTriviaHostedService>();
 builder.Services.AddHostedService<WordScrambleHostedService>();
@@ -219,6 +232,14 @@ using (var scope = app.Services.CreateScope())
     await growthSchemaService.EnsureAsync();
     var squadSchemaService = scope.ServiceProvider.GetRequiredService<SquadSchemaService>();
     await squadSchemaService.EnsureAsync();
+    var challengeInviteSchemaService = scope.ServiceProvider.GetRequiredService<ChallengeInviteSchemaService>();
+    await challengeInviteSchemaService.EnsureAsync();
+    var achievementSchemaService = scope.ServiceProvider.GetRequiredService<AchievementSchemaService>();
+    await achievementSchemaService.EnsureAsync();
+    var friendSchemaService = scope.ServiceProvider.GetRequiredService<FriendSchemaService>();
+    await friendSchemaService.EnsureAsync();
+    var directMessageSchemaService = scope.ServiceProvider.GetRequiredService<DirectMessageSchemaService>();
+    await directMessageSchemaService.EnsureAsync();
 }
 
 app.Run();

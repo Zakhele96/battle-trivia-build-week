@@ -2,13 +2,23 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   changeMyPassword,
+  getMyMissions,
   getMyProfile,
   getMyProfileHistory,
   getMyProgression,
   updateMyProfile,
 } from "../api/profileApi";
 import { getLeaderboard } from "../api/leaderboardsApi";
+import {
+  acceptFriendRequest,
+  declineFriendRequest,
+  getMyFriendNetwork,
+  searchPlayers,
+  sendFriendRequest,
+} from "../api/friendsApi";
 import ProfileAchievementsCard from "../components/profile/ProfileAchievementsCard";
+import ProfileFriendsCard from "../components/profile/ProfileFriendsCard";
+import ProfileMissionsCard from "../components/profile/ProfileMissionsCard";
 import ProfileProgressCard from "../components/profile/ProfileProgressCard";
 import AppTopBar from "../components/layout/AppTopBar";
 import AppSectionNav from "../components/layout/AppSectionNav";
@@ -16,9 +26,12 @@ import { useSoundPreferences } from "../hooks/useSoundPreferences";
 import { useAuth } from "../hooks/useAuth";
 import { useTheme } from "../hooks/useTheme";
 import {
+  buildStreakCardSvg,
   buildPlayerRecapImageUrl,
   buildPlayerRecapUrl,
   buildShareUrl,
+  buildTopTenCardSvg,
+  downloadGeneratedCardPng,
   downloadImageUrlPng,
   downloadShareCardPng,
 } from "../services/leaderboardShare";
@@ -261,9 +274,12 @@ function GrowthInviteCard({
   onCopyInvite,
   onShareInvite,
   onDownloadCard,
+  onDownloadStreakCard,
+  onDownloadTopTenCard,
   onShareRecap,
   onDownloadRecap,
   momentum,
+  canDownloadTopTenCard = false,
 }) {
   const showMomentum = Boolean(momentum);
 
@@ -278,7 +294,7 @@ function GrowthInviteCard({
             Bring people into your weekly race
           </div>
           <div className="mt-1 text-[12px] leading-5 text-neutral-400">
-            Share your BTS page, challenge friends to beat your rank, and turn your own progress into sign-ups.
+            Share your BTS page, post your rank and recap cards, and turn your own progress into sign-ups.
           </div>
         </div>
 
@@ -318,7 +334,7 @@ function GrowthInviteCard({
           onClick={onShareInvite}
           className="rounded-[16px] border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/15"
         >
-          Challenge friends
+          Share invite page
         </button>
         <button
           type="button"
@@ -343,6 +359,24 @@ function GrowthInviteCard({
           className="rounded-[16px] border border-amber-300/18 bg-amber-400/10 px-4 py-3 text-sm font-semibold text-amber-100 transition hover:bg-amber-400/15"
         >
           Download weekly recap
+        </button>
+      </div>
+
+      <div className="mt-2 grid gap-2 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={onDownloadStreakCard}
+          className="rounded-[16px] border border-orange-400/20 bg-orange-500/10 px-4 py-3 text-sm font-semibold text-orange-100 transition hover:bg-orange-500/15"
+        >
+          Download streak card
+        </button>
+        <button
+          type="button"
+          onClick={onDownloadTopTenCard}
+          disabled={!canDownloadTopTenCard}
+          className="rounded-[16px] border border-cyan-300/18 bg-cyan-400/10 px-4 py-3 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/15 disabled:cursor-not-allowed disabled:opacity-45"
+        >
+          {canDownloadTopTenCard ? "Download top 10 card" : "Top 10 card locked"}
         </button>
       </div>
     </div>
@@ -544,6 +578,14 @@ export default function ProfilePage() {
   const [isSavingPassword, setIsSavingPassword] = useState(false);
   const [growthMessage, setGrowthMessage] = useState("");
   const [playerMomentum, setPlayerMomentum] = useState(null);
+  const [currentCombinedStanding, setCurrentCombinedStanding] = useState(null);
+  const [missions, setMissions] = useState(null);
+  const [isLoadingMissions, setIsLoadingMissions] = useState(true);
+  const [friendNetwork, setFriendNetwork] = useState(null);
+  const [isLoadingFriends, setIsLoadingFriends] = useState(true);
+  const [friendSearchQuery, setFriendSearchQuery] = useState("");
+  const [friendSearchResults, setFriendSearchResults] = useState([]);
+  const [friendMessage, setFriendMessage] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -647,6 +689,7 @@ export default function ProfilePage() {
         const previousRow =
           previousBoard?.rows?.find((row) => row.userId === authUser.id) || null;
         const leaderScore = currentBoard?.rows?.[0]?.score ?? 0;
+        setCurrentCombinedStanding(currentRow);
 
         if (previousRow) {
           const delta = currentRow
@@ -683,6 +726,7 @@ export default function ProfilePage() {
         }
       } catch {
         if (!isMounted) return;
+        setCurrentCombinedStanding(null);
         setPlayerMomentum(null);
       }
     }
@@ -694,11 +738,62 @@ export default function ProfilePage() {
     };
   }, [authUser?.id]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadMissions() {
+      setIsLoadingMissions(true);
+
+      try {
+        const data = await getMyMissions();
+        if (!isMounted) return;
+        setMissions(data);
+      } catch {
+        if (!isMounted) return;
+        setMissions(null);
+      } finally {
+        if (!isMounted) return;
+        setIsLoadingMissions(false);
+      }
+    }
+
+    loadMissions();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadFriends() {
+      setIsLoadingFriends(true);
+
+      try {
+        const data = await getMyFriendNetwork();
+        if (!isMounted) return;
+        setFriendNetwork(data);
+      } catch {
+        if (!isMounted) return;
+        setFriendNetwork(null);
+      } finally {
+        if (!isMounted) return;
+        setIsLoadingFriends(false);
+      }
+    }
+
+    loadFriends();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const stats = useMemo(() => profile?.stats || {}, [profile]);
   const growth = useMemo(() => profile?.growth || {}, [profile]);
-
-const loginProvider = localStorage.getItem("bts_login_provider");
-const isGoogleAccount = loginProvider === "google";
+  const loginProvider = localStorage.getItem("bts_login_provider");
+  const isGoogleAccount = loginProvider === "google";
 
   async function handleSaveProfile(e) {
     e.preventDefault();
@@ -771,12 +866,12 @@ const isGoogleAccount = loginProvider === "google";
     const url = buildShareUrl("combined", "current", authUser.id);
     const playerName =
       profile?.displayName || authUser.displayName || profile?.username || authUser.username || "I";
-    const text = `${playerName} just challenged you to join BTS and chase them on this week's leaderboard. Create your account and see if you can beat them.`;
+    const text = `${playerName} just shared their BTS page. Create your account, join the weekly leaderboard race, and earn your own recap card.`;
 
     try {
       if (navigator.share) {
         await navigator.share({
-          title: "Beat me on BTS",
+          title: `${playerName} on BTS`,
           text,
           url,
         });
@@ -785,9 +880,9 @@ const isGoogleAccount = loginProvider === "google";
       }
 
       await navigator.clipboard.writeText(`${text}\n${url}`);
-      setGrowthMessage("Challenge text copied.");
+      setGrowthMessage("Invite page copied.");
     } catch {
-      setGrowthMessage("Could not share challenge right now.");
+      setGrowthMessage("Could not share invite page right now.");
     }
   };
 
@@ -847,6 +942,118 @@ const isGoogleAccount = loginProvider === "google";
     }
   };
 
+  const handleDownloadStreakCard = async () => {
+    const playerName =
+      profile?.displayName ||
+      authUser?.displayName ||
+      profile?.username ||
+      authUser?.username ||
+      "Player";
+
+    try {
+      await downloadGeneratedCardPng(
+        buildStreakCardSvg({
+          playerName,
+          bestStreak: stats.bestStreak ?? 0,
+          weeklyWins: stats.weeklyWins ?? 0,
+          totalCorrectAnswers: stats.totalCorrectAnswers ?? 0,
+        }),
+        `${playerName}-streak-card`
+      );
+      setGrowthMessage("Streak card downloaded.");
+    } catch {
+      setGrowthMessage("Could not download streak card.");
+    }
+  };
+
+  const handleDownloadTopTenCard = async () => {
+    if (!currentCombinedStanding || currentCombinedStanding.rank > 10) {
+      setGrowthMessage("Top 10 card unlocks once you are inside the top 10.");
+      return;
+    }
+
+    const playerName =
+      profile?.displayName ||
+      authUser?.displayName ||
+      profile?.username ||
+      authUser?.username ||
+      "Player";
+
+    try {
+      await downloadGeneratedCardPng(
+        buildTopTenCardSvg({
+          playerName,
+          rank: currentCombinedStanding.rank,
+          score: currentCombinedStanding.score,
+          label: "Combined",
+          period: "current",
+        }),
+        `${playerName}-top-10-card`
+      );
+      setGrowthMessage("Top 10 card downloaded.");
+    } catch {
+      setGrowthMessage("Could not download top 10 card.");
+    }
+  };
+
+  const refreshFriendNetwork = async () => {
+    const data = await getMyFriendNetwork();
+    setFriendNetwork(data);
+  };
+
+  const handleFriendSearch = async (event) => {
+    event.preventDefault();
+    setFriendMessage("");
+
+    if (!friendSearchQuery.trim()) {
+      setFriendSearchResults([]);
+      return;
+    }
+
+    try {
+      const results = await searchPlayers(friendSearchQuery.trim());
+      setFriendSearchResults(Array.isArray(results) ? results : []);
+    } catch {
+      setFriendMessage("Could not search players right now.");
+    }
+  };
+
+  const handleSendFriendRequest = async (player) => {
+    try {
+      await sendFriendRequest(player.userId);
+      setFriendMessage(`Friend request sent to ${player.displayName || player.username}.`);
+      const results = await searchPlayers(friendSearchQuery.trim());
+      setFriendSearchResults(Array.isArray(results) ? results : []);
+      await refreshFriendNetwork();
+    } catch (err) {
+      setFriendMessage(err?.response?.data?.message || "Could not send friend request.");
+    }
+  };
+
+  const handleAcceptFriendRequest = async (player) => {
+    if (!player?.friendshipId) return;
+
+    try {
+      await acceptFriendRequest(player.friendshipId);
+      setFriendMessage(`${player.displayName || player.username} is now on your friends board.`);
+      await refreshFriendNetwork();
+    } catch (err) {
+      setFriendMessage(err?.response?.data?.message || "Could not accept friend request.");
+    }
+  };
+
+  const handleDeclineFriendRequest = async (player) => {
+    if (!player?.friendshipId) return;
+
+    try {
+      await declineFriendRequest(player.friendshipId);
+      setFriendMessage("Friend request cleared.");
+      await refreshFriendNetwork();
+    } catch (err) {
+      setFriendMessage(err?.response?.data?.message || "Could not clear friend request.");
+    }
+  };
+
 
 
   const isLight = resolvedTheme === "light";
@@ -894,7 +1101,7 @@ const isGoogleAccount = loginProvider === "google";
           <SectionHeader
             eyebrow="Growth"
             title="Invite and flex"
-            description="Turn your own profile and leaderboard energy into challenges people can actually join."
+            description="Turn your own profile and leaderboard energy into shareable invites, recap cards, and real sign-ups."
           />
 
           <GrowthInviteCard
@@ -902,13 +1109,52 @@ const isGoogleAccount = loginProvider === "google";
             onCopyInvite={handleCopyInvite}
             onShareInvite={handleShareInvite}
             onDownloadCard={handleDownloadGrowthCard}
+            onDownloadStreakCard={handleDownloadStreakCard}
+            onDownloadTopTenCard={handleDownloadTopTenCard}
             onShareRecap={handleShareWeeklyRecap}
             onDownloadRecap={handleDownloadWeeklyRecap}
             momentum={playerMomentum}
+            canDownloadTopTenCard={Boolean(
+              currentCombinedStanding && currentCombinedStanding.rank <= 10
+            )}
           />
 
           {growthMessage ? (
             <div className="mt-3 text-sm text-neutral-400">{growthMessage}</div>
+          ) : null}
+        </section>
+
+        <section className="mb-6 sm:mb-7">
+          <SectionHeader
+            eyebrow="Missions"
+            title="Daily and weekly goals"
+            description="Short loops, streak targets, and reward pacing that keep the week moving."
+          />
+
+          <ProfileMissionsCard missions={missions} loading={isLoadingMissions} />
+        </section>
+
+        <section className="mb-6 sm:mb-7">
+          <SectionHeader
+            eyebrow="Friends"
+            title="Build your real competition circle"
+            description="Add friends, accept requests, and set up the people you will compare against on the leaderboard."
+          />
+
+          <ProfileFriendsCard
+            searchQuery={friendSearchQuery}
+            onSearchQueryChange={setFriendSearchQuery}
+            onSearch={handleFriendSearch}
+            searchResults={friendSearchResults}
+            network={friendNetwork}
+            loading={isLoadingFriends}
+            onSendRequest={handleSendFriendRequest}
+            onAcceptRequest={handleAcceptFriendRequest}
+            onDeclineRequest={handleDeclineFriendRequest}
+          />
+
+          {friendMessage ? (
+            <div className="mt-3 text-sm text-neutral-400">{friendMessage}</div>
           ) : null}
         </section>
 

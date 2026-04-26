@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { createChallengeInvite } from "../api/challengeInvitesApi";
+import { getFriendsLeaderboard, getHeadToHead } from "../api/friendsApi";
 import { getLeaderboard } from "../api/leaderboardsApi";
 import AppTopBar from "../components/layout/AppTopBar";
 import AppSectionNav from "../components/layout/AppSectionNav";
@@ -10,10 +12,11 @@ import SponsorSpotlightCard, {
 import { useAuth } from "../hooks/useAuth";
 import { useTheme } from "../hooks/useTheme";
 import {
-  buildChallengeText,
-  buildChallengeUrl,
+  buildRivalryCardSvg,
   buildShareText,
   buildShareUrl,
+  buildTopThreeCardSvg,
+  downloadGeneratedCardPng,
   downloadShareCardPng,
   getModeLabel,
   getPeriodLabel,
@@ -28,6 +31,11 @@ const MODES = [
 const PERIODS = [
   { key: "current", label: "Current week" },
   { key: "previous", label: "Previous week" },
+];
+
+const SCOPES = [
+  { key: "all", label: "Global" },
+  { key: "friends", label: "Friends" },
 ];
 
 function formatEndedAt(value) {
@@ -147,6 +155,33 @@ function PeriodSwitcher({ value, onChange }) {
   );
 }
 
+function ScopeSwitcher({ value, onChange }) {
+  return (
+    <div className="rounded-[18px] border border-white/10 bg-black/20 p-1">
+      <div className="grid grid-cols-2 gap-1">
+        {SCOPES.map((item) => {
+          const active = value === item.key;
+
+          return (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => onChange(item.key)}
+              className={`rounded-[14px] px-3 py-2 text-sm font-medium transition ${
+                active
+                  ? "bg-emerald-500 text-white shadow-[0_12px_24px_rgba(16,185,129,0.22)]"
+                  : "text-neutral-300 hover:bg-white/[0.04]"
+              }`}
+            >
+              {item.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function SummaryStat({ label, value, detail }) {
   return (
     <div className="rounded-[18px] border border-white/8 bg-black/20 px-4 py-3">
@@ -230,6 +265,7 @@ function MobileLeaderboardCard({
   isCurrentUser = false,
   onShare,
   onDownload,
+  onCompare,
   onChallenge,
 }) {
   const tone = getRankTone(row.rank);
@@ -326,14 +362,27 @@ function MobileLeaderboardCard({
             Download story card
           </button>
         </div>
-      ) : onChallenge ? (
-        <button
-          type="button"
-          onClick={() => onChallenge?.(row)}
-          className="mt-3 w-full rounded-[14px] border border-orange-300/18 bg-orange-400/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-orange-100 transition hover:bg-orange-400/15"
-        >
-          Challenge this player
-        </button>
+      ) : onCompare || onChallenge ? (
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          {onCompare ? (
+            <button
+              type="button"
+              onClick={() => onCompare?.(row)}
+              className="rounded-[14px] border border-violet-300/18 bg-violet-400/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-100 transition hover:bg-violet-400/15"
+            >
+              Compare
+            </button>
+          ) : null}
+          {onChallenge ? (
+            <button
+              type="button"
+              onClick={() => onChallenge?.(row)}
+              className="rounded-[14px] border border-orange-300/18 bg-orange-400/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-orange-100 transition hover:bg-orange-400/15"
+            >
+              Challenge
+            </button>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );
@@ -346,12 +395,16 @@ export default function LeaderboardsPage() {
 
   const mode = searchParams.get("mode") || "combined";
   const period = searchParams.get("period") || "current";
+  const scope = searchParams.get("scope") || "all";
 
   const [data, setData] = useState(null);
   const [sponsor, setSponsor] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [shareMessage, setShareMessage] = useState("");
+  const [selectedRivalUserId, setSelectedRivalUserId] = useState("");
+  const [headToHead, setHeadToHead] = useState(null);
+  const [isLoadingHeadToHead, setIsLoadingHeadToHead] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -362,7 +415,9 @@ export default function LeaderboardsPage() {
 
       try {
         const [result, sponsorResult] = await Promise.all([
-          getLeaderboard(mode, period, 100),
+          scope === "friends"
+            ? getFriendsLeaderboard(mode, period)
+            : getLeaderboard(mode, period, 100),
           period === "current"
             ? getActiveSponsor(mode).catch(() => null)
             : Promise.resolve(null),
@@ -389,7 +444,7 @@ export default function LeaderboardsPage() {
     return () => {
       isMounted = false;
     };
-  }, [mode, period]);
+  }, [mode, period, scope]);
 
   const rows = useMemo(() => data?.rows || [], [data]);
   const podiumRows = useMemo(() => rows.slice(0, 3), [rows]);
@@ -410,11 +465,16 @@ export default function LeaderboardsPage() {
     if (!user?.id) return null;
     return rows.find((row) => row.userId === user.id) || null;
   }, [rows, user?.id]);
+  const selectedRival = useMemo(() => {
+    if (!selectedRivalUserId) return null;
+    return rows.find((row) => row.userId === selectedRivalUserId) || null;
+  }, [rows, selectedRivalUserId]);
 
   const updateQuery = (nextMode, nextPeriod) => {
     setSearchParams({
       mode: nextMode,
       period: nextPeriod,
+      scope,
     });
   };
 
@@ -468,30 +528,75 @@ export default function LeaderboardsPage() {
   const handleChallengePlayer = async (row) => {
     if (!row || !currentStanding || !user?.id || row.userId === user.id) return;
 
-    const url = buildChallengeUrl(mode, period, user.id, row.userId);
-    const text = buildChallengeText({
-      challenger: currentStanding,
-      rival: row,
-      mode,
-      period,
-      label: data?.label,
-    });
+    try {
+      await createChallengeInvite({
+        rivalUserId: row.userId,
+        mode,
+        period,
+      });
+      setShareMessage(
+        `${row.displayName || row.username || "Player"} got your challenge in their inbox.`
+      );
+    } catch {
+      setShareMessage("Could not send challenge right now.");
+    }
+  };
+
+  const handleComparePlayer = async (row) => {
+    if (!row || row.userId === user?.id) return;
+    setSelectedRivalUserId(row.userId);
+    setIsLoadingHeadToHead(true);
 
     try {
-      if (navigator.share) {
-        await navigator.share({
-          title: "BTS Challenge",
-          text,
-          url,
-        });
-        setShareMessage("Challenge share sheet opened.");
-        return;
-      }
+      const summary = await getHeadToHead(row.userId);
+      setHeadToHead(summary);
+      setShareMessage(
+        `${row.displayName || row.username || "That player"} is now loaded into your rivalry card.`
+      );
+    } catch (err) {
+      setHeadToHead(null);
+      setShareMessage(
+        err?.response?.data?.message || "Head-to-head works once that player is in your friend circle."
+      );
+    } finally {
+      setIsLoadingHeadToHead(false);
+    }
+  };
 
-      await navigator.clipboard.writeText(`${text}\n${url}`);
-      setShareMessage("Challenge link copied.");
+  const handleDownloadTopThreeCard = async () => {
+    if (!podiumRows.length) return;
+
+    try {
+      await downloadGeneratedCardPng(
+        buildTopThreeCardSvg({
+          rows: podiumRows,
+          label: data?.label || getModeLabel(mode),
+          period,
+        }),
+        `${mode}-${period}-top-three-card`
+      );
+      setShareMessage("Top 3 card downloaded.");
     } catch {
-      setShareMessage("Could not share challenge right now.");
+      setShareMessage("Could not download the Top 3 card right now.");
+    }
+  };
+
+  const handleDownloadRivalryCard = async () => {
+    if (!currentStanding || !selectedRival) return;
+
+    try {
+      await downloadGeneratedCardPng(
+        buildRivalryCardSvg({
+          challenger: currentStanding,
+          rival: selectedRival,
+          label: data?.label || getModeLabel(mode),
+          period,
+        }),
+        `${currentStanding.displayName || currentStanding.username || "player"}-${selectedRival.displayName || selectedRival.username || "rival"}-rivalry-card`
+      );
+      setShareMessage("Rivalry card downloaded.");
+    } catch {
+      setShareMessage("Could not download the rivalry card right now.");
     }
   };
 
@@ -574,6 +679,18 @@ export default function LeaderboardsPage() {
                     ? "Live scores that can still move this week."
                     : "The most recent finished week with locked results."}
                 </div>
+              </div>
+
+              <div className="mt-3">
+                <div className="mb-2 text-[10px] uppercase tracking-[0.18em] text-neutral-500">
+                  Scope
+                </div>
+                <ScopeSwitcher
+                  value={scope}
+                  onChange={(nextScope) =>
+                    setSearchParams({ mode, period, scope: nextScope })
+                  }
+                />
               </div>
             </div>
           </div>
@@ -671,8 +788,15 @@ export default function LeaderboardsPage() {
                 <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500 sm:text-[11px]">
                   Podium
                 </div>
-                <div className="text-[11px] text-neutral-500">
-                  Top three right now
+                <div className="flex items-center gap-2">
+                  <div className="text-[11px] text-neutral-500">Top three right now</div>
+                  <button
+                    type="button"
+                    onClick={handleDownloadTopThreeCard}
+                    className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-white/[0.08]"
+                  >
+                    Download top 3
+                  </button>
                 </div>
               </div>
 
@@ -708,6 +832,76 @@ export default function LeaderboardsPage() {
                 ) : null}
               </div>
 
+              {currentStanding && selectedRival ? (
+                <div className="mb-3 rounded-[18px] border border-violet-300/18 bg-violet-500/10 px-4 py-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <div className="text-[10px] uppercase tracking-[0.16em] text-violet-100/75">
+                        Rivalry card
+                      </div>
+                      <div className="mt-1 text-sm text-white">
+                        {currentStanding.displayName || currentStanding.username} vs{" "}
+                        {selectedRival.displayName || selectedRival.username}
+                      </div>
+                      <div className="mt-1 text-[12px] leading-5 text-violet-100/80">
+                        #{currentStanding.rank} on {currentStanding.score} pts against #
+                        {selectedRival.rank} on {selectedRival.score} pts.
+                      </div>
+                      {isLoadingHeadToHead ? (
+                        <div className="mt-2 text-[12px] text-violet-100/75">
+                          Loading head-to-head...
+                        </div>
+                      ) : headToHead ? (
+                        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                          <SummaryStat
+                            label="Overall"
+                            value={`${headToHead.overall.wins}-${headToHead.overall.losses}-${headToHead.overall.ties}`}
+                            detail={`${headToHead.overall.matches} shared matches`}
+                          />
+                          <SummaryStat
+                            label="Trivia"
+                            value={`${headToHead.battleTrivia.wins}-${headToHead.battleTrivia.losses}-${headToHead.battleTrivia.ties}`}
+                            detail={`${headToHead.battleTrivia.matches} sessions`}
+                          />
+                          <SummaryStat
+                            label="Scramble"
+                            value={`${headToHead.wordScramble.wins}-${headToHead.wordScramble.losses}-${headToHead.wordScramble.ties}`}
+                            detail={`${headToHead.wordScramble.matches} sessions`}
+                          />
+                        </div>
+                      ) : null}
+                      {headToHead?.currentBoardEdge ? (
+                        <div className="mt-2 text-[12px] leading-5 text-violet-100/80">
+                          {headToHead.currentBoardEdge}
+                        </div>
+                      ) : null}
+                      {headToHead?.previousBoardEdge ? (
+                        <div className="mt-1 text-[12px] leading-5 text-violet-100/80">
+                          {headToHead.previousBoardEdge}
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={handleDownloadRivalryCard}
+                        className="rounded-full border border-violet-200/20 bg-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-100 transition hover:bg-white/15"
+                      >
+                        Download rivalry card
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedRivalUserId("")}
+                        className="rounded-full border border-white/12 bg-white/[0.04] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-white/[0.08]"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+
               <div className="space-y-3 sm:hidden">
                 {rows.map((row) => (
                   <MobileLeaderboardCard
@@ -718,6 +912,7 @@ export default function LeaderboardsPage() {
                     isCurrentUser={row.userId === user?.id}
                     onShare={handleShareRank}
                     onDownload={handleDownloadRankCard}
+                    onCompare={currentStanding ? handleComparePlayer : null}
                     onChallenge={currentStanding ? handleChallengePlayer : null}
                   />
                 ))}
@@ -809,13 +1004,22 @@ export default function LeaderboardsPage() {
                                   </button>
                                 </div>
                               ) : currentStanding ? (
-                                <button
-                                  type="button"
-                                  onClick={() => handleChallengePlayer(row)}
-                                  className="rounded-full border border-orange-300/18 bg-orange-400/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-orange-100 transition hover:bg-orange-400/15"
-                                >
-                                  Challenge
-                                </button>
+                                <div className="flex flex-wrap gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleComparePlayer(row)}
+                                    className="rounded-full border border-violet-300/18 bg-violet-400/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-violet-100 transition hover:bg-violet-400/15"
+                                  >
+                                    Compare
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleChallengePlayer(row)}
+                                    className="rounded-full border border-orange-300/18 bg-orange-400/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-orange-100 transition hover:bg-orange-400/15"
+                                  >
+                                    Challenge
+                                  </button>
+                                </div>
                               ) : (
                                 <span className="text-[11px] text-neutral-500">-</span>
                               )}

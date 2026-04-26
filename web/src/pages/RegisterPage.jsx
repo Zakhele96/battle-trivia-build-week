@@ -2,8 +2,14 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { googleLogin, register as registerRequest } from "../api/authApi";
 import GoogleAuthButton from "../components/auth/GoogleAuthButton";
+import OAuthPlaceholderButtons from "../components/auth/OAuthPlaceholderButtons";
 import { useAuth } from "../hooks/useAuth";
 import { useTheme } from "../hooks/useTheme";
+
+function isValidEmail(value) {
+  const trimmed = String(value || "").trim();
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(trimmed);
+}
 
 function AuthShell({ title, description, children, footer, isLight }) {
   const lightModeUndoFilter = isLight
@@ -136,6 +142,12 @@ export default function RegisterPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (!isValidEmail(form.email)) {
+      setError("Enter a valid email address.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -175,11 +187,17 @@ export default function RegisterPage() {
     }
   };
 
+  const handlePlaceholderProvider = (provider) => {
+    setError(
+      `${provider} sign-in still needs provider credentials and callback setup before it can go live here.`
+    );
+  };
+
   return (
     <AuthShell
       isLight={resolvedTheme === "light"}
       title="Create your account"
-      description="Start with BTS details or continue instantly with Google. Either way, you land in the app ready to play."
+      description="Start with BTS details or continue instantly with Google. Apple and Facebook entry points are surfaced here and just need provider setup to go live."
       footer={
         <p className="text-sm text-neutral-400">
           Already have an account?{" "}
@@ -201,6 +219,8 @@ export default function RegisterPage() {
           disabled={isSubmitting}
           label="Continue with Google"
         />
+
+        <OAuthPlaceholderButtons onProviderClick={handlePlaceholderProvider} />
 
         <div className="flex min-w-0 items-center gap-3">
           <div className="h-px min-w-0 flex-1 bg-white/10" />

@@ -4,6 +4,7 @@ using Bts.Api.Models.Requests;
 using Bts.Api.Models.Responses;
 using Bts.Api.Repositories;
 using Google.Apis.Auth;
+using System.Net.Mail;
 
 namespace Bts.Api.Services;
 
@@ -28,6 +29,9 @@ public sealed class AuthService
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
     {
+        if (!IsValidEmail(request.Email))
+            throw new InvalidOperationException("Enter a valid email address.");
+
         var existingByEmail = await _userRepository.GetByEmailAsync(request.Email);
         if (existingByEmail is not null)
             throw new InvalidOperationException("Email already exists.");
@@ -253,4 +257,24 @@ public sealed class AuthService
         HasPassword = !string.IsNullOrWhiteSpace(user.PasswordHash),
         IsAdmin = user.IsAdmin
     };
+
+    private static bool IsValidEmail(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return false;
+
+        try
+        {
+            var trimmed = value.Trim();
+            var address = new MailAddress(trimmed);
+            return address.Address.Equals(trimmed, StringComparison.OrdinalIgnoreCase)
+                && address.Host.Contains('.', StringComparison.Ordinal)
+                && !address.Host.StartsWith('.')
+                && !address.Host.EndsWith('.');
+        }
+        catch
+        {
+            return false;
+        }
+    }
 }

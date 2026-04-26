@@ -1298,21 +1298,21 @@ public sealed class ShareController : ControllerBase
         var player = Encode(card.SharerName);
 
         return $$"""
-        <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
-          <rect width="1200" height="630" fill="#09090b" />
-          <circle cx="170" cy="110" r="180" fill="rgba(59,130,246,0.18)" />
-          <circle cx="1030" cy="500" r="220" fill="rgba(16,185,129,0.16)" />
-          <rect x="34" y="34" width="1132" height="562" rx="34" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.08)" />
-          <text x="64" y="92" fill="#93c5fd" font-size="18" font-family="Segoe UI, Arial, sans-serif" letter-spacing="3">BTS WEEKLY RECAP</text>
-          <text x="64" y="156" fill="#ffffff" font-size="50" font-family="Segoe UI, Arial, sans-serif" font-weight="700">{{title}}</text>
-          <text x="64" y="196" fill="#cbd5e1" font-size="24" font-family="Segoe UI, Arial, sans-serif">{{label}}</text>
-          <rect x="64" y="246" width="420" height="230" rx="28" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)" />
-          <text x="92" y="286" fill="#71717a" font-size="16" font-family="Segoe UI, Arial, sans-serif" letter-spacing="2">PLAYER</text>
-          <text x="92" y="342" fill="#ffffff" font-size="38" font-family="Segoe UI, Arial, sans-serif" font-weight="700">{{player}}</text>
-          <text x="92" y="400" fill="#bfdbfe" font-size="54" font-family="Segoe UI, Arial, sans-serif" font-weight="700">{{rankText}}</text>
-          <text x="92" y="444" fill="#ffffff" font-size="26" font-family="Segoe UI, Arial, sans-serif">{{scoreText}}</text>
-          <text x="540" y="326" fill="#f8fafc" font-size="30" font-family="Segoe UI, Arial, sans-serif" font-weight="700">Finished the week and posted the receipts.</text>
-          <text x="540" y="372" fill="#a1a1aa" font-size="22" font-family="Segoe UI, Arial, sans-serif">Create your BTS account and earn your own recap card next cycle.</text>
+        <svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
+          <rect width="1080" height="1920" fill="#09090b" />
+          <circle cx="180" cy="180" r="240" fill="rgba(59,130,246,0.18)" />
+          <circle cx="900" cy="1570" r="300" fill="rgba(16,185,129,0.16)" />
+          <rect x="44" y="44" width="992" height="1832" rx="42" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.08)" />
+          <text x="94" y="130" fill="#93c5fd" font-size="30" font-family="Segoe UI, Arial, sans-serif" letter-spacing="4">BTS WEEKLY RECAP</text>
+          <text x="94" y="252" fill="#ffffff" font-size="74" font-family="Segoe UI, Arial, sans-serif" font-weight="700">{{title}}</text>
+          <text x="94" y="310" fill="#cbd5e1" font-size="34" font-family="Segoe UI, Arial, sans-serif">{{label}}</text>
+          <rect x="94" y="402" width="892" height="540" rx="36" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)" />
+          <text x="138" y="482" fill="#71717a" font-size="24" font-family="Segoe UI, Arial, sans-serif" letter-spacing="3">PLAYER</text>
+          <text x="138" y="596" fill="#ffffff" font-size="66" font-family="Segoe UI, Arial, sans-serif" font-weight="700">{{player}}</text>
+          <text x="138" y="734" fill="#bfdbfe" font-size="124" font-family="Segoe UI, Arial, sans-serif" font-weight="700">{{rankText}}</text>
+          <text x="138" y="826" fill="#ffffff" font-size="44" font-family="Segoe UI, Arial, sans-serif">{{scoreText}}</text>
+          <text x="94" y="1128" fill="#f8fafc" font-size="52" font-family="Segoe UI, Arial, sans-serif" font-weight="700">Finished the week and posted the receipts.</text>
+          <text x="94" y="1212" fill="#a1a1aa" font-size="36" font-family="Segoe UI, Arial, sans-serif">Create your BTS account and earn your own recap card next cycle.</text>
         </svg>
         """;
     }
@@ -1397,21 +1397,21 @@ public sealed class ShareController : ControllerBase
         var topScore = $"{topRow?.Score ?? 0} pts";
 
         return $$"""
-        <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
-          <rect width="1200" height="630" fill="#09090b" />
-          <circle cx="170" cy="110" r="180" fill="rgba(16,185,129,0.18)" />
-          <circle cx="1030" cy="500" r="220" fill="rgba(59,130,246,0.16)" />
-          <rect x="34" y="34" width="1132" height="562" rx="34" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.08)" />
-          <text x="64" y="92" fill="#86efac" font-size="18" font-family="Segoe UI, Arial, sans-serif" letter-spacing="3">BTS SQUAD RECAP</text>
-          <text x="64" y="156" fill="#ffffff" font-size="50" font-family="Segoe UI, Arial, sans-serif" font-weight="700">{{title}}</text>
-          <text x="64" y="196" fill="#cbd5e1" font-size="24" font-family="Segoe UI, Arial, sans-serif">{{label}}</text>
-          <rect x="64" y="246" width="420" height="230" rx="28" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)" />
-          <text x="92" y="286" fill="#71717a" font-size="16" font-family="Segoe UI, Arial, sans-serif" letter-spacing="2">SQUAD</text>
-          <text x="92" y="342" fill="#ffffff" font-size="38" font-family="Segoe UI, Arial, sans-serif" font-weight="700">{{Encode(card.SquadName)}}</text>
-          <text x="92" y="396" fill="#d1fae5" font-size="26" font-family="Segoe UI, Arial, sans-serif">{{card.MemberCount}} members</text>
-          <text x="92" y="438" fill="#ffffff" font-size="22" font-family="Segoe UI, Arial, sans-serif">Top finisher: {{topName}}</text>
-          <text x="540" y="326" fill="#f8fafc" font-size="30" font-family="Segoe UI, Arial, sans-serif" font-weight="700">Wrapped the week and posted the squad receipts.</text>
-          <text x="540" y="372" fill="#a1a1aa" font-size="22" font-family="Segoe UI, Arial, sans-serif">Lead score: {{topScore}}</text>
+        <svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
+          <rect width="1080" height="1920" fill="#09090b" />
+          <circle cx="180" cy="180" r="240" fill="rgba(16,185,129,0.18)" />
+          <circle cx="900" cy="1570" r="300" fill="rgba(59,130,246,0.16)" />
+          <rect x="44" y="44" width="992" height="1832" rx="42" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.08)" />
+          <text x="94" y="130" fill="#86efac" font-size="30" font-family="Segoe UI, Arial, sans-serif" letter-spacing="4">BTS SQUAD RECAP</text>
+          <text x="94" y="252" fill="#ffffff" font-size="74" font-family="Segoe UI, Arial, sans-serif" font-weight="700">{{title}}</text>
+          <text x="94" y="310" fill="#cbd5e1" font-size="34" font-family="Segoe UI, Arial, sans-serif">{{label}}</text>
+          <rect x="94" y="402" width="892" height="540" rx="36" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)" />
+          <text x="138" y="482" fill="#71717a" font-size="24" font-family="Segoe UI, Arial, sans-serif" letter-spacing="3">SQUAD</text>
+          <text x="138" y="596" fill="#ffffff" font-size="66" font-family="Segoe UI, Arial, sans-serif" font-weight="700">{{Encode(card.SquadName)}}</text>
+          <text x="138" y="698" fill="#d1fae5" font-size="44" font-family="Segoe UI, Arial, sans-serif">{{card.MemberCount}} members</text>
+          <text x="138" y="782" fill="#ffffff" font-size="34" font-family="Segoe UI, Arial, sans-serif">Top finisher: {{topName}}</text>
+          <text x="94" y="1128" fill="#f8fafc" font-size="52" font-family="Segoe UI, Arial, sans-serif" font-weight="700">Wrapped the week and posted the squad receipts.</text>
+          <text x="94" y="1212" fill="#a1a1aa" font-size="36" font-family="Segoe UI, Arial, sans-serif">Lead score: {{topScore}}</text>
         </svg>
         """;
     }

@@ -100,12 +100,23 @@ public sealed class ProgressionService
         {
             "first_win" => snapshot.BestRank == 1,
             "top3_finish" => snapshot.BestRank is >= 1 and <= 3,
+            "top10_finish" => snapshot.BestRank is >= 1 and <= 10,
+            "rank_2_finish" => snapshot.BestRank == 2,
             "weekly_champion" => snapshot.WeeklyWins > 0,
+            "weekly_champion_5" => snapshot.WeeklyWins >= 5,
+            "weekly_champion_10" => snapshot.WeeklyWins >= 10,
             "hot_streak_5" => snapshot.BestStreak >= 5,
+            "hot_streak_10" => snapshot.BestStreak >= 10,
+            "hot_streak_20" => snapshot.BestStreak >= 20,
             "fastest_answer" => snapshot.FastestCorrectAnswerMs.HasValue && snapshot.FastestCorrectAnswerMs.Value <= 1500,
+            "fastest_answer_1s" => snapshot.FastestCorrectAnswerMs.HasValue && snapshot.FastestCorrectAnswerMs.Value <= 1000,
             "correct_10" => snapshot.TotalCorrectAnswers >= 10,
             "correct_100" => snapshot.TotalCorrectAnswers >= 100,
+            "correct_250" => snapshot.TotalCorrectAnswers >= 250,
+            "correct_500" => snapshot.TotalCorrectAnswers >= 500,
             "sessions_played_5" => snapshot.SessionsPlayed >= 5,
+            "sessions_played_25" => snapshot.SessionsPlayed >= 25,
+            "sessions_played_100" => snapshot.SessionsPlayed >= 100,
             _ => false
         };
     }

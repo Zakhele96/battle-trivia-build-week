@@ -6,6 +6,8 @@ import {
   useMemo,
   useState,
 } from "react";
+import { acceptChallengeInvite } from "../api/challengeInvitesApi";
+import { acceptFriendRequest } from "../api/friendsApi";
 import { useAuth } from "../hooks/useAuth";
 import { fetchAlertsFeed } from "../services/alertsFeed";
 
@@ -126,6 +128,28 @@ export function AlertsProvider({ children }) {
     writeStoredIds(user.id, []);
   }, [user?.id]);
 
+  const acceptInboxChallenge = useCallback(
+    async (inviteId) => {
+      if (!inviteId) return null;
+
+      const accepted = await acceptChallengeInvite(inviteId);
+      await refreshAlerts();
+      return accepted;
+    },
+    [refreshAlerts]
+  );
+
+  const acceptInboxFriendRequest = useCallback(
+    async (friendshipId) => {
+      if (!friendshipId) return null;
+
+      const accepted = await acceptFriendRequest(friendshipId);
+      await refreshAlerts();
+      return accepted;
+    },
+    [refreshAlerts]
+  );
+
   const unreadCount = useMemo(() => {
     const readSet = new Set(readAlertIds);
     return alerts.reduce((count, item) => count + (readSet.has(item.id) ? 0 : 1), 0);
@@ -142,6 +166,8 @@ export function AlertsProvider({ children }) {
       markAlertRead,
       markAllAlertsRead,
       resetAlertInbox,
+      acceptInboxChallenge,
+      acceptInboxFriendRequest,
     }),
     [
       alerts,
@@ -153,6 +179,8 @@ export function AlertsProvider({ children }) {
       markAlertRead,
       markAllAlertsRead,
       resetAlertInbox,
+      acceptInboxChallenge,
+      acceptInboxFriendRequest,
     ]
   );
 

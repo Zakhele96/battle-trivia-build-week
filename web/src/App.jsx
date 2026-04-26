@@ -15,6 +15,7 @@ import CommunityPage from "./pages/CommunityPage";
 import SharedLeaderboardPage from "./pages/SharedLeaderboardPage";
 import SquadsPage from "./pages/SquadsPage";
 import AlertsPage from "./pages/AlertsPage";
+import DirectMessagesPage from "./pages/DirectMessagesPage";
 
 function PublicOnlyRoute({ children }) {
   const { isAuthenticated, isInitializing } = useAuth();
@@ -78,6 +79,15 @@ export default function App() {
         element={
           <ProtectedRoute>
             <AlertsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/messages"
+        element={
+          <ProtectedRoute>
+            <DirectMessagesPage />
           </ProtectedRoute>
         }
       />

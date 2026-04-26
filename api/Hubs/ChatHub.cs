@@ -9,6 +9,7 @@ namespace Bts.Api.Hubs;
 [Authorize]
 public sealed class ChatHub : Hub
 {
+    private const string PresenceWatchGroupPrefix = "presence-watch:";
     private readonly ChatService _chatService;
     private readonly TriviaAnswerService _triviaAnswerService;
     private readonly TriviaLeaderboardService _triviaLeaderboardService;
@@ -18,6 +19,8 @@ public sealed class ChatHub : Hub
     private readonly WordScrambleStateService _wordScrambleStateService;
     private readonly WordScrambleSessionStatusService _wordScrambleSessionStatusService;
     private readonly IUserRepository _userRepository;
+    private readonly UserPresenceService _userPresenceService;
+    private readonly DirectMessageService _directMessageService;
 
     public ChatHub(
         ChatService chatService,
@@ -28,7 +31,9 @@ public sealed class ChatHub : Hub
         WordScrambleAnswerService wordScrambleAnswerService,
         WordScrambleStateService wordScrambleStateService,
         WordScrambleSessionStatusService wordScrambleSessionStatusService,
-        IUserRepository userRepository)
+        IUserRepository userRepository,
+        UserPresenceService userPresenceService,
+        DirectMessageService directMessageService)
     {
         _chatService = chatService;
         _triviaAnswerService = triviaAnswerService;
@@ -39,6 +44,8 @@ public sealed class ChatHub : Hub
         _wordScrambleStateService = wordScrambleStateService;
         _wordScrambleSessionStatusService = wordScrambleSessionStatusService;
         _userRepository = userRepository;
+        _userPresenceService = userPresenceService;
+        _directMessageService = directMessageService;
     }
 
     private Guid GetCurrentUserId()
@@ -56,6 +63,97 @@ public sealed class ChatHub : Hub
 
         if (user is null || !user.IsAdmin)
             throw new HubException("Moderator access required.");
+    }
+
+    public override async Task OnConnectedAsync()
+    {
+        if (Guid.TryParse(Context.UserIdentifier, out var userId))
+        {
+            _userPresenceService.MarkOnline(userId);
+            await Clients.Group($"{PresenceWatchGroupPrefix}{userId}")
+                .SendAsync("DirectPresenceUpdated", new
+                {
+                    userId,
+                    isOnline = true,
+                    lastSeenAt = (DateTime?)null
+                });
+        }
+
+        await base.OnConnectedAsync();
+    }
+
+    public override async Task OnDisconnectedAsync(Exception? exception)
+    {
+        if (Guid.TryParse(Context.UserIdentifier, out var userId))
+        {
+            var lastSeenAt = await _userPresenceService.MarkOfflineAsync(userId);
+            await Clients.Group($"{PresenceWatchGroupPrefix}{userId}")
+                .SendAsync("DirectPresenceUpdated", new
+                {
+                    userId,
+                    isOnline = false,
+                    lastSeenAt
+                });
+        }
+
+        await base.OnDisconnectedAsync(exception);
+    }
+
+    public async Task WatchPresence(IEnumerable<Guid> userIds)
+    {
+        foreach (var userId in userIds.Distinct())
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"{PresenceWatchGroupPrefix}{userId}");
+        }
+    }
+
+    public async Task UnwatchPresence(IEnumerable<Guid> userIds)
+    {
+        foreach (var userId in userIds.Distinct())
+        {
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"{PresenceWatchGroupPrefix}{userId}");
+        }
+    }
+
+    public async Task JoinDirectConversation(Guid conversationId)
+    {
+        var userId = GetCurrentUserId();
+
+        try
+        {
+            await _directMessageService.MarkReadAsync(userId, conversationId);
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"dm:{conversationId}");
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            throw new HubException(ex.Message);
+        }
+    }
+
+    public async Task LeaveDirectConversation(Guid conversationId)
+    {
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"dm:{conversationId}");
+    }
+
+    public async Task<object> SendDirectMessage(Guid recipientUserId, string messageText)
+    {
+        var userId = GetCurrentUserId();
+
+        try
+        {
+            var message = await _directMessageService.SendMessageAsync(userId, recipientUserId, messageText);
+            await Clients.Users(userId.ToString(), recipientUserId.ToString())
+                .SendAsync("DirectMessageReceived", message);
+            return new { success = true, message };
+        }
+        catch (InvalidOperationException ex)
+        {
+            return new { success = false, message = ex.Message };
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return new { success = false, message = ex.Message };
+        }
     }
 
     public async Task JoinRoom(Guid roomId)

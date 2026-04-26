@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { googleLogin, login as loginRequest } from "../api/authApi";
 import GoogleAuthButton from "../components/auth/GoogleAuthButton";
+import OAuthPlaceholderButtons from "../components/auth/OAuthPlaceholderButtons";
 import { useAuth } from "../hooks/useAuth";
 import { useTheme } from "../hooks/useTheme";
 
@@ -177,11 +178,17 @@ export default function LoginPage() {
     }
   };
 
+  const handlePlaceholderProvider = (provider) => {
+    setError(
+      `${provider} sign-in still needs provider credentials and callback setup before it can go live here.`
+    );
+  };
+
   return (
     <AuthShell
       isLight={resolvedTheme === "light"}
       title="Welcome back"
-      description="Sign in with your BTS account or continue with Google to jump straight back into the rooms."
+      description="Sign in with your BTS account or continue with Google. Apple and Facebook entry points are surfaced here and just need provider setup to go live."
       footer={
         <p className="text-sm text-neutral-400">
           Don&apos;t have an account?{" "}
@@ -206,6 +213,8 @@ export default function LoginPage() {
           disabled={isSubmitting}
           label="Continue with Google"
         />
+
+        <OAuthPlaceholderButtons onProviderClick={handlePlaceholderProvider} />
 
         <div className="flex min-w-0 items-center gap-3">
           <div className="h-px min-w-0 flex-1 bg-white/10" />

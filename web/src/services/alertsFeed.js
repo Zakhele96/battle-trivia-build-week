@@ -1,6 +1,18 @@
 import { getLeaderboard } from "../api/leaderboardsApi";
+import { getMyChallengeInvites } from "../api/challengeInvitesApi";
+import { getMyFriendNetwork } from "../api/friendsApi";
 import { getMyProfile } from "../api/profileApi";
 import { getMySquads, getSquadDetail } from "../api/squadsApi";
+
+function getModeLabel(mode) {
+  if (mode === "battle-trivia") return "Battle Trivia";
+  if (mode === "word-scramble") return "Word Scramble";
+  return "Combined";
+}
+
+function getPeriodLabel(period) {
+  return period === "previous" ? "Previous week" : "Current week";
+}
 
 export function buildPlayerAlerts({ authUser, profile, currentBoard, previousBoard }) {
   const alerts = [];
@@ -124,16 +136,56 @@ export function buildSquadAlerts(squadDetails = []) {
   return alerts;
 }
 
+export function buildChallengeInviteAlerts(invites = []) {
+  return (Array.isArray(invites) ? invites : [])
+    .filter((invite) => invite?.status === "pending" && invite?.id)
+    .map((invite) => ({
+      id: `challenge-invite-${invite.id}`,
+      kind: "Challenge",
+      tone: "amber",
+      title: `${invite.challengerName || invite.challengerUsername || "A player"} challenged you on ${getModeLabel(invite.mode)}.`,
+      detail: `Accept the invite and jump into the ${getPeriodLabel(invite.period).toLowerCase()} board.`,
+      ctaTo: `/leaderboards?mode=${encodeURIComponent(invite.mode || "combined")}&period=${encodeURIComponent(invite.period || "current")}`,
+      ctaLabel: "Accept challenge",
+      actionType: "accept-challenge",
+      challengeInviteId: invite.id,
+      priority: 5,
+    }));
+}
+
+export function buildFriendRequestAlerts(network) {
+  const incoming = Array.isArray(network?.incomingRequests)
+    ? network.incomingRequests
+    : [];
+
+  return incoming
+    .filter((request) => request?.friendshipId && request?.userId)
+    .map((request) => ({
+      id: `friend-request-${request.friendshipId}`,
+      kind: "Friend request",
+      tone: "emerald",
+      title: `${request.displayName || request.username || "A player"} wants to join your friend circle.`,
+      detail: "Accept the request to unlock the friends leaderboard and head-to-head rivalry cards.",
+      ctaTo: "/profile",
+      ctaLabel: "Accept request",
+      actionType: "accept-friend-request",
+      friendshipId: request.friendshipId,
+      priority: 6,
+    }));
+}
+
 export async function fetchAlertsFeed(authUser) {
   if (!authUser?.id) {
     return [];
   }
 
-  const [profile, currentBoard, previousBoard, squads] = await Promise.all([
+  const [profile, currentBoard, previousBoard, squads, challengeInvites, friendNetwork] = await Promise.all([
     getMyProfile(),
     getLeaderboard("combined", "current", 200),
     getLeaderboard("combined", "previous", 200),
     getMySquads(),
+    getMyChallengeInvites().catch(() => []),
+    getMyFriendNetwork().catch(() => null),
   ]);
 
   const squadDetails = await Promise.all(
@@ -148,6 +200,8 @@ export async function fetchAlertsFeed(authUser) {
   );
 
   return [
+    ...buildChallengeInviteAlerts(challengeInvites),
+    ...buildFriendRequestAlerts(friendNetwork),
     ...buildPlayerAlerts({
       authUser,
       profile,

@@ -1,10 +1,10 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import AppSectionNav from "../components/layout/AppSectionNav";
 import AppTopBar from "../components/layout/AppTopBar";
 import { useAlerts } from "../context/AlertsContext";
 import { useTheme } from "../hooks/useTheme";
 
-function AlertCard({ item, isRead = false, onMarkRead }) {
+function AlertCard({ item, isRead = false, onMarkRead, onPrimaryAction }) {
   const toneClass =
     item.tone === "amber"
       ? "border-amber-300/18 bg-amber-400/10 text-amber-100"
@@ -60,7 +60,7 @@ function AlertCard({ item, isRead = false, onMarkRead }) {
           {item.ctaTo ? (
             <Link
               to={item.ctaTo}
-              onClick={() => onMarkRead?.(item.id)}
+              onClick={(event) => onPrimaryAction?.(item, event)}
               className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-white/[0.08]"
             >
               {item.ctaLabel || "Open"}
@@ -73,8 +73,11 @@ function AlertCard({ item, isRead = false, onMarkRead }) {
 }
 
 export default function AlertsPage() {
+  const navigate = useNavigate();
   const {
     alerts,
+    acceptInboxChallenge,
+    acceptInboxFriendRequest,
     error,
     isLoading: loading,
     markAlertRead,
@@ -84,6 +87,34 @@ export default function AlertsPage() {
     unreadCount,
   } = useAlerts();
   const { resolvedTheme } = useTheme();
+
+  const handlePrimaryAction = async (item, event) => {
+    markAlertRead(item?.id);
+
+    if (item?.actionType !== "accept-challenge" || !item?.challengeInviteId) {
+      if (item?.actionType !== "accept-friend-request" || !item?.friendshipId) {
+        return;
+      }
+
+      event?.preventDefault?.();
+
+      try {
+        await acceptInboxFriendRequest(item.friendshipId);
+      } finally {
+        navigate(item.ctaTo || "/profile");
+      }
+
+      return;
+    }
+
+    event?.preventDefault?.();
+
+    try {
+      await acceptInboxChallenge(item.challengeInviteId);
+    } finally {
+      navigate(item.ctaTo || "/leaderboards?mode=combined&period=current");
+    }
+  };
 
   const isLight = resolvedTheme === "light";
   const lightModeUndoFilter = isLight
@@ -145,6 +176,7 @@ export default function AlertsPage() {
                 item={item}
                 isRead={readAlertIds.includes(item.id)}
                 onMarkRead={markAlertRead}
+                onPrimaryAction={handlePrimaryAction}
               />
             ))}
           </div>
