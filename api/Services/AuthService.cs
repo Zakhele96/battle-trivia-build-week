@@ -12,15 +12,18 @@ public sealed class AuthService
     private readonly IUserRepository _userRepository;
     private readonly JwtTokenGenerator _jwtTokenGenerator;
     private readonly IConfiguration _configuration;
+    private readonly GrowthAnalyticsService _growthAnalyticsService;
 
     public AuthService(
         IUserRepository userRepository,
         JwtTokenGenerator jwtTokenGenerator,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        GrowthAnalyticsService growthAnalyticsService)
     {
         _userRepository = userRepository;
         _jwtTokenGenerator = jwtTokenGenerator;
         _configuration = configuration;
+        _growthAnalyticsService = growthAnalyticsService;
     }
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
@@ -56,6 +59,12 @@ public sealed class AuthService
         };
 
         await _userRepository.CreateAsync(user);
+        await _growthAnalyticsService.RecordReferralSignupAsync(
+            request.ReferredByUserId ?? Guid.Empty,
+            user.Id,
+            request.ReferralSource,
+            request.ReferralMode,
+            request.ReferralPeriod);
 
         var token = _jwtTokenGenerator.Generate(user);
 
@@ -88,7 +97,12 @@ public sealed class AuthService
         };
     }
 
-    public async Task<AuthResponse> LoginWithGoogleAsync(string idToken)
+    public async Task<AuthResponse> LoginWithGoogleAsync(
+        string idToken,
+        Guid? referredByUserId = null,
+        string? referralSource = null,
+        string? referralMode = null,
+        string? referralPeriod = null)
     {
         if (string.IsNullOrWhiteSpace(idToken))
             throw new UnauthorizedAccessException("Google token is missing.");
@@ -97,12 +111,21 @@ public sealed class AuthService
         if (string.IsNullOrWhiteSpace(clientId))
             throw new InvalidOperationException("GoogleAuth:ClientId is not configured.");
 
-        var payload = await GoogleJsonWebSignature.ValidateAsync(
-            idToken,
-            new GoogleJsonWebSignature.ValidationSettings
-            {
-                Audience = new[] { clientId }
-            });
+        GoogleJsonWebSignature.Payload payload;
+
+        try
+        {
+            payload = await GoogleJsonWebSignature.ValidateAsync(
+                idToken,
+                new GoogleJsonWebSignature.ValidationSettings
+                {
+                    Audience = new[] { clientId }
+                });
+        }
+        catch
+        {
+            throw new UnauthorizedAccessException("Google sign-in could not verify this credential.");
+        }
 
         if (string.IsNullOrWhiteSpace(payload.Email))
             throw new UnauthorizedAccessException("Google account email is missing.");
@@ -112,6 +135,8 @@ public sealed class AuthService
         if (user is null)
         {
             user = await _userRepository.GetByEmailAsync(payload.Email);
+
+            var createdNewUser = false;
 
             if (user is null)
             {
@@ -138,6 +163,7 @@ public sealed class AuthService
                 };
 
                 await _userRepository.CreateAsync(user);
+                createdNewUser = true;
             }
             else
             {
@@ -147,6 +173,16 @@ public sealed class AuthService
                 user.EmailVerified = payload.EmailVerified;
 
                 await _userRepository.LinkGoogleAsync(user);
+            }
+
+            if (createdNewUser)
+            {
+                await _growthAnalyticsService.RecordReferralSignupAsync(
+                    referredByUserId ?? Guid.Empty,
+                    user.Id,
+                    referralSource,
+                    referralMode,
+                    referralPeriod);
             }
         }
 

@@ -12,6 +12,9 @@ import AdminTriviaManagementPage from "./pages/AdminTriviaManagementPage";
 import LeaderboardsPage from "./pages/LeaderboardsPage";
 import RoomsPage from "./pages/RoomsPage";
 import CommunityPage from "./pages/CommunityPage";
+import SharedLeaderboardPage from "./pages/SharedLeaderboardPage";
+import SquadsPage from "./pages/SquadsPage";
+import AlertsPage from "./pages/AlertsPage";
 
 function PublicOnlyRoute({ children }) {
   const { isAuthenticated, isInitializing } = useAuth();
@@ -71,6 +74,24 @@ export default function App() {
       />
 
       <Route
+        path="/alerts"
+        element={
+          <ProtectedRoute>
+            <AlertsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/squads"
+        element={
+          <ProtectedRoute>
+            <SquadsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/community"
         element={
           <ProtectedRoute>
@@ -87,6 +108,8 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+
+      <Route path="/share/leaderboard" element={<SharedLeaderboardPage />} />
 
       <Route
         path="/profile"

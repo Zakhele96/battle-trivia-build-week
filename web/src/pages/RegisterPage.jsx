@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { googleLogin, register as registerRequest } from "../api/authApi";
 import GoogleAuthButton from "../components/auth/GoogleAuthButton";
 import { useAuth } from "../hooks/useAuth";
@@ -104,6 +104,7 @@ function AuthShell({ title, description, children, footer, isLight }) {
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { login } = useAuth();
   const { resolvedTheme } = useTheme();
 
@@ -116,6 +117,17 @@ export default function RegisterPage() {
   });
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const referralPayload = useMemo(() => {
+    const ref = searchParams.get("ref");
+
+    return {
+      referredByUserId: ref || null,
+      referralSource: searchParams.get("source") || "leaderboard-share",
+      referralMode: searchParams.get("mode") || "combined",
+      referralPeriod: searchParams.get("period") || "current",
+    };
+  }, [searchParams]);
+  const hasReferral = Boolean(referralPayload.referredByUserId);
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -133,6 +145,7 @@ export default function RegisterPage() {
         email: form.email.trim(),
         phoneNumber: form.phoneNumber.trim(),
         password: form.password,
+        ...referralPayload,
       });
 
       login(data, "local");
@@ -149,7 +162,10 @@ export default function RegisterPage() {
     setIsSubmitting(true);
 
     try {
-      const data = await googleLogin(credential);
+      const data = await googleLogin({
+        idToken: credential,
+        ...referralPayload,
+      });
       login(data, "google");
       navigate("/", { replace: true });
     } catch (err) {
@@ -174,6 +190,12 @@ export default function RegisterPage() {
       }
     >
       <div className="min-w-0 space-y-5">
+        {hasReferral ? (
+          <div className="rounded-[18px] border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+            This sign-up link came from a BTS player challenge. Create your account and jump straight into the weekly race.
+          </div>
+        ) : null}
+
         <GoogleAuthButton
           onCredential={handleGoogleLogin}
           disabled={isSubmitting}

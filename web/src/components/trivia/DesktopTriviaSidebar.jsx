@@ -36,6 +36,7 @@ export default function DesktopTriviaSidebar({
   status,
   sessionStatus,
   sessionLabel,
+  sponsor = null,
   compact = false,
 }) {
   const isLiveNow = !!sessionStatus?.isLiveNow;
@@ -102,6 +103,31 @@ export default function DesktopTriviaSidebar({
             </span>
           ) : null}
         </div>
+
+        {sponsor?.name ? (
+          <div className="mt-3 rounded-[16px] border border-amber-300/18 bg-amber-500/10 p-3">
+            <div className="text-[9px] uppercase tracking-[0.14em] text-amber-200/80">
+              Sponsored this week
+            </div>
+            <div className="mt-1 text-sm font-semibold text-white">
+              {sponsor.name}
+            </div>
+            <div className="mt-1 text-[11px] leading-5 text-neutral-300">
+              {sponsor.sponsorText || "This week's competition is sponsored by"}
+            </div>
+            {sponsor.websiteUrl ? (
+              <a
+                href={sponsor.websiteUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-2 inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-100"
+              >
+                {sponsor.callToActionLabel || "Visit sponsor"}
+                <span aria-hidden="true">→</span>
+              </a>
+            ) : null}
+          </div>
+        ) : null}
       </div>
     </div>
   );

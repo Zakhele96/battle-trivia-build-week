@@ -8,4 +8,5 @@ public sealed class ProfileMeResponse
     public string? PhoneNumber { get; set; }
     public bool IsAdmin { get; set; }
     public ProfileStatsResponse Stats { get; set; } = new();
+    public GrowthSummaryResponse Growth { get; set; } = new();
 }

@@ -2,5 +2,5 @@
 
 public interface IChatRateLimitService
 {
-    Task<bool> CanSendAsync(Guid roomId, Guid userId);
+    Task<bool> CanSendAsync(Guid roomId, Guid userId, int slowModeSeconds);
 }

@@ -25,6 +25,7 @@ import {
   markMessageMentionRead,
   markRoomMentionsRead,
 } from "../api/roomsApi";
+import { getActiveSponsor } from "../api/sponsorApi";
 import {
   deleteRoomMessage,
   getRoomModerationActions,
@@ -37,6 +38,9 @@ import { useTheme } from "../hooks/useTheme";
 import useRoomBootstrap from "../hooks/useRoomBootstrap";
 import useRoomLiveState from "../hooks/useRoomLiveState";
 import { useMentions } from "../context/MentionContext";
+import SponsorSpotlightCard, {
+  hasSponsorPlacement,
+} from "../components/sponsor/SponsorSpotlightCard";
 
 function getApiErrorMessage(error, fallback) {
   return (
@@ -52,6 +56,17 @@ function getApiErrorMessage(error, fallback) {
 function isMutedErrorMessage(value) {
   if (!value) return false;
   return value.toLowerCase().includes("muted in this room");
+}
+
+function isSlowModeErrorMessage(value) {
+  if (!value) return false;
+  return value.toLowerCase().includes("slow mode is active");
+}
+
+function getSlowModeWaitSeconds(value) {
+  if (!value) return 0;
+  const match = value.match(/wait\s+(\d+)\s+seconds?/i);
+  return match ? Number(match[1]) || 0 : 0;
 }
 
 function formatMutedUntil(value) {
@@ -372,6 +387,9 @@ export default function RoomPage() {
     useState(false);
   const [viewportState, setViewportState] = useState(getViewportState);
   const [replyTarget, setReplyTarget] = useState(null);
+  const [slowModeBlockedUntil, setSlowModeBlockedUntil] = useState(0);
+  const [slowModeNow, setSlowModeNow] = useState(() => Date.now());
+  const [battleTriviaSponsor, setBattleTriviaSponsor] = useState(null);
   const [mentionToasts, setMentionToasts] = useState([]);
 
   const messagesContainerRef = useRef(null);
@@ -713,7 +731,19 @@ const {
 
   const effectivePlayerRank = isWordScramble ? scramblePlayerRank : playerRank;
 
-  const displayError = localError || bootstrapError || connectionError;
+  const activeSlowModeRemainingSeconds =
+    slowModeBlockedUntil > slowModeNow
+      ? Math.max(1, Math.ceil((slowModeBlockedUntil - slowModeNow) / 1000))
+      : 0;
+
+  const slowModeBlockMessage = activeSlowModeRemainingSeconds
+    ? `Slow mode active. Try again in ${activeSlowModeRemainingSeconds}s.`
+    : "";
+
+  const displayError =
+    !isSlowModeErrorMessage(localError) && localError
+      ? localError
+      : bootstrapError || connectionError;
 
   const moderatedMutedMessage =
     !showGameSidebar && moderationState?.isMuted
@@ -1072,6 +1102,31 @@ const {
     };
   }, [isBattleTrivia, roomId, user?.id, sessionStatus?.sessionId]);
 
+  useEffect(() => {
+    if (!isBattleTrivia) {
+      setBattleTriviaSponsor(null);
+      return;
+    }
+
+    let isMounted = true;
+
+    getActiveSponsor("battle-trivia")
+      .then((data) => {
+        if (isMounted) {
+          setBattleTriviaSponsor(data || null);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setBattleTriviaSponsor(null);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isBattleTrivia]);
+
   const updateAutoScrollState = () => {
     if (showGameSidebar) {
       shouldAutoScrollRef.current = true;
@@ -1089,7 +1144,24 @@ const {
 
   useEffect(() => {
     setLocalError("");
+    setSlowModeBlockedUntil(0);
   }, [roomId]);
+
+  useEffect(() => {
+    if (!slowModeBlockedUntil) return undefined;
+
+    setSlowModeNow(Date.now());
+    const intervalId = window.setInterval(() => {
+      const now = Date.now();
+      setSlowModeNow(now);
+
+      if (now >= slowModeBlockedUntil) {
+        setSlowModeBlockedUntil(0);
+      }
+    }, 250);
+
+    return () => window.clearInterval(intervalId);
+  }, [slowModeBlockedUntil]);
 
   useEffect(() => {
     const el = messagesContainerRef.current;
@@ -1151,7 +1223,19 @@ const {
         ? rawMessage.split("HubException:").pop().trim()
         : rawMessage;
 
-      setLocalError(cleanedMessage);
+      if (isSlowModeErrorMessage(cleanedMessage)) {
+        const waitSeconds =
+          getSlowModeWaitSeconds(cleanedMessage) ||
+          moderationState?.slowModeSeconds ||
+          1;
+
+        setSlowModeBlockedUntil(Date.now() + waitSeconds * 1000);
+        setSlowModeNow(Date.now());
+        setLocalError("");
+      } else {
+        setLocalError(cleanedMessage);
+      }
+
       return false;
     }
   };
@@ -1282,6 +1366,11 @@ const {
                 status={status}
                 sessionStatus={effectiveSessionStatus}
                 sessionLabel={effectiveSessionLabel}
+                sponsor={
+                  hasSponsorPlacement(battleTriviaSponsor, "room-sidebar")
+                    ? battleTriviaSponsor
+                    : null
+                }
                 compact
               />
             </div>
@@ -1381,6 +1470,13 @@ const {
 
         {!shouldCompactMobileChrome && !shouldCompactGameChrome ? roomStateBanner : null}
 
+        {isBattleTrivia &&
+        hasSponsorPlacement(battleTriviaSponsor, "room-sidebar") ? (
+          <div className="mb-3 xl:hidden">
+            <SponsorSpotlightCard sponsor={battleTriviaSponsor} compact />
+          </div>
+        ) : null}
+
         {isBattleTrivia ? (
           <TriviaHeroCard
             currentRoundNumber={currentRoundNumber}
@@ -1461,6 +1557,13 @@ const {
         ) : mutedBannerMessage ? (
           <div className="rounded-[16px] border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
             {mutedBannerMessage}
+          </div>
+        ) : slowModeBlockMessage ? (
+          <div className="flex items-center justify-between gap-3 rounded-[16px] border border-blue-400/25 bg-blue-500/12 px-3 py-2 text-sm text-blue-100 shadow-[0_10px_24px_rgba(37,99,235,0.16)]">
+            <span>{slowModeBlockMessage}</span>
+            <span className="rounded-full border border-blue-200/20 bg-white/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-blue-100">
+              Cooldown
+            </span>
           </div>
         ) : slowModeMessage ? (
           <div className="rounded-[16px] border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-neutral-300">

@@ -79,6 +79,9 @@ builder.Services.AddSingleton<IChatRateLimitService, InMemoryChatRateLimitServic
 builder.Services.AddSingleton<IProfanityFilterService, BasicProfanityFilterService>();
 builder.Services.AddScoped<IAchievementRepository, AchievementRepository>();
 builder.Services.AddScoped<IProfileProgressionRepository, ProfileProgressionRepository>();
+builder.Services.AddScoped<ILeaderboardSponsorRepository, LeaderboardSponsorRepository>();
+builder.Services.AddScoped<IGrowthRepository, GrowthRepository>();
+builder.Services.AddScoped<ISquadRepository, SquadRepository>();
 
 builder.Services.AddScoped<IWordScrambleSessionRepository, WordScrambleSessionRepository>();
 builder.Services.AddScoped<IWordScrambleRoundRepository, WordScrambleRoundRepository>();
@@ -94,6 +97,7 @@ builder.Services.AddScoped<WordScrambleAnswerService>();
 
 builder.Services.AddScoped<WordScrambleStateService>();
 builder.Services.AddScoped<WordScrambleSessionStatusService>();
+builder.Services.AddScoped<WordScrambleSessionFinalizerService>();
 
 builder.Services.AddScoped<ProgressionService>();
 builder.Services.AddScoped<MessageModerationService>();
@@ -112,12 +116,22 @@ builder.Services.AddScoped<TriviaAnswerService>();
 builder.Services.AddScoped<TriviaLeaderboardService>();
 builder.Services.AddScoped<BattleTriviaSessionStatusService>();
 builder.Services.AddScoped<AdminTriviaQuestionService>();
+builder.Services.AddScoped<AdminWordScrambleWordService>();
+builder.Services.AddScoped<AdminUserService>();
 builder.Services.AddScoped<AdminBattleTriviaSettingsService>();
+builder.Services.AddScoped<AdminLeaderboardSponsorService>();
 builder.Services.AddScoped<RoomModerationStateService>();
 builder.Services.AddScoped<ProfileService>();
 builder.Services.AddScoped<ProgressionRealtimeService>();
 builder.Services.AddScoped<GameLeaderboardService>();
 builder.Services.AddScoped<MentionNotificationService>();
+builder.Services.AddScoped<LeaderboardSponsorService>();
+builder.Services.AddScoped<LeaderboardSponsorSchemaService>();
+builder.Services.AddScoped<LeaderboardShareService>();
+builder.Services.AddScoped<GrowthSchemaService>();
+builder.Services.AddScoped<GrowthAnalyticsService>();
+builder.Services.AddScoped<SquadSchemaService>();
+builder.Services.AddScoped<SquadService>();
 
 builder.Services.AddHostedService<BattleTriviaHostedService>();
 builder.Services.AddHostedService<WordScrambleHostedService>();
@@ -196,5 +210,15 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHub<Bts.Api.Hubs.ChatHub>("/hubs/chat");
+
+using (var scope = app.Services.CreateScope())
+{
+    var schemaService = scope.ServiceProvider.GetRequiredService<LeaderboardSponsorSchemaService>();
+    await schemaService.EnsureAsync();
+    var growthSchemaService = scope.ServiceProvider.GetRequiredService<GrowthSchemaService>();
+    await growthSchemaService.EnsureAsync();
+    var squadSchemaService = scope.ServiceProvider.GetRequiredService<SquadSchemaService>();
+    await squadSchemaService.EnsureAsync();
+}
 
 app.Run();

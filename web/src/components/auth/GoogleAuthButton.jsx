@@ -48,6 +48,7 @@ export default function GoogleAuthButton({
 }) {
   const shellRef = useRef(null);
   const buttonHostRef = useRef(null);
+  const helperRef = useRef(null);
 
   useEffect(() => {
     const localCredentialHandler = (credential) => {
@@ -86,6 +87,16 @@ export default function GoogleAuthButton({
 
     const renderFallbackButton = () => {
       if (!buttonHostRef.current) return;
+
+      if (helperRef.current) {
+        const isLocalhost =
+          typeof window !== "undefined" &&
+          ["localhost", "127.0.0.1"].includes(window.location.hostname);
+
+        helperRef.current.textContent = isLocalhost
+          ? "Google sign-in is not enabled for this local origin yet. Use BTS login for now, or add this localhost origin in Google Cloud OAuth settings."
+          : "";
+      }
 
       buttonHostRef.current.innerHTML = `
         <button
@@ -142,6 +153,10 @@ export default function GoogleAuthButton({
           });
 
           googleAccountsInitialized = true;
+        }
+
+        if (helperRef.current) {
+          helperRef.current.textContent = "";
         }
 
         const width = getButtonWidth();
@@ -221,6 +236,10 @@ export default function GoogleAuthButton({
           className="google-auth-button-shell flex min-w-0 max-w-full justify-center overflow-hidden"
         />
       </div>
+      <div
+        ref={helperRef}
+        className="min-h-[1.25rem] px-1 text-[11px] leading-5 text-neutral-500"
+      />
 
       <style>{`
         .google-auth-button-shell,

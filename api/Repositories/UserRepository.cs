@@ -39,6 +39,47 @@ public sealed class UserRepository : IUserRepository
         return await connection.QuerySingleOrDefaultAsync<User>(sql, new { Id = id });
     }
 
+    public async Task<IReadOnlyList<User>> SearchAsync(string? query, int take = 50)
+    {
+        const string sql = """
+            SELECT
+                id,
+                username,
+                display_name AS DisplayName,
+                email,
+                phone_number AS PhoneNumber,
+                password_hash AS PasswordHash,
+                google_sub AS GoogleSub,
+                auth_provider AS AuthProvider,
+                avatar_url AS AvatarUrl,
+                email_verified AS EmailVerified,
+                is_active AS IsActive,
+                is_admin AS IsAdmin,
+                created_at AS CreatedAt,
+                updated_at AS UpdatedAt
+            FROM users
+            WHERE is_active = TRUE
+              AND (
+                  @Query IS NULL
+                  OR username ILIKE @QueryPattern
+                  OR display_name ILIKE @QueryPattern
+                  OR email ILIKE @QueryPattern
+              )
+            ORDER BY is_admin DESC, updated_at DESC
+            LIMIT @Take;
+            """;
+
+        using var connection = _context.CreateConnection();
+        var rows = await connection.QueryAsync<User>(sql, new
+        {
+            Query = string.IsNullOrWhiteSpace(query) ? null : query.Trim(),
+            QueryPattern = $"%{query?.Trim()}%",
+            Take = Math.Clamp(take, 1, 100)
+        });
+
+        return rows.ToList();
+    }
+
     public async Task<User?> GetByEmailAsync(string email)
     {
         const string sql = """
@@ -241,6 +282,23 @@ public sealed class UserRepository : IUserRepository
         {
             UserId = userId,
             PasswordHash = passwordHash
+        });
+    }
+
+    public async Task SetAdminAsync(Guid userId, bool isAdmin)
+    {
+        const string sql = """
+            UPDATE users
+            SET is_admin = @IsAdmin,
+                updated_at = NOW()
+            WHERE id = @UserId;
+            """;
+
+        using var connection = _context.CreateConnection();
+        await connection.ExecuteAsync(sql, new
+        {
+            UserId = userId,
+            IsAdmin = isAdmin
         });
     }
 }

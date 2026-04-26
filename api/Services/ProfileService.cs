@@ -10,15 +10,18 @@ public sealed class ProfileService
 {
     private readonly IUserRepository _userRepository;
     private readonly BattleTriviaProfileStatsService _battleTriviaProfileStatsService;
+    private readonly GrowthAnalyticsService _growthAnalyticsService;
     private readonly DapperContext _context;
 
     public ProfileService(
         IUserRepository userRepository,
         BattleTriviaProfileStatsService battleTriviaProfileStatsService,
+        GrowthAnalyticsService growthAnalyticsService,
         DapperContext context)
     {
         _userRepository = userRepository;
         _battleTriviaProfileStatsService = battleTriviaProfileStatsService;
+        _growthAnalyticsService = growthAnalyticsService;
         _context = context;
     }
 
@@ -47,6 +50,7 @@ public sealed class ProfileService
         var wordScrambleCorrectAnswers = await connection.ExecuteScalarAsync<int>(
             wordScrambleCorrectSql,
             new { UserId = userId });
+        var growth = await _growthAnalyticsService.GetUserSummaryAsync(userId);
 
         return new ProfileMeResponse
         {
@@ -62,7 +66,8 @@ public sealed class ProfileService
                 BestStreak = stats.BestStreak,
                 WeeklyWins = stats.WeeklyWins,
                 FastestCorrectAnswerMs = stats.FastestCorrectAnswerMs
-            }
+            },
+            Growth = growth
         };
     }
 

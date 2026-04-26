@@ -7,4 +7,8 @@ public sealed class RegisterRequest
     public string Email { get; set; } = string.Empty;
     public string? PhoneNumber { get; set; }
     public string Password { get; set; } = string.Empty;
+    public Guid? ReferredByUserId { get; set; }
+    public string? ReferralSource { get; set; }
+    public string? ReferralMode { get; set; }
+    public string? ReferralPeriod { get; set; }
 }

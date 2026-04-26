@@ -17,6 +17,10 @@ import { useTheme } from "../hooks/useTheme";
 import { useMentions } from "../context/MentionContext";
 import MentionInboxCard from "../components/mentions/MentionInboxCard";
 import { getUnreadMentions } from "../api/roomsApi";
+import { getActiveSponsor } from "../api/sponsorApi";
+import SponsorSpotlightCard, {
+  hasSponsorPlacement,
+} from "../components/sponsor/SponsorSpotlightCard";
 
 function formatEndedAt(value) {
   if (!value) return "Latest completed week";
@@ -999,6 +1003,7 @@ export default function LobbyPage() {
   const [currentLeaders, setCurrentLeaders] = useState([]);
   const [wordScrambleLeaders, setWordScrambleLeaders] = useState([]);
   const [combinedBoardRows, setCombinedBoardRows] = useState([]);
+  const [battleTriviaSponsor, setBattleTriviaSponsor] = useState(null);
   const [profileOverview, setProfileOverview] = useState(null);
   const [recentResult, setRecentResult] = useState(null);
 
@@ -1036,6 +1041,7 @@ export default function LobbyPage() {
           leaders,
           scrambleBoard,
           combinedBoard,
+          sponsorData,
           profileData,
           historyData,
         ] = await Promise.all([
@@ -1050,6 +1056,7 @@ export default function LobbyPage() {
           getLeaderboard("combined", "current", 100).catch(() => ({
             rows: [],
           })),
+          getActiveSponsor("battle-trivia").catch(() => null),
           getMyProfile().catch(() => null),
           getMyProfileHistory(1, 1).catch(() => ({
             items: [],
@@ -1066,6 +1073,7 @@ export default function LobbyPage() {
           setCombinedBoardRows(
             Array.isArray(combinedBoard?.rows) ? combinedBoard.rows : []
           );
+          setBattleTriviaSponsor(sponsorData || null);
           setProfileOverview(profileData || null);
           setRecentResult(
             Array.isArray(historyData?.items)
@@ -1188,6 +1196,12 @@ export default function LobbyPage() {
                 sessionPodium={sessionPodium}
                 isLight={isLight}
               />
+
+              {hasSponsorPlacement(battleTriviaSponsor, "lobby-featured") ? (
+                <div className="mt-3 sm:mt-4">
+                  <SponsorSpotlightCard sponsor={battleTriviaSponsor} />
+                </div>
+              ) : null}
 
               {showPodium ? (
                 <WinnersPodiumCard
@@ -1393,6 +1407,12 @@ export default function LobbyPage() {
                 description="The lobby stays lighter now: one live combined snapshot here, then the full leaderboard page when you want the full breakdown."
                 isLight={isLight}
               />
+
+              {hasSponsorPlacement(battleTriviaSponsor, "lobby-standings") ? (
+                <div className="mb-3 sm:mb-4">
+                  <SponsorSpotlightCard sponsor={battleTriviaSponsor} compact />
+                </div>
+              ) : null}
 
               <div className="grid gap-3 sm:gap-4 lg:grid-cols-[1.2fr_0.8fr]">
                 <LeaderboardPreviewCard

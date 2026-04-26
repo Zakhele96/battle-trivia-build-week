@@ -18,6 +18,7 @@ public sealed class LeaderboardsController : ControllerBase
     }
 
     [HttpGet("{mode}")]
+    [AllowAnonymous]
     public async Task<ActionResult<GameLeaderboardDto>> Get(
         string mode,
         [FromQuery] string period = "current",

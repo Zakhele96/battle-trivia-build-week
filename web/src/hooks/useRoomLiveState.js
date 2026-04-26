@@ -739,13 +739,18 @@ export default function useRoomLiveState({
         return result ?? true;
       }
 
-      await connection.invoke(
+      const result = await connection.invoke(
         "SendMessage",
         roomId,
         text,
         options?.replyToMessageId ?? null
       );
-      return true;
+
+      if (result && typeof result === "object" && result.success === false) {
+        throw new Error(result.message || "Failed to send message.");
+      }
+
+      return result ?? true;
     },
     [roomId, ensureConnected, applyWordScrambleGuessPayload]
   );

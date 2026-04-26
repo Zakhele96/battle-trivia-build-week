@@ -37,8 +37,24 @@ public sealed class AuthController : ControllerBase
     [HttpPost("google")]
     public async Task<IActionResult> Google([FromBody] GoogleLoginRequest request)
     {
-        var result = await _authService.LoginWithGoogleAsync(request.IdToken);
-        return Ok(result);
+        try
+        {
+            var result = await _authService.LoginWithGoogleAsync(
+                request.IdToken,
+                request.ReferredByUserId,
+                request.ReferralSource,
+                request.ReferralMode,
+                request.ReferralPeriod);
+            return Ok(result);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [Authorize]

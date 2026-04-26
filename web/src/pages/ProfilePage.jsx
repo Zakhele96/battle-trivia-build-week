@@ -7,6 +7,7 @@ import {
   getMyProgression,
   updateMyProfile,
 } from "../api/profileApi";
+import { getLeaderboard } from "../api/leaderboardsApi";
 import ProfileAchievementsCard from "../components/profile/ProfileAchievementsCard";
 import ProfileProgressCard from "../components/profile/ProfileProgressCard";
 import AppTopBar from "../components/layout/AppTopBar";
@@ -14,6 +15,13 @@ import AppSectionNav from "../components/layout/AppSectionNav";
 import { useSoundPreferences } from "../hooks/useSoundPreferences";
 import { useAuth } from "../hooks/useAuth";
 import { useTheme } from "../hooks/useTheme";
+import {
+  buildPlayerRecapImageUrl,
+  buildPlayerRecapUrl,
+  buildShareUrl,
+  downloadImageUrlPng,
+  downloadShareCardPng,
+} from "../services/leaderboardShare";
 
 function formatFastest(ms) {
   if (typeof ms !== "number") return "—";
@@ -248,6 +256,99 @@ function SignInMethodCard({ isGoogleAccount }) {
   );
 }
 
+function GrowthInviteCard({
+  growth,
+  onCopyInvite,
+  onShareInvite,
+  onDownloadCard,
+  onShareRecap,
+  onDownloadRecap,
+  momentum,
+}) {
+  const showMomentum = Boolean(momentum);
+
+  return (
+    <div className="rounded-[22px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.12),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-4 sm:rounded-[24px] sm:p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="text-[10px] uppercase tracking-[0.16em] text-emerald-300/70">
+            Invite loop
+          </div>
+          <div className="mt-1.5 text-[18px] font-semibold tracking-[-0.03em] text-white">
+            Bring people into your weekly race
+          </div>
+          <div className="mt-1 text-[12px] leading-5 text-neutral-400">
+            Share your BTS page, challenge friends to beat your rank, and turn your own progress into sign-ups.
+          </div>
+        </div>
+
+        <div className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-emerald-100">
+          Growth ready
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-3 gap-3">
+        <StatCard label="Share views" value={growth?.shareViews ?? 0} />
+        <StatCard label="Join clicks" value={growth?.joinClicks ?? 0} />
+        <StatCard label="Sign-ups" value={growth?.referredSignups ?? 0} />
+      </div>
+
+      {showMomentum ? (
+        <div className="mt-4 rounded-[18px] border border-violet-400/18 bg-violet-500/10 px-4 py-3">
+          <div className="text-[10px] uppercase tracking-[0.16em] text-violet-100/75">
+            Momentum
+          </div>
+          <div className="mt-1 text-sm text-white">{momentum.title}</div>
+          <div className="mt-1 text-[12px] leading-5 text-violet-100/80">
+            {momentum.detail}
+          </div>
+        </div>
+      ) : null}
+
+      <div className="mt-4 grid gap-2 sm:grid-cols-3">
+        <button
+          type="button"
+          onClick={onCopyInvite}
+          className="rounded-[16px] bg-white px-4 py-3 text-sm font-semibold text-neutral-950 transition hover:bg-neutral-200"
+        >
+          Copy invite link
+        </button>
+        <button
+          type="button"
+          onClick={onShareInvite}
+          className="rounded-[16px] border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/15"
+        >
+          Challenge friends
+        </button>
+        <button
+          type="button"
+          onClick={onDownloadCard}
+          className="rounded-[16px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
+        >
+          Download rank card
+        </button>
+      </div>
+
+      <div className="mt-2 grid gap-2 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={onShareRecap}
+          className="rounded-[16px] border border-violet-400/20 bg-violet-500/10 px-4 py-3 text-sm font-semibold text-violet-100 transition hover:bg-violet-500/15"
+        >
+          Share weekly recap
+        </button>
+        <button
+          type="button"
+          onClick={onDownloadRecap}
+          className="rounded-[16px] border border-amber-300/18 bg-amber-400/10 px-4 py-3 text-sm font-semibold text-amber-100 transition hover:bg-amber-400/15"
+        >
+          Download weekly recap
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function ChoiceIndicator({ active, isLight = false }) {
   return (
     <span
@@ -441,6 +542,8 @@ export default function ProfilePage() {
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
+  const [growthMessage, setGrowthMessage] = useState("");
+  const [playerMomentum, setPlayerMomentum] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -525,7 +628,74 @@ export default function ProfilePage() {
     };
   }, [page]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadMomentum() {
+      if (!authUser?.id) return;
+
+      try {
+        const [currentBoard, previousBoard] = await Promise.all([
+          getLeaderboard("combined", "current", 200),
+          getLeaderboard("combined", "previous", 200),
+        ]);
+
+        if (!isMounted) return;
+
+        const currentRow =
+          currentBoard?.rows?.find((row) => row.userId === authUser.id) || null;
+        const previousRow =
+          previousBoard?.rows?.find((row) => row.userId === authUser.id) || null;
+        const leaderScore = currentBoard?.rows?.[0]?.score ?? 0;
+
+        if (previousRow) {
+          const delta = currentRow
+            ? previousRow.rank - currentRow.rank
+            : 0;
+
+          setPlayerMomentum({
+            title: currentRow
+              ? delta > 0
+                ? `You climbed ${delta} spot${delta === 1 ? "" : "s"} since last week.`
+                : delta < 0
+                ? `You slipped ${Math.abs(delta)} spot${Math.abs(delta) === 1 ? "" : "s"} from last week.`
+                : "You held the same place as last week."
+              : "Your weekly recap is ready to post.",
+            detail: currentRow
+              ? currentRow.rank === 1
+                ? "You are leading the current combined board right now."
+                : `${Math.max(0, leaderScore - currentRow.score)} point${Math.max(0, leaderScore - currentRow.score) === 1 ? "" : "s"} separate you from the current leader.`
+              : `Last week you finished #${previousRow.rank} with ${previousRow.score} points.`,
+          });
+          return;
+        }
+
+        if (currentRow) {
+          setPlayerMomentum({
+            title: `You are currently #${currentRow.rank} on the combined board.`,
+            detail:
+              currentRow.rank === 1
+                ? "Protect the lead and post the recap when the week closes."
+                : `${Math.max(0, leaderScore - currentRow.score)} point${Math.max(0, leaderScore - currentRow.score) === 1 ? "" : "s"} behind the leader right now.`,
+          });
+        } else {
+          setPlayerMomentum(null);
+        }
+      } catch {
+        if (!isMounted) return;
+        setPlayerMomentum(null);
+      }
+    }
+
+    loadMomentum();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [authUser?.id]);
+
   const stats = useMemo(() => profile?.stats || {}, [profile]);
+  const growth = useMemo(() => profile?.growth || {}, [profile]);
 
 const loginProvider = localStorage.getItem("bts_login_provider");
 const isGoogleAccount = loginProvider === "google";
@@ -582,6 +752,101 @@ const isGoogleAccount = loginProvider === "google";
     navigate("/login", { replace: true });
   }
 
+  const handleCopyInvite = async () => {
+    if (!authUser?.id) return;
+
+    try {
+      await navigator.clipboard.writeText(
+        buildShareUrl("combined", "current", authUser.id)
+      );
+      setGrowthMessage("Invite link copied.");
+    } catch {
+      setGrowthMessage("Could not copy invite link.");
+    }
+  };
+
+  const handleShareInvite = async () => {
+    if (!authUser?.id) return;
+
+    const url = buildShareUrl("combined", "current", authUser.id);
+    const playerName =
+      profile?.displayName || authUser.displayName || profile?.username || authUser.username || "I";
+    const text = `${playerName} just challenged you to join BTS and chase them on this week's leaderboard. Create your account and see if you can beat them.`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "Beat me on BTS",
+          text,
+          url,
+        });
+        setGrowthMessage("Share sheet opened.");
+        return;
+      }
+
+      await navigator.clipboard.writeText(`${text}\n${url}`);
+      setGrowthMessage("Challenge text copied.");
+    } catch {
+      setGrowthMessage("Could not share challenge right now.");
+    }
+  };
+
+  const handleDownloadGrowthCard = async () => {
+    if (!authUser?.id) return;
+
+    try {
+      await downloadShareCardPng({
+        mode: "combined",
+        period: "current",
+        userId: authUser.id,
+        filenameBase: `${profile?.displayName || profile?.username || "player"}-bts-growth-card`,
+      });
+      setGrowthMessage("Rank card downloaded.");
+    } catch {
+      setGrowthMessage("Could not download rank card.");
+    }
+  };
+
+  const handleShareWeeklyRecap = async () => {
+    if (!authUser?.id) return;
+
+    const url = buildPlayerRecapUrl(authUser.id, "combined", "previous");
+    const playerName =
+      profile?.displayName || authUser.displayName || profile?.username || authUser.username || "I";
+    const text = `${playerName} just posted their BTS weekly recap. See how they finished and create your own account to get on next week's board.`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "My BTS weekly recap",
+          text,
+          url,
+        });
+        setGrowthMessage("Weekly recap share sheet opened.");
+        return;
+      }
+
+      await navigator.clipboard.writeText(`${text}\n${url}`);
+      setGrowthMessage("Weekly recap copied.");
+    } catch {
+      setGrowthMessage("Could not share weekly recap right now.");
+    }
+  };
+
+  const handleDownloadWeeklyRecap = async () => {
+    if (!authUser?.id) return;
+
+    try {
+      await downloadImageUrlPng(
+        buildPlayerRecapImageUrl(authUser.id, "combined", "previous"),
+        `${profile?.displayName || profile?.username || "player"}-weekly-recap`
+      );
+      setGrowthMessage("Weekly recap downloaded.");
+    } catch {
+      setGrowthMessage("Could not download weekly recap.");
+    }
+  };
+
 
 
   const isLight = resolvedTheme === "light";
@@ -624,6 +889,28 @@ const isGoogleAccount = loginProvider === "google";
         <div className="mb-6 sm:mb-7">
           <IdentityCard profile={profile} authUser={authUser} />
         </div>
+
+        <section className="mb-6 sm:mb-7">
+          <SectionHeader
+            eyebrow="Growth"
+            title="Invite and flex"
+            description="Turn your own profile and leaderboard energy into challenges people can actually join."
+          />
+
+          <GrowthInviteCard
+            growth={growth}
+            onCopyInvite={handleCopyInvite}
+            onShareInvite={handleShareInvite}
+            onDownloadCard={handleDownloadGrowthCard}
+            onShareRecap={handleShareWeeklyRecap}
+            onDownloadRecap={handleDownloadWeeklyRecap}
+            momentum={playerMomentum}
+          />
+
+          {growthMessage ? (
+            <div className="mt-3 text-sm text-neutral-400">{growthMessage}</div>
+          ) : null}
+        </section>
 
         <section className="mb-6 sm:mb-7">
           <SectionHeader

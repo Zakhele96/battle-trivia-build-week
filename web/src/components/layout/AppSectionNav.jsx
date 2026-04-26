@@ -1,5 +1,6 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { createPortal } from "react-dom";
+import { useAlerts } from "../../context/AlertsContext";
 import { useMentions } from "../../context/MentionContext";
 import { useTheme } from "../../hooks/useTheme";
 
@@ -51,6 +52,24 @@ function CommunityIcon() {
   );
 }
 
+function SquadsIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
+      <path
+        d="M8 11C9.66 11 11 9.66 11 8C11 6.34 9.66 5 8 5C6.34 5 5 6.34 5 8C5 9.66 6.34 11 8 11ZM16 12.5C17.38 12.5 18.5 11.38 18.5 10C18.5 8.62 17.38 7.5 16 7.5C14.62 7.5 13.5 8.62 13.5 10C13.5 11.38 14.62 12.5 16 12.5Z"
+        className="stroke-current"
+        strokeWidth="1.5"
+      />
+      <path
+        d="M4.5 18C4.5 15.79 6.52 14 9 14C11.48 14 13.5 15.79 13.5 18M13.5 17C13.79 15.87 14.87 15 16.25 15C17.91 15 19.25 16.25 19.5 18"
+        className="stroke-current"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 function StandingsIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
@@ -89,6 +108,25 @@ function ActivityIcon() {
   );
 }
 
+function AlertsIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
+      <path
+        d="M12 5C9.79 5 8 6.79 8 9V11.3C8 12.03 7.79 12.75 7.4 13.36L6.2 15.2C5.75 15.89 6.24 16.8 7.06 16.8H16.94C17.76 16.8 18.25 15.89 17.8 15.2L16.6 13.36C16.21 12.75 16 12.03 16 11.3V9C16 6.79 14.21 5 12 5Z"
+        className="stroke-current"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M10.2 18.2C10.53 19.02 11.2 19.5 12 19.5C12.8 19.5 13.47 19.02 13.8 18.2"
+        className="stroke-current"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 function ProfileIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
@@ -110,6 +148,8 @@ function ProfileIcon() {
 const DESKTOP_ITEMS = [
   { to: "/", label: "Dashboard", exact: true, icon: DashboardIcon },
   { to: "/rooms", label: "Rooms", icon: RoomsIcon },
+  { to: "/alerts", label: "Alerts", icon: AlertsIcon },
+  { to: "/squads", label: "Squads", icon: SquadsIcon },
   {
     to: "/community",
     label: "Community",
@@ -129,6 +169,8 @@ const DESKTOP_ITEMS = [
 const MOBILE_ITEMS = [
   { to: "/", label: "Dashboard", exact: true, icon: DashboardIcon },
   { to: "/rooms", label: "Rooms", icon: RoomsIcon },
+  { to: "/alerts", label: "Alerts", icon: AlertsIcon },
+  { to: "/squads", label: "Squads", icon: SquadsIcon },
   {
     to: "/community",
     label: "Community",
@@ -170,6 +212,31 @@ function MentionBadge({ count, mobile = false, isLight = false }) {
   );
 }
 
+function NavCountBadge({ count, mobile = false, isLight = false, tone = "amber" }) {
+  if (!count || count <= 0) return null;
+
+  const toneClassName =
+    tone === "blue"
+      ? isLight
+        ? "border-sky-300 bg-sky-50 text-sky-800"
+        : "border-blue-300/18 bg-blue-300/12 text-blue-100"
+      : isLight
+        ? "border-amber-300 bg-amber-50 text-amber-800"
+        : "border-amber-300/18 bg-amber-300/12 text-amber-100";
+
+  return (
+    <span
+      className={`inline-flex items-center justify-center rounded-full border font-medium ${toneClassName} ${
+        mobile
+          ? "min-w-[1.1rem] px-1 py-0.5 text-[9px]"
+          : "min-w-[1.2rem] px-1.5 py-0.5 text-[10px]"
+      }`}
+    >
+      {count > 99 ? "99+" : count}
+    </span>
+  );
+}
+
 function NavIconShell({ children, active = false, isLight = false, mobile = false }) {
   const baseClassName = mobile
     ? "flex h-10 w-10 items-center justify-center rounded-[14px] border transition"
@@ -189,6 +256,7 @@ function NavIconShell({ children, active = false, isLight = false, mobile = fals
 export default function AppSectionNav() {
   const location = useLocation();
   const { totalUnreadMentions } = useMentions();
+  const { unreadCount } = useAlerts();
   const { resolvedTheme } = useTheme();
   const isLight = resolvedTheme === "light";
 
@@ -203,7 +271,7 @@ export default function AppSectionNav() {
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 isolate sm:hidden [backface-visibility:hidden] [contain:paint] [transform:translateZ(0)] [will-change:transform]">
         <div className={mobileShellClassName}>
           <div className="mx-auto max-w-[38rem]">
-            <div className="grid grid-cols-5 gap-1.5">
+            <div className="grid grid-cols-7 gap-1.5">
               {MOBILE_ITEMS.map((item) => {
                 const Icon = item.icon;
                 const active = isItemActive(item, location.pathname);
@@ -232,6 +300,16 @@ export default function AppSectionNav() {
                             count={totalUnreadMentions}
                             mobile
                             isLight={isLight}
+                          />
+                        </div>
+                      ) : null}
+                      {item.to === "/alerts" ? (
+                        <div className="absolute -right-2 -top-1.5">
+                          <NavCountBadge
+                            count={unreadCount}
+                            mobile
+                            isLight={isLight}
+                            tone="blue"
                           />
                         </div>
                       ) : null}
@@ -275,6 +353,9 @@ export default function AppSectionNav() {
                   <span className="tracking-[0.01em]">{item.label}</span>
                   {item.showMentionBadge ? (
                     <MentionBadge count={totalUnreadMentions} isLight={isLight} />
+                  ) : null}
+                  {item.to === "/alerts" ? (
+                    <NavCountBadge count={unreadCount} isLight={isLight} tone="blue" />
                   ) : null}
                 </NavLink>
               );

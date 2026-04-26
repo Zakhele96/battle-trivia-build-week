@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import "./index.css";
 import { AuthProvider } from "./context/AuthContext";
+import { AlertsProvider } from "./context/AlertsContext";
 import { MentionProvider } from "./context/MentionContext";
 import { ThemeProvider } from "./context/ThemeContext";
 
@@ -12,9 +13,11 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
-          <MentionProvider>
-            <App />
-          </MentionProvider>
+          <AlertsProvider>
+            <MentionProvider>
+              <App />
+            </MentionProvider>
+          </AlertsProvider>
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>

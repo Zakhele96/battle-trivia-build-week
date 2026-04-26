@@ -56,9 +56,11 @@ public sealed class WordScrambleHostedService : BackgroundService
         var roundBuilderService = scope.ServiceProvider.GetRequiredService<WordScrambleRoundBuilderService>();
         var stateService = scope.ServiceProvider.GetRequiredService<WordScrambleStateService>();
         var statusService = scope.ServiceProvider.GetRequiredService<WordScrambleSessionStatusService>();
+        var finalizerService = scope.ServiceProvider.GetRequiredService<WordScrambleSessionFinalizerService>();
+        var chatService = scope.ServiceProvider.GetRequiredService<ChatService>();
 
         var room = await roomRepository.GetBySlugAsync(WordScrambleRoomSlug);
-        if (room is null)
+        if (room is null || !room.IsActive)
             return;
 
         var nowUtc = DateTime.UtcNow;
@@ -66,23 +68,79 @@ public sealed class WordScrambleHostedService : BackgroundService
         var session = await sessionRepository.GetActiveByRoomIdAsync(room.Id);
         if (session is null)
         {
-            session = new WordScrambleSession
-            {
-                Id = Guid.NewGuid(),
-                RoomId = room.Id,
-                Status = "active",
-                RunMode = "continuous",
-                StartedAt = nowUtc,
-                EndedAt = null,
-                PeriodStart = nowUtc,
-                PeriodEnd = null,
-                CreatedAt = nowUtc
-            };
+            session = CreateDefaultWeeklySession(room.Id, nowUtc);
 
             await sessionRepository.CreateAsync(session);
+
+            var startedMessage = await chatService.CreateSystemMessageAsync(
+                room.Id,
+                "A new Word Scramble weekly session is now live!");
+
+            await _hubContext.Clients.Group(room.Id.ToString())
+                .SendAsync("ReceiveMessage", startedMessage, cancellationToken);
         }
 
         var latestRound = await roundRepository.GetLatestBySessionIdAsync(session.Id);
+        var effectivePeriodEnd = GetEffectivePeriodEndUtc(session, nowUtc);
+
+        if (nowUtc >= effectivePeriodEnd)
+        {
+            if (latestRound is not null &&
+                !string.Equals(latestRound.Status, "closed", StringComparison.OrdinalIgnoreCase))
+            {
+                await roundRepository.CloseAsync(latestRound.Id);
+            }
+
+            var finalResults = await finalizerService.FinalizeSessionAsync(session.Id);
+            var top3 = finalResults
+                .OrderBy(x => x.Rank)
+                .ThenByDescending(x => x.Score)
+                .Take(3)
+                .ToList();
+
+            if (top3.Count > 0)
+            {
+                var winnerLines = string.Join(" | ", top3.Select(x =>
+                    $"#{x.Rank} {x.DisplayName} ({x.Score})"));
+
+                var winnersMessage = await chatService.CreateSystemMessageAsync(
+                    room.Id,
+                    $"Word Scramble weekly winners: {winnerLines}");
+
+                await _hubContext.Clients.Group(room.Id.ToString())
+                    .SendAsync("ReceiveMessage", winnersMessage, cancellationToken);
+            }
+            else
+            {
+                var noWinnersMessage = await chatService.CreateSystemMessageAsync(
+                    room.Id,
+                    "Word Scramble weekly session ended with no winners.");
+
+                await _hubContext.Clients.Group(room.Id.ToString())
+                    .SendAsync("ReceiveMessage", noWinnersMessage, cancellationToken);
+            }
+
+            await sessionRepository.EndAsync(session.Id, nowUtc);
+
+            var nextSession = CreateDefaultWeeklySession(room.Id, nowUtc.AddSeconds(1));
+            nextSession.RunMode = session.RunMode;
+            await sessionRepository.CreateAsync(nextSession);
+
+            var newSessionMessage = await chatService.CreateSystemMessageAsync(
+                room.Id,
+                "A new Word Scramble weekly session has started. Round numbers are back to 1.");
+
+            await _hubContext.Clients.Group(room.Id.ToString())
+                .SendAsync("ReceiveMessage", newSessionMessage, cancellationToken);
+
+            _logger.LogInformation(
+                "Finalized Word Scramble session {OldSessionId} and created session {NewSessionId}",
+                session.Id,
+                nextSession.Id);
+
+            await BroadcastAsync(room.Id, stateService, statusService, cancellationToken);
+            return;
+        }
 
         if (latestRound is null || string.Equals(latestRound.Status, "closed", StringComparison.OrdinalIgnoreCase))
         {
@@ -168,5 +226,45 @@ public sealed class WordScrambleHostedService : BackgroundService
             DateTimeKind.Local => value.ToUniversalTime(),
             _ => DateTime.SpecifyKind(value, DateTimeKind.Utc)
         };
+    }
+
+    private static WordScrambleSession CreateDefaultWeeklySession(Guid roomId, DateTime nowUtc)
+    {
+        var weekStart = StartOfWeekUtc(nowUtc, DayOfWeek.Monday);
+        var weekEnd = weekStart.AddDays(7).AddTicks(-1);
+
+        return new WordScrambleSession
+        {
+            Id = Guid.NewGuid(),
+            RoomId = roomId,
+            Status = "active",
+            RunMode = "continuous",
+            StartedAt = nowUtc,
+            EndedAt = null,
+            PeriodStart = weekStart,
+            PeriodEnd = weekEnd,
+            CreatedAt = nowUtc
+        };
+    }
+
+    private static DateTime GetEffectivePeriodEndUtc(WordScrambleSession session, DateTime nowUtc)
+    {
+        if (session.PeriodEnd.HasValue)
+            return ToUtc(session.PeriodEnd.Value);
+
+        var periodStart = session.PeriodStart.HasValue
+            ? ToUtc(session.PeriodStart.Value)
+            : nowUtc;
+
+        var weekStart = StartOfWeekUtc(periodStart, DayOfWeek.Monday);
+        return weekStart.AddDays(7).AddTicks(-1);
+    }
+
+    private static DateTime StartOfWeekUtc(DateTime value, DayOfWeek startOfWeek)
+    {
+        var utcValue = ToUtc(value);
+        var diff = (7 + (utcValue.DayOfWeek - startOfWeek)) % 7;
+        var date = utcValue.Date.AddDays(-diff);
+        return DateTime.SpecifyKind(date, DateTimeKind.Utc);
     }
 }

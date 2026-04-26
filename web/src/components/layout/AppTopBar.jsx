@@ -1,7 +1,29 @@
 import { Link } from "react-router-dom";
 import { useTheme } from "../../hooks/useTheme";
 
-function MobileAction({ to, label, tone = "default", isLight = false }) {
+function ActionShell({
+  to,
+  onClick,
+  className,
+  children,
+  type = "button",
+}) {
+  if (to) {
+    return (
+      <Link to={to} className={className}>
+        {children}
+      </Link>
+    );
+  }
+
+  return (
+    <button type={type} onClick={onClick} className={className}>
+      {children}
+    </button>
+  );
+}
+
+function MobileAction({ to, onClick, label, tone = "default", isLight = false }) {
   const toneClass =
     tone === "primary"
       ? isLight
@@ -12,18 +34,26 @@ function MobileAction({ to, label, tone = "default", isLight = false }) {
       : "border-white/10 bg-white/[0.035] text-neutral-200";
 
   return (
-    <Link
+    <ActionShell
       to={to}
+      onClick={onClick}
       className={`inline-flex shrink-0 items-center justify-center rounded-full border px-3 py-1.5 text-[11px] font-medium transition ${
         isLight ? "hover:border-stone-300 hover:bg-white" : "hover:border-white/15 hover:bg-white/[0.05]"
       } ${toneClass}`}
     >
       {label}
-    </Link>
+    </ActionShell>
   );
 }
 
-function DesktopAction({ to, label, sublabel, primary = false, isLight = false }) {
+function DesktopAction({
+  to,
+  onClick,
+  label,
+  sublabel,
+  primary = false,
+  isLight = false,
+}) {
   const cardClassName = primary
     ? isLight
       ? "border-sky-300 bg-white hover:border-sky-400 hover:bg-sky-50"
@@ -40,8 +70,9 @@ function DesktopAction({ to, label, sublabel, primary = false, isLight = false }
     : "text-white";
 
   return (
-    <Link
+    <ActionShell
       to={to}
+      onClick={onClick}
       className={`inline-flex min-w-[8.5rem] flex-col rounded-[16px] border px-3.5 py-2.5 text-left transition ${cardClassName}`}
     >
       <span className={`text-[13px] font-medium ${labelClassName}`}>{label}</span>
@@ -51,7 +82,7 @@ function DesktopAction({ to, label, sublabel, primary = false, isLight = false }
           {sublabel}
         </span>
       ) : null}
-    </Link>
+    </ActionShell>
   );
 }
 
@@ -123,6 +154,7 @@ export default function AppTopBar({
               {primaryAction ? (
                 <MobileAction
                   to={primaryAction.to}
+                  onClick={primaryAction.onClick}
                   label={primaryAction.label}
                   tone="primary"
                   isLight={isLight}
@@ -131,8 +163,9 @@ export default function AppTopBar({
 
               {secondaryActions.map((action) => (
                 <MobileAction
-                  key={`${action.to}-${action.label}`}
+                  key={`${action.to || action.label}-${action.label}`}
                   to={action.to}
+                  onClick={action.onClick}
                   label={action.label}
                   isLight={isLight}
                 />
@@ -165,8 +198,9 @@ export default function AppTopBar({
             <div className="flex flex-wrap gap-2.5">
               {actions.map((action, index) => (
                 <DesktopAction
-                  key={`${action.to}-${action.label}`}
+                  key={`${action.to || action.label}-${action.label}`}
                   to={action.to}
+                  onClick={action.onClick}
                   label={action.label}
                   sublabel={action.sublabel}
                   primary={index === 0}

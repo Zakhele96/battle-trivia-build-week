@@ -32,6 +32,39 @@ public sealed class WordScrambleWordRepository : IWordScrambleWordRepository
         return await connection.QuerySingleOrDefaultAsync<WordScrambleWord>(sql, new { Id = id });
     }
 
+    public async Task<IReadOnlyList<WordScrambleWord>> GetAllAsync(
+        string? category,
+        bool? isActive,
+        int take = 200)
+    {
+        const string sql = """
+            SELECT
+                id,
+                answer_word AS AnswerWord,
+                normalized_answer AS NormalizedAnswer,
+                category,
+                hint,
+                is_active AS IsActive,
+                created_at AS CreatedAt
+            FROM word_scramble_words
+            WHERE (@Category IS NULL OR category ILIKE @CategoryPattern)
+              AND (@IsActive IS NULL OR is_active = @IsActive)
+            ORDER BY created_at DESC
+            LIMIT @Take;
+            """;
+
+        using var connection = _context.CreateConnection();
+        var rows = await connection.QueryAsync<WordScrambleWord>(sql, new
+        {
+            Category = string.IsNullOrWhiteSpace(category) ? null : category.Trim(),
+            CategoryPattern = $"%{category?.Trim()}%",
+            IsActive = isActive,
+            Take = Math.Clamp(take, 1, 500)
+        });
+
+        return rows.ToList();
+    }
+
     public async Task<WordScrambleWord?> GetRandomActiveAsync(string? category = null)
     {
         const string sql = """
@@ -108,5 +141,38 @@ public sealed class WordScrambleWordRepository : IWordScrambleWordRepository
 
         using var connection = _context.CreateConnection();
         await connection.ExecuteAsync(sql, word);
+    }
+
+    public async Task UpdateAsync(WordScrambleWord word)
+    {
+        const string sql = """
+            UPDATE word_scramble_words
+            SET
+                answer_word = @AnswerWord,
+                normalized_answer = @NormalizedAnswer,
+                category = @Category,
+                hint = @Hint,
+                is_active = @IsActive
+            WHERE id = @Id;
+            """;
+
+        using var connection = _context.CreateConnection();
+        await connection.ExecuteAsync(sql, word);
+    }
+
+    public async Task SetActiveAsync(Guid id, bool isActive)
+    {
+        const string sql = """
+            UPDATE word_scramble_words
+            SET is_active = @IsActive
+            WHERE id = @Id;
+            """;
+
+        using var connection = _context.CreateConnection();
+        await connection.ExecuteAsync(sql, new
+        {
+            Id = id,
+            IsActive = isActive
+        });
     }
 }

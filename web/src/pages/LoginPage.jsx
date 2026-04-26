@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { googleLogin, login as loginRequest } from "../api/authApi";
 import GoogleAuthButton from "../components/auth/GoogleAuthButton";
 import { useAuth } from "../hooks/useAuth";
@@ -105,6 +105,7 @@ function AuthShell({ title, description, children, footer, isLight }) {
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { login } = useAuth();
   const { resolvedTheme } = useTheme();
 
@@ -116,6 +117,20 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const from = location.state?.from?.pathname || "/";
+  const referralQuery = useMemo(() => {
+    const ref = searchParams.get("ref");
+    if (!ref) return "";
+
+    const params = new URLSearchParams({
+      ref,
+      source: searchParams.get("source") || "leaderboard-share",
+      mode: searchParams.get("mode") || "combined",
+      period: searchParams.get("period") || "current",
+    });
+
+    return `?${params.toString()}`;
+  }, [searchParams]);
+  const hasReferral = Boolean(searchParams.get("ref"));
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -146,7 +161,13 @@ export default function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      const data = await googleLogin(credential);
+      const data = await googleLogin({
+        idToken: credential,
+        referredByUserId: searchParams.get("ref") || null,
+        referralSource: searchParams.get("source") || "leaderboard-share",
+        referralMode: searchParams.get("mode") || "combined",
+        referralPeriod: searchParams.get("period") || "current",
+      });
       login(data, "google");
       navigate(from, { replace: true });
     } catch (err) {
@@ -164,13 +185,22 @@ export default function LoginPage() {
       footer={
         <p className="text-sm text-neutral-400">
           Don&apos;t have an account?{" "}
-          <Link to="/register" className="font-medium text-blue-300 hover:text-blue-200">
+          <Link
+            to={`/register${referralQuery}`}
+            className="font-medium text-blue-300 hover:text-blue-200"
+          >
             Register
           </Link>
         </p>
       }
     >
       <div className="min-w-0 space-y-5">
+        {hasReferral ? (
+          <div className="rounded-[18px] border border-blue-400/20 bg-blue-500/10 px-4 py-3 text-sm text-blue-100">
+            You came in through a BTS player invite. Log in if you already have an account, or register to join the challenge.
+          </div>
+        ) : null}
+
         <GoogleAuthButton
           onCredential={handleGoogleLogin}
           disabled={isSubmitting}

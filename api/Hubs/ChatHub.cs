@@ -127,7 +127,7 @@ public sealed class ChatHub : Hub
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId.ToString());
     }
 
-    public async Task SendMessage(Guid roomId, string messageText, Guid? replyToMessageId = null)
+    public async Task<object> SendMessage(Guid roomId, string messageText, Guid? replyToMessageId = null)
     {
         var userId = GetCurrentUserId();
 
@@ -141,14 +141,27 @@ public sealed class ChatHub : Hub
 
             await Clients.Group(roomId.ToString())
                 .SendAsync("ReceiveMessage", message);
+
+            return new
+            {
+                success = true
+            };
         }
         catch (InvalidOperationException ex)
         {
-            throw new HubException(ex.Message);
+            return new
+            {
+                success = false,
+                message = ex.Message
+            };
         }
         catch (KeyNotFoundException ex)
         {
-            throw new HubException(ex.Message);
+            return new
+            {
+                success = false,
+                message = ex.Message
+            };
         }
     }
 
