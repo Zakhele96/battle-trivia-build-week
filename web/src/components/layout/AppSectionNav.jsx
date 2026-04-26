@@ -297,6 +297,7 @@ export default function AppSectionNav() {
   const { unreadCount: unreadDirectMessages } = useDirectMessages();
   const { resolvedTheme } = useTheme();
   const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const moreTrayRef = useRef(null);
   const isLight = resolvedTheme === "light";
   const isMoreActive = MOBILE_MORE_ITEMS.some((item) =>
@@ -306,6 +307,31 @@ export default function AppSectionNav() {
   useEffect(() => {
     setIsMoreOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) {
+      document.documentElement.style.setProperty("--bts-mobile-nav-height", "5.5rem");
+      return undefined;
+    }
+
+    function updateKeyboardState() {
+      const keyboardVisible = window.innerHeight - viewport.height > 140;
+      setIsKeyboardOpen(keyboardVisible);
+      document.documentElement.style.setProperty(
+        "--bts-mobile-nav-height",
+        keyboardVisible ? "0px" : "5.5rem"
+      );
+    }
+
+    updateKeyboardState();
+    viewport.addEventListener("resize", updateKeyboardState);
+
+    return () => {
+      viewport.removeEventListener("resize", updateKeyboardState);
+      document.documentElement.style.setProperty("--bts-mobile-nav-height", "5.5rem");
+    };
+  }, []);
 
   useEffect(() => {
     if (!isMoreOpen) return undefined;
@@ -329,7 +355,11 @@ export default function AppSectionNav() {
     : "pointer-events-auto border-t border-white/10 bg-neutral-950/96 px-2 pt-2 pb-[max(0.55rem,env(safe-area-inset-bottom))] shadow-[0_-14px_34px_rgba(0,0,0,0.3)] backdrop-blur-xl supports-[backdrop-filter]:bg-neutral-950/88";
 
   const mobileNav = (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 isolate sm:hidden [backface-visibility:hidden] [contain:paint] [transform:translateZ(0)] [will-change:transform]">
+    <div
+      className={`pointer-events-none fixed inset-x-0 bottom-0 z-50 isolate sm:hidden [backface-visibility:hidden] [contain:paint] [transform:translateZ(0)] [will-change:transform] ${
+        isKeyboardOpen ? "hidden" : ""
+      }`}
+    >
       {isMoreOpen ? (
         <button
           type="button"

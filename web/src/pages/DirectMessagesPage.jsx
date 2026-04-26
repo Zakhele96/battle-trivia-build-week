@@ -653,9 +653,13 @@ export default function DirectMessagesPage() {
           </section>
 
           <section
-            className={`h-[calc(100vh-8.5rem)] min-h-0 overflow-hidden rounded-[26px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.08),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] lg:h-[42rem] lg:rounded-[30px] ${
+            className={`min-h-0 overflow-hidden border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.08),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] ${
               !selectedConversation ? "hidden lg:flex" : "flex"
-            } flex-col`}
+            } ${
+              selectedConversation
+                ? "fixed inset-x-0 top-0 bottom-0 z-40 rounded-none border-x-0 border-t-0 pb-[var(--bts-mobile-nav-height,5.5rem)] pt-[env(safe-area-inset-top)] sm:inset-auto sm:relative sm:h-[calc(100vh-8.5rem)] sm:rounded-[26px] sm:border sm:pt-0"
+                : "h-[42rem] rounded-[30px]"
+            } lg:relative lg:inset-auto lg:h-[42rem] lg:rounded-[30px] lg:border lg:px-0 lg:pb-0 lg:pt-0 flex-col`}
           >
             <div className="shrink-0 border-b border-white/8 px-4 py-4 sm:px-5">
               {selectedConversation ? (
