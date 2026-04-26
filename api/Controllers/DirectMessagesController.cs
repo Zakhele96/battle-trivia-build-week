@@ -92,7 +92,7 @@ public sealed class DirectMessagesController : ControllerBase
 
         try
         {
-            var message = await _directMessageService.SendMessageAsync(userId.Value, request.RecipientUserId, request.MessageText);
+            var message = await _directMessageService.SendMessageAsync(userId.Value, request.RecipientUserId, request.MessageText, request.ReplyToMessageId);
             return Ok(message);
         }
         catch (KeyNotFoundException ex)

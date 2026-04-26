@@ -135,13 +135,13 @@ public sealed class ChatHub : Hub
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"dm:{conversationId}");
     }
 
-    public async Task<object> SendDirectMessage(Guid recipientUserId, string messageText)
+    public async Task<object> SendDirectMessage(Guid recipientUserId, string messageText, Guid? replyToMessageId = null)
     {
         var userId = GetCurrentUserId();
 
         try
         {
-            var message = await _directMessageService.SendMessageAsync(userId, recipientUserId, messageText);
+            var message = await _directMessageService.SendMessageAsync(userId, recipientUserId, messageText, replyToMessageId);
             await Clients.Users(userId.ToString(), recipientUserId.ToString())
                 .SendAsync("DirectMessageReceived", message);
             return new { success = true, message };
@@ -153,6 +153,30 @@ public sealed class ChatHub : Hub
         catch (KeyNotFoundException ex)
         {
             return new { success = false, message = ex.Message };
+        }
+    }
+
+    public async Task ToggleDirectMessageReaction(Guid conversationId, Guid messageId, string emoji)
+    {
+        var userId = GetCurrentUserId();
+
+        try
+        {
+            var payload = await _directMessageService.ToggleReactionAsync(userId, messageId, emoji);
+            await Clients.Group($"dm:{conversationId}")
+                .SendAsync("DirectMessageReactionUpdated", payload);
+        }
+        catch (InvalidOperationException ex)
+        {
+            throw new HubException(ex.Message);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            throw new HubException(ex.Message);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            throw new HubException(ex.Message);
         }
     }
 

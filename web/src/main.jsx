@@ -5,6 +5,7 @@ import App from "./App";
 import "./index.css";
 import { AuthProvider } from "./context/AuthContext";
 import { AlertsProvider } from "./context/AlertsContext";
+import { DirectMessagesProvider } from "./context/DirectMessagesContext";
 import { MentionProvider } from "./context/MentionContext";
 import { ThemeProvider } from "./context/ThemeContext";
 
@@ -14,9 +15,11 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <ThemeProvider>
         <AuthProvider>
           <AlertsProvider>
-            <MentionProvider>
-              <App />
-            </MentionProvider>
+            <DirectMessagesProvider>
+              <MentionProvider>
+                <App />
+              </MentionProvider>
+            </DirectMessagesProvider>
           </AlertsProvider>
         </AuthProvider>
       </ThemeProvider>

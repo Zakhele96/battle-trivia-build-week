@@ -11,4 +11,9 @@ public sealed class DirectMessageResponse
     public string MessageText { get; set; } = string.Empty;
     public DateTime SentAt { get; set; }
     public DateTime? ReadAt { get; set; }
+    public Guid? ReplyToMessageId { get; set; }
+    public string? ReplyToUsername { get; set; }
+    public string? ReplyToDisplayName { get; set; }
+    public string? ReplyToPreviewText { get; set; }
+    public List<ChatMessageReactionResponse> Reactions { get; set; } = new();
 }

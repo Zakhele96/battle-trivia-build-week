@@ -1,6 +1,8 @@
+import { useEffect, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { createPortal } from "react-dom";
 import { useAlerts } from "../../context/AlertsContext";
+import { useDirectMessages } from "../../context/DirectMessagesContext";
 import { useMentions } from "../../context/MentionContext";
 import { useTheme } from "../../hooks/useTheme";
 
@@ -164,6 +166,17 @@ function ProfileIcon() {
   );
 }
 
+function MoreIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
+      <path
+        d="M6.75 12C6.75 12.41 6.41 12.75 6 12.75C5.59 12.75 5.25 12.41 5.25 12C5.25 11.59 5.59 11.25 6 11.25C6.41 11.25 6.75 11.59 6.75 12ZM12.75 12C12.75 12.41 12.41 12.75 12 12.75C11.59 12.75 11.25 12.41 11.25 12C11.25 11.59 11.59 11.25 12 11.25C12.41 11.25 12.75 11.59 12.75 12ZM18.75 12C18.75 12.41 18.41 12.75 18 12.75C17.59 12.75 17.25 12.41 17.25 12C17.25 11.59 17.59 11.25 18 11.25C18.41 11.25 18.75 11.59 18.75 12Z"
+        className="fill-current"
+      />
+    </svg>
+  );
+}
+
 const DESKTOP_ITEMS = [
   { to: "/", label: "Dashboard", exact: true, icon: DashboardIcon },
   { to: "/rooms", label: "Rooms", icon: RoomsIcon },
@@ -191,6 +204,9 @@ const MOBILE_ITEMS = [
   { to: "/rooms", label: "Rooms", icon: RoomsIcon },
   { to: "/messages", label: "Messages", icon: MessagesIcon },
   { to: "/alerts", label: "Alerts", icon: AlertsIcon },
+];
+
+const MOBILE_MORE_ITEMS = [
   { to: "/squads", label: "Squads", icon: SquadsIcon },
   {
     to: "/community",
@@ -278,8 +294,32 @@ export default function AppSectionNav() {
   const location = useLocation();
   const { totalUnreadMentions } = useMentions();
   const { unreadCount } = useAlerts();
+  const { unreadCount: unreadDirectMessages } = useDirectMessages();
   const { resolvedTheme } = useTheme();
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const moreTrayRef = useRef(null);
   const isLight = resolvedTheme === "light";
+  const isMoreActive = MOBILE_MORE_ITEMS.some((item) =>
+    isItemActive(item, location.pathname)
+  );
+
+  useEffect(() => {
+    setIsMoreOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!isMoreOpen) return undefined;
+
+    function handlePointerDown(event) {
+      if (moreTrayRef.current?.contains(event.target)) return;
+      setIsMoreOpen(false);
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [isMoreOpen]);
 
   const desktopShellClassName = isLight
     ? "rounded-[24px] border border-[#ddc8a8] bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(245,234,216,0.96))] p-2.5 shadow-[0_18px_34px_rgba(114,84,41,0.12)]"
@@ -290,58 +330,154 @@ export default function AppSectionNav() {
 
   const mobileNav = (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 isolate sm:hidden [backface-visibility:hidden] [contain:paint] [transform:translateZ(0)] [will-change:transform]">
-        <div className={mobileShellClassName}>
-          <div className="mx-auto max-w-[38rem]">
-            <div className="-mx-1 overflow-x-auto px-1 pb-0.5">
-              <div className="flex min-w-max gap-1.5">
-              {MOBILE_ITEMS.map((item) => {
-                const Icon = item.icon;
-                const active = isItemActive(item, location.pathname);
-                const itemClassName = active
+      {isMoreOpen ? (
+        <button
+          type="button"
+          aria-label="Close more navigation"
+          className="pointer-events-auto absolute inset-0 bg-black/45 backdrop-blur-[2px]"
+          onClick={() => setIsMoreOpen(false)}
+        />
+      ) : null}
+      <div ref={moreTrayRef} className={mobileShellClassName}>
+        <div className="mx-auto max-w-[38rem]">
+          {isMoreOpen ? (
+            <div
+              className={`mb-2 rounded-[24px] border p-2 shadow-[0_18px_32px_rgba(0,0,0,0.22)] ${
+                isLight
+                  ? "border-[#d9c7aa] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(244,234,218,0.98))]"
+                  : "border-white/10 bg-neutral-900/96"
+              }`}
+            >
+              <div className="grid grid-cols-2 gap-2">
+                {MOBILE_MORE_ITEMS.map((item) => {
+                  const Icon = item.icon;
+                  const active = isItemActive(item, location.pathname);
+                  const itemClassName = active
+                    ? isLight
+                      ? "border border-sky-300 bg-white text-stone-900 shadow-[0_8px_18px_rgba(59,130,246,0.12)]"
+                      : "border border-blue-400/15 bg-[linear-gradient(180deg,rgba(32,63,120,0.46),rgba(18,23,35,0.9))] text-white shadow-[0_8px_22px_rgba(37,99,235,0.12)]"
+                    : isLight
+                    ? "border border-transparent bg-white/56 text-stone-700"
+                    : "border border-transparent bg-white/[0.03] text-neutral-300";
+
+                  return (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      end={item.exact}
+                      onClick={() => setIsMoreOpen(false)}
+                      className={`relative flex min-h-[4.5rem] items-center gap-3 rounded-[18px] px-3 py-3 text-left text-[12px] font-medium transition ${itemClassName}`}
+                    >
+                      <div className="relative">
+                        <NavIconShell active={active} isLight={isLight} mobile>
+                          <Icon />
+                        </NavIconShell>
+                        {item.showMentionBadge ? (
+                          <div className="absolute -right-2 -top-1.5">
+                            <MentionBadge
+                              count={totalUnreadMentions}
+                              mobile
+                              isLight={isLight}
+                            />
+                          </div>
+                        ) : null}
+                      </div>
+                      <span className="truncate">{item.label}</span>
+                    </NavLink>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
+
+          <div className="grid grid-cols-5 gap-1.5">
+            {MOBILE_ITEMS.map((item) => {
+              const Icon = item.icon;
+              const active = isItemActive(item, location.pathname);
+              const itemClassName = active
+                ? isLight
+                  ? "border border-sky-300 bg-white text-stone-900 shadow-[0_8px_18px_rgba(59,130,246,0.12)]"
+                  : "border border-blue-400/15 bg-[linear-gradient(180deg,rgba(32,63,120,0.46),rgba(18,23,35,0.9))] text-white shadow-[0_8px_22px_rgba(37,99,235,0.12)]"
+                : isLight
+                  ? "border border-transparent text-stone-600 hover:bg-white/72 hover:text-stone-900"
+                  : "border border-transparent text-neutral-400 hover:bg-white/[0.04] hover:text-white";
+
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.exact}
+                  className={`relative flex min-h-[4.25rem] touch-manipulation flex-col items-center justify-center gap-1.5 rounded-[18px] px-1 py-2 text-[10px] font-medium transition ${itemClassName}`}
+                >
+                  <div className="relative">
+                    <NavIconShell active={active} isLight={isLight} mobile>
+                      <Icon />
+                    </NavIconShell>
+                    {item.showMentionBadge ? (
+                      <div className="absolute -right-2 -top-1.5">
+                        <MentionBadge
+                          count={totalUnreadMentions}
+                          mobile
+                          isLight={isLight}
+                        />
+                      </div>
+                    ) : null}
+                    {item.to === "/alerts" ? (
+                      <div className="absolute -right-2 -top-1.5">
+                        <NavCountBadge
+                          count={unreadCount}
+                          mobile
+                          isLight={isLight}
+                          tone="blue"
+                        />
+                      </div>
+                    ) : null}
+                    {item.to === "/messages" ? (
+                      <div className="absolute -right-2 -top-1.5">
+                        <NavCountBadge
+                          count={unreadDirectMessages}
+                          mobile
+                          isLight={isLight}
+                          tone="blue"
+                        />
+                      </div>
+                    ) : null}
+                  </div>
+                  <span className="max-w-full truncate px-1 tracking-[0.01em]">{item.label}</span>
+                </NavLink>
+              );
+            })}
+
+            <button
+              type="button"
+              onClick={() => setIsMoreOpen((previous) => !previous)}
+              className={`relative flex min-h-[4.25rem] touch-manipulation flex-col items-center justify-center gap-1.5 rounded-[18px] px-1 py-2 text-[10px] font-medium transition ${
+                isMoreOpen || isMoreActive
                   ? isLight
                     ? "border border-sky-300 bg-white text-stone-900 shadow-[0_8px_18px_rgba(59,130,246,0.12)]"
                     : "border border-blue-400/15 bg-[linear-gradient(180deg,rgba(32,63,120,0.46),rgba(18,23,35,0.9))] text-white shadow-[0_8px_22px_rgba(37,99,235,0.12)]"
                   : isLight
-                    ? "border border-transparent text-stone-600 hover:bg-white/72 hover:text-stone-900"
-                    : "border border-transparent text-neutral-400 hover:bg-white/[0.04] hover:text-white";
-
-                return (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    end={item.exact}
-                    className={`relative flex min-h-[4.25rem] min-w-[4.9rem] touch-manipulation flex-col items-center justify-center gap-1.5 rounded-[18px] px-2 py-2 text-[10px] font-medium transition ${itemClassName}`}
-                  >
-                    <div className="relative">
-                      <NavIconShell active={active} isLight={isLight} mobile>
-                        <Icon />
-                      </NavIconShell>
-                      {item.showMentionBadge ? (
-                        <div className="absolute -right-2 -top-1.5">
-                          <MentionBadge
-                            count={totalUnreadMentions}
-                            mobile
-                            isLight={isLight}
-                          />
-                        </div>
-                      ) : null}
-                      {item.to === "/alerts" ? (
-                        <div className="absolute -right-2 -top-1.5">
-                          <NavCountBadge
-                            count={unreadCount}
-                            mobile
-                            isLight={isLight}
-                            tone="blue"
-                          />
-                        </div>
-                      ) : null}
-                    </div>
-                    <span className="max-w-full truncate px-1 tracking-[0.01em]">{item.label}</span>
-                  </NavLink>
-                );
-              })}
+                  ? "border border-transparent text-stone-600 hover:bg-white/72 hover:text-stone-900"
+                  : "border border-transparent text-neutral-400 hover:bg-white/[0.04] hover:text-white"
+              }`}
+            >
+              <div className="relative">
+                <NavIconShell active={isMoreOpen || isMoreActive} isLight={isLight} mobile>
+                  <MoreIcon />
+                </NavIconShell>
+                {totalUnreadMentions > 0 && !isMoreOpen ? (
+                  <div className="absolute -right-2 -top-1.5">
+                    <MentionBadge
+                      count={totalUnreadMentions}
+                      mobile
+                      isLight={isLight}
+                    />
+                  </div>
+                ) : null}
               </div>
-            </div>
+              <span className="max-w-full truncate px-1 tracking-[0.01em]">More</span>
+            </button>
+          </div>
           </div>
         </div>
       </div>
@@ -379,6 +515,13 @@ export default function AppSectionNav() {
                   ) : null}
                   {item.to === "/alerts" ? (
                     <NavCountBadge count={unreadCount} isLight={isLight} tone="blue" />
+                  ) : null}
+                  {item.to === "/messages" ? (
+                    <NavCountBadge
+                      count={unreadDirectMessages}
+                      isLight={isLight}
+                      tone="blue"
+                    />
                   ) : null}
                 </NavLink>
               );

@@ -2,11 +2,17 @@ using Bts.Api.Data;
 using Bts.Api.Models.Domain;
 using Bts.Api.Models.Responses;
 using Dapper;
+using System.Text.Json;
 
 namespace Bts.Api.Repositories;
 
 public sealed class DirectMessageRepository : IDirectMessageRepository
 {
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
     private readonly DapperContext _context;
 
     public DirectMessageRepository(DapperContext context)
@@ -152,7 +158,7 @@ public sealed class DirectMessageRepository : IDirectMessageRepository
         return rows.ToList();
     }
 
-    public async Task<IReadOnlyList<DirectMessageResponse>> GetMessagesAsync(Guid conversationId, int take = 50)
+    public async Task<IReadOnlyList<DirectMessageResponse>> GetMessagesAsync(Guid conversationId, Guid currentUserId, int take = 50)
     {
         const string sql = """
             SELECT
@@ -163,23 +169,119 @@ public sealed class DirectMessageRepository : IDirectMessageRepository
                 sender.display_name AS SenderDisplayName,
                 m.recipient_user_id AS RecipientUserId,
                 m.message_text AS MessageText,
+                m.reply_to_message_id AS ReplyToMessageId,
+                reply_sender.username AS ReplyToUsername,
+                reply_sender.display_name AS ReplyToDisplayName,
+                LEFT(reply.message_text, 120) AS ReplyToPreviewText,
                 m.sent_at AS SentAt,
-                m.read_at AS ReadAt
+                m.read_at AS ReadAt,
+                COALESCE(
+                    (
+                        SELECT json_agg(
+                            json_build_object(
+                                'emoji', x.emoji,
+                                'count', x.reaction_count,
+                                'reactedByMe', x.reacted_by_me
+                            )
+                            ORDER BY x.emoji
+                        )::text
+                        FROM
+                        (
+                            SELECT
+                                r.emoji,
+                                COUNT(*)::INT AS reaction_count,
+                                BOOL_OR(r.user_id = @CurrentUserId) AS reacted_by_me
+                            FROM direct_message_reactions r
+                            WHERE r.direct_message_id = m.id
+                            GROUP BY r.emoji
+                        ) x
+                    ),
+                    '[]'
+                ) AS ReactionsJson
             FROM direct_messages m
             INNER JOIN users sender
                 ON sender.id = m.sender_user_id
+            LEFT JOIN direct_messages reply
+                ON reply.id = m.reply_to_message_id
+            LEFT JOIN users reply_sender
+                ON reply_sender.id = reply.sender_user_id
             WHERE m.conversation_id = @ConversationId
             ORDER BY m.sent_at DESC
             LIMIT @Take;
             """;
 
         using var connection = _context.CreateConnection();
-        var rows = await connection.QueryAsync<DirectMessageResponse>(sql, new
+        var rows = await connection.QueryAsync<DirectMessageRow>(sql, new
         {
           ConversationId = conversationId,
+          CurrentUserId = currentUserId,
           Take = Math.Clamp(take, 1, 100)
         });
-        return rows.Reverse().ToList();
+        return rows
+            .Reverse()
+            .Select(MapMessage)
+            .ToList();
+    }
+
+    public async Task<DirectMessageResponse?> GetMessageByIdAsync(Guid messageId, Guid currentUserId)
+    {
+        const string sql = """
+            SELECT
+                m.id AS Id,
+                m.conversation_id AS ConversationId,
+                m.sender_user_id AS SenderUserId,
+                sender.username AS SenderUsername,
+                sender.display_name AS SenderDisplayName,
+                m.recipient_user_id AS RecipientUserId,
+                m.message_text AS MessageText,
+                m.reply_to_message_id AS ReplyToMessageId,
+                reply_sender.username AS ReplyToUsername,
+                reply_sender.display_name AS ReplyToDisplayName,
+                LEFT(reply.message_text, 120) AS ReplyToPreviewText,
+                m.sent_at AS SentAt,
+                m.read_at AS ReadAt,
+                COALESCE(
+                    (
+                        SELECT json_agg(
+                            json_build_object(
+                                'emoji', x.emoji,
+                                'count', x.reaction_count,
+                                'reactedByMe', x.reacted_by_me
+                            )
+                            ORDER BY x.emoji
+                        )::text
+                        FROM
+                        (
+                            SELECT
+                                r.emoji,
+                                COUNT(*)::INT AS reaction_count,
+                                BOOL_OR(r.user_id = @CurrentUserId) AS reacted_by_me
+                            FROM direct_message_reactions r
+                            WHERE r.direct_message_id = m.id
+                            GROUP BY r.emoji
+                        ) x
+                    ),
+                    '[]'
+                ) AS ReactionsJson
+            FROM direct_messages m
+            INNER JOIN users sender
+                ON sender.id = m.sender_user_id
+            LEFT JOIN direct_messages reply
+                ON reply.id = m.reply_to_message_id
+            LEFT JOIN users reply_sender
+                ON reply_sender.id = reply.sender_user_id
+            WHERE m.id = @MessageId
+            LIMIT 1;
+            """;
+
+        using var connection = _context.CreateConnection();
+        var row = await connection.QuerySingleOrDefaultAsync<DirectMessageRow>(sql, new
+        {
+            MessageId = messageId,
+            CurrentUserId = currentUserId
+        });
+
+        return row is null ? null : MapMessage(row);
     }
 
     public async Task<bool> IsParticipantAsync(Guid conversationId, Guid userId)
@@ -206,6 +308,7 @@ public sealed class DirectMessageRepository : IDirectMessageRepository
                 sender_user_id,
                 recipient_user_id,
                 message_text,
+                reply_to_message_id,
                 sent_at,
                 read_at
             )
@@ -215,6 +318,7 @@ public sealed class DirectMessageRepository : IDirectMessageRepository
                 @SenderUserId,
                 @RecipientUserId,
                 @MessageText,
+                @ReplyToMessageId,
                 @SentAt,
                 @ReadAt
             );
@@ -240,5 +344,100 @@ public sealed class DirectMessageRepository : IDirectMessageRepository
 
         using var connection = _context.CreateConnection();
         await connection.ExecuteAsync(sql, new { ConversationId = conversationId, UserId = userId, ReadAtUtc = readAtUtc });
+    }
+
+    public async Task ToggleReactionAsync(Guid messageId, Guid userId, string emoji)
+    {
+        const string deleteSql = """
+            DELETE FROM direct_message_reactions
+            WHERE direct_message_id = @MessageId
+              AND user_id = @UserId
+              AND emoji = @Emoji;
+            """;
+
+        const string insertSql = """
+            INSERT INTO direct_message_reactions (
+                direct_message_id,
+                user_id,
+                emoji,
+                reacted_at
+            )
+            VALUES (
+                @MessageId,
+                @UserId,
+                @Emoji,
+                NOW()
+            );
+            """;
+
+        using var connection = _context.CreateConnection();
+        var deleted = await connection.ExecuteAsync(deleteSql, new { MessageId = messageId, UserId = userId, Emoji = emoji });
+        if (deleted == 0)
+        {
+            await connection.ExecuteAsync(insertSql, new { MessageId = messageId, UserId = userId, Emoji = emoji });
+        }
+    }
+
+    public async Task<List<ChatMessageReactionResponse>> GetReactionsAsync(Guid messageId, Guid currentUserId)
+    {
+        const string sql = """
+            SELECT
+                emoji AS Emoji,
+                COUNT(*)::int AS Count,
+                BOOL_OR(user_id = @CurrentUserId) AS ReactedByMe
+            FROM direct_message_reactions
+            WHERE direct_message_id = @MessageId
+            GROUP BY emoji
+            ORDER BY emoji;
+            """;
+
+        using var connection = _context.CreateConnection();
+        var rows = await connection.QueryAsync<ChatMessageReactionResponse>(sql, new
+        {
+            MessageId = messageId,
+            CurrentUserId = currentUserId
+        });
+        return rows.ToList();
+    }
+
+    private static DirectMessageResponse MapMessage(DirectMessageRow row)
+    {
+        return new DirectMessageResponse
+        {
+            Id = row.Id,
+            ConversationId = row.ConversationId,
+            SenderUserId = row.SenderUserId,
+            SenderUsername = row.SenderUsername,
+            SenderDisplayName = row.SenderDisplayName,
+            RecipientUserId = row.RecipientUserId,
+            MessageText = row.MessageText,
+            ReplyToMessageId = row.ReplyToMessageId,
+            ReplyToUsername = row.ReplyToUsername,
+            ReplyToDisplayName = row.ReplyToDisplayName,
+            ReplyToPreviewText = row.ReplyToPreviewText,
+            SentAt = row.SentAt,
+            ReadAt = row.ReadAt,
+            Reactions = string.IsNullOrWhiteSpace(row.ReactionsJson)
+                ? new List<ChatMessageReactionResponse>()
+                : JsonSerializer.Deserialize<List<ChatMessageReactionResponse>>(row.ReactionsJson, JsonOptions) ?? new List<ChatMessageReactionResponse>()
+        };
+    }
+
+    private sealed class DirectMessageRow
+    {
+        public Guid Id { get; set; }
+        public Guid ConversationId { get; set; }
+        public Guid SenderUserId { get; set; }
+        public string SenderUsername { get; set; } = string.Empty;
+        public string SenderDisplayName { get; set; } = string.Empty;
+        public Guid RecipientUserId { get; set; }
+        public string MessageText { get; set; } = string.Empty;
+        public Guid? ReplyToMessageId { get; set; }
+        public string? ReplyToUsername { get; set; }
+        public string? ReplyToDisplayName { get; set; }
+        public string? ReplyToPreviewText { get; set; }
+        public DateTime SentAt { get; set; }
+        public DateTime? ReadAt { get; set; }
+        public string ReactionsJson { get; set; } = "[]";
     }
 }

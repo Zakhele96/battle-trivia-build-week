@@ -8,6 +8,7 @@ api/.vs/
 api/.vscode/
 api/*.user
 api/*.suo
+api/build-verify
 
 web/node_modules/
 web/dist/
@@ -15,3 +16,4 @@ web/.vite/
 web/.env
 web/.env.local
 web/.env.development
+

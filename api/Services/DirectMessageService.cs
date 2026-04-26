@@ -6,6 +6,11 @@ namespace Bts.Api.Services;
 
 public sealed class DirectMessageService
 {
+    private static readonly HashSet<string> AllowedReactions =
+    [
+        "👍", "❤️", "😂", "😮", "😢", "🙏", "🔥"
+    ];
+
     private readonly IDirectMessageRepository _directMessageRepository;
     private readonly IUserRepository _userRepository;
     private readonly IFriendRepository _friendRepository;
@@ -46,7 +51,7 @@ public sealed class DirectMessageService
         if (!isParticipant)
             throw new UnauthorizedAccessException("You are not part of this conversation.");
 
-        var messages = await _directMessageRepository.GetMessagesAsync(conversationId, take);
+        var messages = await _directMessageRepository.GetMessagesAsync(conversationId, userId, take);
         await _directMessageRepository.MarkConversationReadAsync(conversationId, userId, DateTime.UtcNow);
         return messages;
     }
@@ -65,7 +70,7 @@ public sealed class DirectMessageService
             };
     }
 
-    public async Task<DirectMessageResponse> SendMessageAsync(Guid userId, Guid recipientUserId, string text)
+    public async Task<DirectMessageResponse> SendMessageAsync(Guid userId, Guid recipientUserId, string text, Guid? replyToMessageId = null)
     {
         await EnsureFriendsAsync(userId, recipientUserId);
 
@@ -81,6 +86,13 @@ public sealed class DirectMessageService
             throw new InvalidOperationException("Message is too long.");
 
         var conversation = await _directMessageRepository.GetOrCreateConversationAsync(userId, recipientUserId);
+        if (replyToMessageId.HasValue)
+        {
+            var replyTarget = await _directMessageRepository.GetMessageByIdAsync(replyToMessageId.Value, userId);
+            if (replyTarget is null || replyTarget.ConversationId != conversation.Id)
+                throw new InvalidOperationException("Reply target not found in this conversation.");
+        }
+
         var message = new DirectMessage
         {
             Id = Guid.NewGuid(),
@@ -88,23 +100,25 @@ public sealed class DirectMessageService
             SenderUserId = userId,
             RecipientUserId = recipientUserId,
             MessageText = trimmed,
+            ReplyToMessageId = replyToMessageId,
             SentAt = DateTime.UtcNow
         };
 
         await _directMessageRepository.CreateMessageAsync(message);
-
-        return new DirectMessageResponse
-        {
-            Id = message.Id,
-            ConversationId = message.ConversationId,
-            SenderUserId = sender.Id,
-            SenderUsername = sender.Username,
-            SenderDisplayName = sender.DisplayName,
-            RecipientUserId = recipient.Id,
-            MessageText = message.MessageText,
-            SentAt = message.SentAt,
-            ReadAt = message.ReadAt
-        };
+        return await _directMessageRepository.GetMessageByIdAsync(message.Id, userId)
+            ?? new DirectMessageResponse
+            {
+                Id = message.Id,
+                ConversationId = message.ConversationId,
+                SenderUserId = sender.Id,
+                SenderUsername = sender.Username,
+                SenderDisplayName = sender.DisplayName,
+                RecipientUserId = recipient.Id,
+                MessageText = message.MessageText,
+                ReplyToMessageId = message.ReplyToMessageId,
+                SentAt = message.SentAt,
+                ReadAt = message.ReadAt
+            };
     }
 
     public async Task MarkReadAsync(Guid userId, Guid conversationId)
@@ -114,6 +128,28 @@ public sealed class DirectMessageService
             throw new UnauthorizedAccessException("You are not part of this conversation.");
 
         await _directMessageRepository.MarkConversationReadAsync(conversationId, userId, DateTime.UtcNow);
+    }
+
+    public async Task<ChatMessageReactionUpdateResponse> ToggleReactionAsync(Guid userId, Guid messageId, string emoji)
+    {
+        if (string.IsNullOrWhiteSpace(emoji) || !AllowedReactions.Contains(emoji))
+            throw new InvalidOperationException("Reaction is not allowed.");
+
+        var message = await _directMessageRepository.GetMessageByIdAsync(messageId, userId)
+            ?? throw new KeyNotFoundException("Direct message not found.");
+
+        var isParticipant = await _directMessageRepository.IsParticipantAsync(message.ConversationId, userId);
+        if (!isParticipant)
+            throw new UnauthorizedAccessException("You are not part of this conversation.");
+
+        await _directMessageRepository.ToggleReactionAsync(messageId, userId, emoji);
+        var reactions = await _directMessageRepository.GetReactionsAsync(messageId, userId);
+
+        return new ChatMessageReactionUpdateResponse
+        {
+            MessageId = messageId,
+            Reactions = reactions
+        };
     }
 
     private async Task EnsureFriendsAsync(Guid userId, Guid otherUserId)
