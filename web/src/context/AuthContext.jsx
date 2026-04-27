@@ -15,6 +15,10 @@ function normalizeUser(user) {
     isAdmin: Boolean(user.isAdmin),
     emailVerified:
       typeof user.emailVerified === "boolean" ? user.emailVerified : true,
+    isSupporter: Boolean(user.isSupporter),
+    supporterTier: user.supporterTier || "",
+    supporterBadgeLabel: user.supporterBadgeLabel || "",
+    supporterExpiresAt: user.supporterExpiresAt || null,
     authProvider: user.authProvider || "local",
     hasPassword:
       typeof user.hasPassword === "boolean" ? user.hasPassword : true,

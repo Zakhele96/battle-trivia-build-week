@@ -77,6 +77,9 @@ public sealed class AuthService
             AuthProvider = "local",
             AvatarUrl = null,
             StatusMessage = null,
+            IsSupporter = false,
+            SupporterTier = null,
+            SupporterExpiresAt = null,
             EmailVerified = false,
             IsActive = true,
             IsAdmin = false,
@@ -186,6 +189,9 @@ public sealed class AuthService
                     AuthProvider = "google",
                     AvatarUrl = payload.Picture,
                     StatusMessage = null,
+                    IsSupporter = false,
+                    SupporterTier = null,
+                    SupporterExpiresAt = null,
                     EmailVerified = payload.EmailVerified,
                     IsActive = true,
                     IsAdmin = false,
@@ -342,6 +348,9 @@ public sealed class AuthService
                     AuthProvider = "facebook",
                     AvatarUrl = facebookProfile.Picture?.Data?.Url,
                     StatusMessage = null,
+                    IsSupporter = false,
+                    SupporterTier = null,
+                    SupporterExpiresAt = null,
                     EmailVerified = !string.IsNullOrWhiteSpace(facebookProfile.Email),
                     IsActive = true,
                     IsAdmin = false,
@@ -436,6 +445,10 @@ public sealed class AuthService
         PhoneNumber = user.PhoneNumber,
         AvatarUrl = user.AvatarUrl,
         StatusMessage = user.StatusMessage,
+        IsSupporter = user.IsSupporter,
+        SupporterTier = user.SupporterTier,
+        SupporterBadgeLabel = GetSupporterBadgeLabel(user.SupporterTier),
+        SupporterExpiresAt = user.SupporterExpiresAt,
         AuthProvider = string.IsNullOrWhiteSpace(user.AuthProvider) ? "local" : user.AuthProvider,
         HasPassword = !string.IsNullOrWhiteSpace(user.PasswordHash),
         IsAdmin = user.IsAdmin,
@@ -490,6 +503,16 @@ public sealed class AuthService
             return email.Trim();
 
         return $"facebook-{facebookUserId}@users.bts.local";
+    }
+
+    private static string? GetSupporterBadgeLabel(string? tier)
+    {
+        if (string.IsNullOrWhiteSpace(tier))
+            return null;
+
+        return string.Equals(tier, "supporter", StringComparison.OrdinalIgnoreCase)
+            ? "Supporter"
+            : "Member";
     }
 
     private async Task<FacebookDebugTokenData> ValidateFacebookAccessTokenAsync(

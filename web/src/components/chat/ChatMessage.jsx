@@ -270,6 +270,8 @@ export default function ChatMessage({
   const isSystem = message.messageType === "system";
   const isMine = message.userId === currentUserId;
   const isMessageFromModerator = message.isAdmin === true;
+  const isSupporterMessage = message.isSupporter === true;
+  const supporterBadgeLabel = message.supporterBadgeLabel || "Supporter";
   const isPinned = message.isPinned === true;
   const currentUserReaction =
     Array.isArray(message.reactions)
@@ -354,10 +356,14 @@ export default function ChatMessage({
 
   const mineStyles = isMessageFromModerator
     ? "bg-[linear-gradient(180deg,rgba(88,101,242,1)_0%,rgba(64,78,237,1)_100%)] text-white ring-1 ring-violet-300/25"
+    : isSupporterMessage
+    ? "bg-[linear-gradient(180deg,rgba(245,158,11,0.96)_0%,rgba(217,119,6,0.96)_45%,rgba(29,78,216,0.96)_100%)] text-white ring-1 ring-amber-200/30"
     : "bg-[linear-gradient(180deg,rgba(55,149,255,1)_0%,rgba(10,132,255,1)_100%)] text-white";
 
   const theirsStyles = isMessageFromModerator
     ? "border border-violet-400/15 bg-[linear-gradient(180deg,rgba(58,49,94,0.92)_0%,rgba(41,35,68,0.96)_100%)] text-violet-50"
+    : isSupporterMessage
+    ? "border border-amber-300/18 bg-[linear-gradient(180deg,rgba(91,58,18,0.96)_0%,rgba(52,36,14,0.98)_55%,rgba(19,33,62,0.98)_100%)] text-amber-50 shadow-[0_10px_24px_rgba(245,158,11,0.1)]"
     : bubbleTone?.bubbleClass ||
       "border border-white/[0.05] bg-[linear-gradient(180deg,rgba(46,46,49,0.98),rgba(34,34,37,0.98))] text-neutral-100";
 
@@ -368,6 +374,8 @@ export default function ChatMessage({
 
   const senderTextClass = isMessageFromModerator
     ? "text-violet-100/90"
+    : isSupporterMessage
+    ? "text-amber-50/92"
     : usesVividBubble
     ? "text-white/90"
     : bubbleTone?.senderClass
@@ -654,6 +662,12 @@ export default function ChatMessage({
               {isMessageFromModerator ? (
                 <span className="rounded-full border border-violet-300/20 bg-violet-300/12 px-2 py-[2px] text-[9px] font-semibold uppercase tracking-[0.14em] text-violet-100">
                   Mod
+                </span>
+              ) : null}
+
+              {isSupporterMessage ? (
+                <span className="rounded-full border border-amber-200/20 bg-amber-300/14 px-2 py-[2px] text-[9px] font-semibold uppercase tracking-[0.14em] text-amber-50">
+                  {supporterBadgeLabel}
                 </span>
               ) : null}
 

@@ -368,6 +368,8 @@ function HeroCard({ profile, authUser, stats, playerMomentum }) {
   const phone = profile?.phoneNumber || authUser?.phoneNumber || "Not added";
   const providerLabel =
     getAuthProviderLabel(authUser?.authProvider || "local");
+  const supporterBadgeLabel = authUser?.supporterBadgeLabel || profile?.supporterBadgeLabel || "Supporter";
+  const isSupporter = authUser?.isSupporter || profile?.isSupporter;
 
   return (
     <Panel className="rounded-[28px] bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.14),transparent_26%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.012))] p-5 sm:p-6">
@@ -396,6 +398,15 @@ function HeroCard({ profile, authUser, stats, playerMomentum }) {
               <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-neutral-300">
                 {providerLabel}
               </div>
+              <div
+                className={`rounded-full border px-3 py-1 text-[10px] font-medium uppercase tracking-[0.14em] ${
+                  isSupporter
+                    ? "border-amber-300/18 bg-amber-400/10 text-amber-100"
+                    : "border-white/10 bg-white/[0.04] text-neutral-300"
+                }`}
+              >
+                {isSupporter ? `${supporterBadgeLabel} active` : "Supporter inactive"}
+              </div>
               <div className="rounded-full border border-emerald-400/16 bg-emerald-500/10 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-emerald-100">
                 {statusMessage ? "DM status set" : "No DM status yet"}
               </div>
@@ -421,6 +432,24 @@ function HeroCard({ profile, authUser, stats, playerMomentum }) {
                 </div>
               </div>
             ) : null}
+
+            <div className="mt-4 rounded-[18px] border border-amber-300/16 bg-amber-400/10 px-4 py-3">
+              <div className="text-[10px] uppercase tracking-[0.16em] text-amber-100/75">
+                Support BTS
+              </div>
+              <div className="mt-1 text-sm text-white">
+                Supporter is priced to stay light at R18/month.
+              </div>
+              <div className="mt-1 text-[12px] leading-5 text-amber-50/80">
+                Unlock supporter cosmetics and keep the app moving without affecting gameplay balance.
+              </div>
+              <Link
+                to="/support"
+                className="mt-3 inline-flex rounded-full border border-amber-200/20 bg-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-50 transition hover:bg-white/15"
+              >
+                Open support options
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -1214,6 +1243,10 @@ export default function ProfilePage() {
             {
               label: "View standings",
               to: "/leaderboards?mode=combined&period=current",
+            },
+            {
+              label: "Support BTS",
+              to: "/support",
             },
             {
               label: "Open activity",

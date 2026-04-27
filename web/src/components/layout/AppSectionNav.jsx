@@ -166,6 +166,19 @@ function ProfileIcon() {
   );
 }
 
+function SupportIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
+      <path
+        d="M12 19.5C12 19.5 5.5 15.9 5.5 10.2C5.5 8.15 7.1 6.5 9.15 6.5C10.42 6.5 11.44 7.06 12 7.93C12.56 7.06 13.58 6.5 14.85 6.5C16.9 6.5 18.5 8.15 18.5 10.2C18.5 15.9 12 19.5 12 19.5Z"
+        className="stroke-current"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function MoreIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
@@ -195,6 +208,7 @@ const DESKTOP_ITEMS = [
     label: "Standings",
     icon: StandingsIcon,
   },
+  { to: "/support", label: "Support", icon: SupportIcon },
   { to: "/activity", label: "Activity", icon: ActivityIcon },
   { to: "/profile", label: "Profile", icon: ProfileIcon },
 ];
@@ -220,6 +234,7 @@ const MOBILE_MORE_ITEMS = [
     label: "Standings",
     icon: StandingsIcon,
   },
+  { to: "/support", label: "Support", icon: SupportIcon },
   { to: "/profile", label: "Profile", icon: ProfileIcon },
 ];
 

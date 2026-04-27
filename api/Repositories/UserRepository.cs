@@ -28,6 +28,9 @@ public sealed class UserRepository : IUserRepository
                 auth_provider AS AuthProvider,
                 avatar_url AS AvatarUrl,
                 status_message AS StatusMessage,
+                (COALESCE(is_supporter, FALSE) AND (supporter_expires_at IS NULL OR supporter_expires_at > NOW())) AS IsSupporter,
+                supporter_tier AS SupporterTier,
+                supporter_expires_at AS SupporterExpiresAt,
                 email_verified AS EmailVerified,
                 email_verification_code_hash AS EmailVerificationCodeHash,
                 email_verification_expires_at AS EmailVerificationExpiresAt,
@@ -59,6 +62,9 @@ public sealed class UserRepository : IUserRepository
                 auth_provider AS AuthProvider,
                 avatar_url AS AvatarUrl,
                 status_message AS StatusMessage,
+                (COALESCE(is_supporter, FALSE) AND (supporter_expires_at IS NULL OR supporter_expires_at > NOW())) AS IsSupporter,
+                supporter_tier AS SupporterTier,
+                supporter_expires_at AS SupporterExpiresAt,
                 email_verified AS EmailVerified,
                 email_verification_code_hash AS EmailVerificationCodeHash,
                 email_verification_expires_at AS EmailVerificationExpiresAt,
@@ -105,6 +111,9 @@ public sealed class UserRepository : IUserRepository
                 auth_provider AS AuthProvider,
                 avatar_url AS AvatarUrl,
                 status_message AS StatusMessage,
+                (COALESCE(is_supporter, FALSE) AND (supporter_expires_at IS NULL OR supporter_expires_at > NOW())) AS IsSupporter,
+                supporter_tier AS SupporterTier,
+                supporter_expires_at AS SupporterExpiresAt,
                 email_verified AS EmailVerified,
                 email_verification_code_hash AS EmailVerificationCodeHash,
                 email_verification_expires_at AS EmailVerificationExpiresAt,
@@ -136,6 +145,9 @@ public sealed class UserRepository : IUserRepository
                 auth_provider AS AuthProvider,
                 avatar_url AS AvatarUrl,
                 status_message AS StatusMessage,
+                (COALESCE(is_supporter, FALSE) AND (supporter_expires_at IS NULL OR supporter_expires_at > NOW())) AS IsSupporter,
+                supporter_tier AS SupporterTier,
+                supporter_expires_at AS SupporterExpiresAt,
                 email_verified AS EmailVerified,
                 email_verification_code_hash AS EmailVerificationCodeHash,
                 email_verification_expires_at AS EmailVerificationExpiresAt,
@@ -167,6 +179,9 @@ public sealed class UserRepository : IUserRepository
                 auth_provider AS AuthProvider,
                 avatar_url AS AvatarUrl,
                 status_message AS StatusMessage,
+                (COALESCE(is_supporter, FALSE) AND (supporter_expires_at IS NULL OR supporter_expires_at > NOW())) AS IsSupporter,
+                supporter_tier AS SupporterTier,
+                supporter_expires_at AS SupporterExpiresAt,
                 email_verified AS EmailVerified,
                 email_verification_code_hash AS EmailVerificationCodeHash,
                 email_verification_expires_at AS EmailVerificationExpiresAt,
@@ -229,6 +244,9 @@ public sealed class UserRepository : IUserRepository
                 auth_provider,
                 avatar_url,
                 status_message,
+                is_supporter,
+                supporter_tier,
+                supporter_expires_at,
                 email_verified,
                 email_verification_code_hash,
                 email_verification_expires_at,
@@ -250,6 +268,9 @@ public sealed class UserRepository : IUserRepository
                 @AuthProvider,
                 @AvatarUrl,
                 @StatusMessage,
+                @IsSupporter,
+                @SupporterTier,
+                @SupporterExpiresAt,
                 @EmailVerified,
                 @EmailVerificationCodeHash,
                 @EmailVerificationExpiresAt,
@@ -308,6 +329,9 @@ public sealed class UserRepository : IUserRepository
                 auth_provider AS AuthProvider,
                 avatar_url AS AvatarUrl,
                 status_message AS StatusMessage,
+                (COALESCE(is_supporter, FALSE) AND (supporter_expires_at IS NULL OR supporter_expires_at > NOW())) AS IsSupporter,
+                supporter_tier AS SupporterTier,
+                supporter_expires_at AS SupporterExpiresAt,
                 email_verified AS EmailVerified,
                 is_active AS IsActive,
                 is_admin AS IsAdmin,
@@ -426,6 +450,27 @@ public sealed class UserRepository : IUserRepository
         {
             UserId = userId,
             IsAdmin = isAdmin
+        });
+    }
+
+    public async Task UpdateSupporterStatusAsync(Guid userId, bool isSupporter, string? supporterTier, DateTime? supporterExpiresAt)
+    {
+        const string sql = """
+            UPDATE users
+            SET is_supporter = @IsSupporter,
+                supporter_tier = @SupporterTier,
+                supporter_expires_at = @SupporterExpiresAt,
+                updated_at = NOW()
+            WHERE id = @UserId;
+            """;
+
+        using var connection = _context.CreateConnection();
+        await connection.ExecuteAsync(sql, new
+        {
+            UserId = userId,
+            IsSupporter = isSupporter,
+            SupporterTier = supporterTier,
+            SupporterExpiresAt = supporterExpiresAt
         });
     }
 }

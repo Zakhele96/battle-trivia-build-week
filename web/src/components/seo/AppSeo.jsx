@@ -26,6 +26,16 @@ function getSeoConfig(pathname) {
     };
   }
 
+  if (pathname === "/support") {
+    return {
+      title: "Support BTS",
+      description:
+        "Support BTS with a lightweight monthly supporter plan or a compliant support page that helps fund the app.",
+      canonicalPath: "/support",
+      robots: "noindex,nofollow",
+    };
+  }
+
   return {
     title: "Player App",
     description:

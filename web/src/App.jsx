@@ -17,6 +17,7 @@ import SharedLeaderboardPage from "./pages/SharedLeaderboardPage";
 import SquadsPage from "./pages/SquadsPage";
 import AlertsPage from "./pages/AlertsPage";
 import DirectMessagesPage from "./pages/DirectMessagesPage";
+import SupportPage from "./pages/SupportPage";
 import AppSeo from "./components/seo/AppSeo";
 import PwaInstallPrompt from "./components/pwa/PwaInstallPrompt";
 import PwaUpdatePrompt from "./components/pwa/PwaUpdatePrompt";
@@ -134,6 +135,15 @@ export default function App() {
         element={
           <ProtectedRoute>
             <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/support"
+        element={
+          <ProtectedRoute>
+            <SupportPage />
           </ProtectedRoute>
         }
       />

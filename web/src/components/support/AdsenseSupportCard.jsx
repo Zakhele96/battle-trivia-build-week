@@ -1,0 +1,67 @@
+import { useEffect, useRef } from "react";
+
+const ADSENSE_CLIENT = import.meta.env.VITE_ADSENSE_CLIENT_ID || "";
+const ADSENSE_SLOT = import.meta.env.VITE_ADSENSE_SUPPORT_SLOT_ID || "";
+
+function ensureAdsenseScript() {
+  if (typeof document === "undefined" || !ADSENSE_CLIENT) return;
+  if (document.querySelector('script[data-bts-adsense="true"]')) return;
+
+  const script = document.createElement("script");
+  script.async = true;
+  script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`;
+  script.crossOrigin = "anonymous";
+  script.dataset.btsAdsense = "true";
+  document.head.appendChild(script);
+}
+
+export default function AdsenseSupportCard() {
+  const adRef = useRef(null);
+  const isReady = Boolean(ADSENSE_CLIENT && ADSENSE_SLOT);
+
+  useEffect(() => {
+    if (!isReady) return;
+
+    ensureAdsenseScript();
+
+    try {
+      if (adRef.current?.dataset.loaded === "true") return;
+      window.adsbygoogle = window.adsbygoogle || [];
+      window.adsbygoogle.push({});
+      if (adRef.current) {
+        adRef.current.dataset.loaded = "true";
+      }
+    } catch {
+      // AdSense can fail silently before account approval or on localhost.
+    }
+  }, [isReady]);
+
+  if (!isReady) {
+    return (
+      <div className="rounded-[22px] border border-dashed border-white/12 bg-black/20 p-4">
+        <div className="text-sm font-semibold text-white">Ad space ready</div>
+        <div className="mt-2 text-sm leading-6 text-neutral-400">
+          Add `VITE_ADSENSE_CLIENT_ID` and `VITE_ADSENSE_SUPPORT_SLOT_ID` to show a
+          live Google ad unit here once your AdSense account is approved.
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-[22px] border border-white/10 bg-black/20 p-4">
+      <div className="mb-3 text-[10px] uppercase tracking-[0.18em] text-neutral-500">
+        Advertisement
+      </div>
+      <ins
+        ref={adRef}
+        className="adsbygoogle block min-h-[180px] w-full overflow-hidden rounded-[18px] bg-white/[0.03]"
+        style={{ display: "block" }}
+        data-ad-client={ADSENSE_CLIENT}
+        data-ad-slot={ADSENSE_SLOT}
+        data-ad-format="auto"
+        data-full-width-responsive="true"
+      />
+    </div>
+  );
+}

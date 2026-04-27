@@ -37,6 +37,7 @@ const SCOPES = [
   { key: "all", label: "Global" },
   { key: "friends", label: "Friends" },
 ];
+const PAGE_SIZE = 10;
 
 function formatEndedAt(value) {
   if (!value) return "";
@@ -182,15 +183,27 @@ function ScopeSwitcher({ value, onChange }) {
   );
 }
 
-function SummaryStat({ label, value, detail }) {
+function SummaryStat({ label, value, detail, compact = false }) {
   return (
-    <div className="rounded-[18px] border border-white/8 bg-black/20 px-4 py-3">
-      <div className="text-[10px] uppercase tracking-[0.14em] text-neutral-500">
+    <div
+      className={`rounded-[18px] border border-white/8 bg-black/20 ${
+        compact ? "px-3 py-2.5" : "px-4 py-3"
+      }`}
+    >
+      <div
+        className={`uppercase tracking-[0.14em] text-neutral-500 ${
+          compact ? "text-[9px]" : "text-[10px]"
+        }`}
+      >
         {label}
       </div>
-      <div className="mt-1 text-sm font-semibold text-white">{value}</div>
+      <div className={`mt-1 font-semibold text-white ${compact ? "text-[13px]" : "text-sm"}`}>
+        {value}
+      </div>
       {detail ? (
-        <div className="mt-1 text-[11px] leading-5 text-neutral-400">
+        <div
+          className={`mt-1 text-neutral-400 ${compact ? "text-[10px] leading-4" : "text-[11px] leading-5"}`}
+        >
           {detail}
         </div>
       ) : null}
@@ -203,7 +216,7 @@ function PodiumCard({ row, mode }) {
 
   return (
     <div
-      className={`rounded-[22px] border p-4 shadow-[0_18px_36px_rgba(0,0,0,0.14)] ${tone.shell}`}
+      className={`rounded-[16px] border p-3 shadow-[0_10px_22px_rgba(0,0,0,0.1)] sm:rounded-[22px] sm:p-4 sm:shadow-[0_18px_36px_rgba(0,0,0,0.14)] ${tone.shell}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -213,7 +226,7 @@ function PodiumCard({ row, mode }) {
             {tone.label}
           </span>
 
-          <div className="mt-3 truncate text-base font-semibold text-white">
+          <div className="mt-2 truncate text-[14px] font-semibold text-white sm:mt-3 sm:text-base">
             {row.displayName || row.username}
           </div>
 
@@ -223,7 +236,7 @@ function PodiumCard({ row, mode }) {
         </div>
 
         <div className="text-right">
-          <div className={`text-2xl font-semibold ${tone.score}`}>
+          <div className={`text-xl font-semibold sm:text-2xl ${tone.score}`}>
             {row.score}
           </div>
           <div className="mt-1 text-[10px] uppercase tracking-[0.16em] text-neutral-500">
@@ -232,15 +245,17 @@ function PodiumCard({ row, mode }) {
         </div>
       </div>
 
-      <div className="mt-4 grid gap-2 sm:grid-cols-2">
+      <div className="mt-2.5 grid gap-2 sm:mt-4 sm:grid-cols-2">
         {mode === "combined" ? (
           <>
             <SummaryStat
+              compact
               label="Trivia"
               value={row.battleTriviaScore}
               detail="Battle Trivia points"
             />
             <SummaryStat
+              compact
               label="Scramble"
               value={row.wordScrambleScore}
               detail="Word Scramble points"
@@ -248,6 +263,7 @@ function PodiumCard({ row, mode }) {
           </>
         ) : (
           <SummaryStat
+            compact
             label="Weekly score"
             value={`${row.score} pts`}
             detail={`Current position: #${row.rank}`}
@@ -273,7 +289,7 @@ function MobileLeaderboardCard({
 
   return (
     <div
-      className={`rounded-[20px] border p-4 shadow-[0_14px_28px_rgba(0,0,0,0.12)] ${
+      className={`rounded-[16px] border p-3 shadow-[0_8px_18px_rgba(0,0,0,0.1)] ${
         isCurrentUser
           ? "border-blue-300/25 bg-blue-500/10"
           : `${tone.shell} ${tone.accent}`
@@ -301,7 +317,7 @@ function MobileLeaderboardCard({
             ) : null}
           </div>
 
-          <div className="mt-3 text-base font-semibold text-white">
+          <div className="mt-2 text-[14px] font-semibold text-white">
             {row.displayName || row.username}
           </div>
 
@@ -312,7 +328,7 @@ function MobileLeaderboardCard({
 
         <div className="shrink-0 text-right">
           <div
-            className={`text-2xl font-semibold ${
+            className={`text-xl font-semibold ${
               isCurrentUser ? "text-blue-100" : tone.score
             }`}
           >
@@ -325,13 +341,15 @@ function MobileLeaderboardCard({
       </div>
 
       {mode === "combined" ? (
-        <div className="mt-4 grid grid-cols-2 gap-2">
+        <div className="mt-2.5 grid grid-cols-2 gap-2">
           <SummaryStat
+            compact
             label="Trivia"
             value={row.battleTriviaScore}
             detail="Battle Trivia"
           />
           <SummaryStat
+            compact
             label="Scramble"
             value={row.wordScrambleScore}
             detail="Word Scramble"
@@ -339,14 +357,14 @@ function MobileLeaderboardCard({
         </div>
       ) : null}
 
-      <div className="mt-4 rounded-[16px] border border-white/8 bg-black/20 px-3 py-2.5 text-[12px] leading-5 text-neutral-300">
+      <div className="mt-2.5 rounded-[14px] border border-white/8 bg-black/20 px-3 py-2 text-[11px] leading-4 text-neutral-300">
         {row.rank === 1
           ? "Currently leading this board."
           : `${gap} point${gap === 1 ? "" : "s"} behind the leader.`}
       </div>
 
       {isCurrentUser ? (
-        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        <div className="mt-2.5 grid gap-2">
           <button
             type="button"
             onClick={() => onShare?.(row)}
@@ -363,7 +381,7 @@ function MobileLeaderboardCard({
           </button>
         </div>
       ) : onCompare || onChallenge ? (
-        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        <div className="mt-2.5 grid gap-2">
           {onCompare ? (
             <button
               type="button"
@@ -405,6 +423,7 @@ export default function LeaderboardsPage() {
   const [selectedRivalUserId, setSelectedRivalUserId] = useState("");
   const [headToHead, setHeadToHead] = useState(null);
   const [isLoadingHeadToHead, setIsLoadingHeadToHead] = useState(false);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     let isMounted = true;
@@ -446,10 +465,19 @@ export default function LeaderboardsPage() {
     };
   }, [mode, period, scope]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [mode, period, scope]);
+
   const rows = useMemo(() => data?.rows || [], [data]);
   const podiumRows = useMemo(() => rows.slice(0, 3), [rows]);
   const leader = rows[0] || null;
   const leaderScore = leader?.score || 0;
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const pagedRows = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return rows.slice(start, start + PAGE_SIZE);
+  }, [page, rows]);
 
   const subtitle = useMemo(() => {
     if (!data) return "";
@@ -713,7 +741,7 @@ export default function LeaderboardsPage() {
             </div>
           </div>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <div className="mt-4 grid gap-2.5 sm:grid-cols-3 sm:gap-3">
             <SummaryStat
               label="Leader"
               value={leader ? `#1 ${leader.displayName || leader.username}` : "Waiting for scores"}
@@ -738,6 +766,38 @@ export default function LeaderboardsPage() {
               }
             />
           </div>
+
+          {rows.length > PAGE_SIZE ? (
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[18px] border border-white/8 bg-black/20 px-4 py-3">
+              <div className="text-[12px] text-neutral-400">
+                Showing {Math.min((page - 1) * PAGE_SIZE + 1, rows.length)}-
+                {Math.min(page * PAGE_SIZE, rows.length)} of {rows.length}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={page <= 1}
+                  onClick={() => setPage((previous) => Math.max(1, previous - 1))}
+                  className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  Previous
+                </button>
+                <div className="text-[11px] uppercase tracking-[0.14em] text-neutral-500">
+                  Page {page} of {totalPages}
+                </div>
+                <button
+                  type="button"
+                  disabled={page >= totalPages}
+                  onClick={() =>
+                    setPage((previous) => Math.min(totalPages, previous + 1))
+                  }
+                  className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          ) : null}
 
           {currentStanding ? (
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[18px] border border-blue-300/18 bg-blue-400/10 px-4 py-3">
@@ -800,7 +860,7 @@ export default function LeaderboardsPage() {
                 </div>
               </div>
 
-              <div className="grid gap-3 lg:grid-cols-3">
+              <div className="grid gap-2.5 sm:gap-3 lg:grid-cols-3">
                 {podiumRows.map((row) => (
                   <PodiumCard key={row.userId} row={row} mode={mode} />
                 ))}
@@ -902,8 +962,8 @@ export default function LeaderboardsPage() {
                 </div>
               ) : null}
 
-              <div className="space-y-3 sm:hidden">
-                {rows.map((row) => (
+              <div className="space-y-2.5 sm:hidden">
+                {pagedRows.map((row) => (
                   <MobileLeaderboardCard
                     key={row.userId}
                     row={row}
@@ -937,7 +997,7 @@ export default function LeaderboardsPage() {
                     </thead>
 
                     <tbody>
-                      {rows.map((row) => {
+                      {pagedRows.map((row) => {
                         const tone = getRankTone(row.rank);
                         const isCurrentUser = row.userId === user?.id;
 

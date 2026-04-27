@@ -45,6 +45,10 @@ public sealed class ProfileService
             PhoneNumber = user.PhoneNumber,
             AvatarUrl = user.AvatarUrl,
             StatusMessage = user.StatusMessage,
+            IsSupporter = user.IsSupporter,
+            SupporterTier = user.SupporterTier,
+            SupporterBadgeLabel = GetSupporterBadgeLabel(user.SupporterTier),
+            SupporterExpiresAt = user.SupporterExpiresAt,
             IsAdmin = user.IsAdmin,
             Stats = stats,
             Growth = growth
@@ -66,6 +70,9 @@ public sealed class ProfileService
             DisplayName = user.DisplayName,
             AvatarUrl = user.AvatarUrl,
             StatusMessage = user.StatusMessage,
+            IsSupporter = user.IsSupporter,
+            SupporterTier = user.SupporterTier,
+            SupporterBadgeLabel = GetSupporterBadgeLabel(user.SupporterTier),
             IsOnline = _userPresenceService.IsOnline(userId),
             LastSeenAt = lastSeenMap.TryGetValue(userId, out var lastSeenAt) ? lastSeenAt : null,
             Stats = await BuildStatsAsync(userId)
@@ -229,5 +236,15 @@ public sealed class ProfileService
             TotalItems = totalItems,
             TotalPages = totalPages
         };
+    }
+
+    private static string? GetSupporterBadgeLabel(string? tier)
+    {
+        if (string.IsNullOrWhiteSpace(tier))
+            return null;
+
+        return string.Equals(tier, "supporter", StringComparison.OrdinalIgnoreCase)
+            ? "Supporter"
+            : "Member";
     }
 }

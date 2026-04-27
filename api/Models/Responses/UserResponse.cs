@@ -10,6 +10,10 @@ public sealed class UserResponse
     public bool IsAdmin { get; set; }
     public string? AvatarUrl { get; set; }
     public string? StatusMessage { get; set; }
+    public bool IsSupporter { get; set; }
+    public string? SupporterTier { get; set; }
+    public string? SupporterBadgeLabel { get; set; }
+    public DateTime? SupporterExpiresAt { get; set; }
     public string AuthProvider { get; set; } = "local";
     public bool HasPassword { get; set; }
     public bool EmailVerified { get; set; }

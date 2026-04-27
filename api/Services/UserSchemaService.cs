@@ -31,6 +31,15 @@ public sealed class UserSchemaService
                 ADD COLUMN IF NOT EXISTS status_message VARCHAR(120) NULL;
 
             ALTER TABLE users
+                ADD COLUMN IF NOT EXISTS is_supporter BOOLEAN NOT NULL DEFAULT FALSE;
+
+            ALTER TABLE users
+                ADD COLUMN IF NOT EXISTS supporter_tier VARCHAR(30) NULL;
+
+            ALTER TABLE users
+                ADD COLUMN IF NOT EXISTS supporter_expires_at TIMESTAMP NULL;
+
+            ALTER TABLE users
                 ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE;
 
             ALTER TABLE users

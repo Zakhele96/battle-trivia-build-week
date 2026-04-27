@@ -8,6 +8,8 @@ public sealed class DirectConversationResponse
     public string OtherDisplayName { get; set; } = string.Empty;
     public string? OtherAvatarUrl { get; set; }
     public string? OtherStatusMessage { get; set; }
+    public bool OtherIsSupporter { get; set; }
+    public string? OtherSupporterBadgeLabel { get; set; }
     public string? LastMessageText { get; set; }
     public DateTime? LastMessageAt { get; set; }
     public Guid? LastMessageSenderUserId { get; set; }

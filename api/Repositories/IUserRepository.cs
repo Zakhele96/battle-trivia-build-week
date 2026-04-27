@@ -18,4 +18,5 @@ public interface IUserRepository
     Task LinkGoogleAsync(User user);
     Task LinkFacebookAsync(User user);
     Task UpdateEmailVerificationAsync(Guid userId, string? codeHash, DateTime? expiresAt, DateTime? sentAt, bool emailVerified);
+    Task UpdateSupporterStatusAsync(Guid userId, bool isSupporter, string? supporterTier, DateTime? supporterExpiresAt);
 }

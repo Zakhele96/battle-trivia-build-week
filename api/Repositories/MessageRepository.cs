@@ -93,6 +93,8 @@ public sealed class MessageRepository : IMessageRepository
                     u.username AS Username,
                     u.display_name AS DisplayName,
                     COALESCE(u.is_admin, FALSE) AS IsAdmin,
+                    COALESCE(u.is_supporter, FALSE) AS IsSupporter,
+                    u.supporter_tier AS SupporterTier,
                     ru.username AS ReplyToUsername,
                     ru.display_name AS ReplyToDisplayName,
                     LEFT(rcm.message_text, 120) AS ReplyToPreviewText
@@ -168,6 +170,8 @@ public sealed class MessageRepository : IMessageRepository
                 u.username AS Username,
                 u.display_name AS DisplayName,
                 COALESCE(u.is_admin, FALSE) AS IsAdmin,
+                COALESCE(u.is_supporter, FALSE) AS IsSupporter,
+                u.supporter_tier AS SupporterTier,
                 ru.username AS ReplyToUsername,
                 ru.display_name AS ReplyToDisplayName,
                 LEFT(rcm.message_text, 120) AS ReplyToPreviewText,
@@ -473,6 +477,8 @@ public sealed class MessageRepository : IMessageRepository
                 u.username AS Username,
                 u.display_name AS DisplayName,
                 COALESCE(u.is_admin, FALSE) AS IsAdmin,
+                COALESCE(u.is_supporter, FALSE) AS IsSupporter,
+                u.supporter_tier AS SupporterTier,
                 ru.username AS ReplyToUsername,
                 ru.display_name AS ReplyToDisplayName,
                 LEFT(rcm.message_text, 120) AS ReplyToPreviewText,
@@ -545,6 +551,8 @@ public sealed class MessageRepository : IMessageRepository
                 u.username AS Username,
                 u.display_name AS DisplayName,
                 COALESCE(u.is_admin, FALSE) AS IsAdmin,
+                COALESCE(u.is_supporter, FALSE) AS IsSupporter,
+                u.supporter_tier AS SupporterTier,
                 m.message_text AS MessageText,
                 m.message_type AS MessageType,
                 m.sent_at AS SentAt,
@@ -579,6 +587,8 @@ public sealed class MessageRepository : IMessageRepository
                 u.username AS Username,
                 u.display_name AS DisplayName,
                 COALESCE(u.is_admin, FALSE) AS IsAdmin,
+                COALESCE(u.is_supporter, FALSE) AS IsSupporter,
+                u.supporter_tier AS SupporterTier,
                 m.message_text AS MessageText,
                 m.message_type AS MessageType,
                 m.sent_at AS SentAt,
@@ -611,6 +621,8 @@ public sealed class MessageRepository : IMessageRepository
                 u.username AS Username,
                 u.display_name AS DisplayName,
                 COALESCE(u.is_admin, FALSE) AS IsAdmin,
+                COALESCE(u.is_supporter, FALSE) AS IsSupporter,
+                u.supporter_tier AS SupporterTier,
                 m.message_text AS MessageText,
                 m.message_type AS MessageType,
                 m.sent_at AS SentAt,
@@ -676,6 +688,8 @@ public sealed class MessageRepository : IMessageRepository
             UserId = row.UserId,
             Username = row.Username,
             IsAdmin = row.IsAdmin,
+            IsSupporter = row.IsSupporter,
+            SupporterBadgeLabel = GetSupporterBadgeLabel(row.SupporterTier),
             DisplayName = row.DisplayName,
             MessageText = row.MessageText,
             MessageType = row.MessageType,
@@ -730,6 +744,8 @@ public sealed class MessageRepository : IMessageRepository
                 u.username AS Username,
                 u.display_name AS DisplayName,
                 COALESCE(u.is_admin, FALSE) AS IsAdmin,
+                COALESCE(u.is_supporter, FALSE) AS IsSupporter,
+                u.supporter_tier AS SupporterTier,
                 ru.username AS ReplyToUsername,
                 ru.display_name AS ReplyToDisplayName,
                 LEFT(rcm.message_text, 120) AS ReplyToPreviewText
@@ -800,6 +816,8 @@ public sealed class MessageRepository : IMessageRepository
         public Guid? UserId { get; set; }
         public string? Username { get; set; }
         public bool IsAdmin { get; set; }
+        public bool IsSupporter { get; set; }
+        public string? SupporterTier { get; set; }
         public string? DisplayName { get; set; }
         public string MessageText { get; set; } = string.Empty;
         public string MessageType { get; set; } = string.Empty;
@@ -819,5 +837,15 @@ public sealed class MessageRepository : IMessageRepository
     {
         public Guid Id { get; set; }
         public string Emoji { get; set; } = string.Empty;
+    }
+
+    private static string? GetSupporterBadgeLabel(string? tier)
+    {
+        if (string.IsNullOrWhiteSpace(tier))
+            return null;
+
+        return string.Equals(tier, "supporter", StringComparison.OrdinalIgnoreCase)
+            ? "Supporter"
+            : "Member";
     }
 }

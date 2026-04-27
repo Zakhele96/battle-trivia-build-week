@@ -141,6 +141,12 @@ public sealed class DirectMessageRepository : IDirectMessageRepository
                 u.display_name AS OtherDisplayName,
                 u.avatar_url AS OtherAvatarUrl,
                 u.status_message AS OtherStatusMessage,
+                COALESCE(u.is_supporter, FALSE) AS OtherIsSupporter,
+                CASE
+                    WHEN u.supporter_tier IS NOT NULL AND LENGTH(TRIM(u.supporter_tier)) > 0
+                        THEN 'Supporter'
+                    ELSE NULL
+                END AS OtherSupporterBadgeLabel,
                 lm.message_text AS LastMessageText,
                 lm.sent_at AS LastMessageAt,
                 lm.sender_user_id AS LastMessageSenderUserId,
@@ -169,6 +175,8 @@ public sealed class DirectMessageRepository : IDirectMessageRepository
                 m.sender_user_id AS SenderUserId,
                 sender.username AS SenderUsername,
                 sender.display_name AS SenderDisplayName,
+                COALESCE(sender.is_supporter, FALSE) AS SenderIsSupporter,
+                sender.supporter_tier AS SenderSupporterTier,
                 m.recipient_user_id AS RecipientUserId,
                 m.message_text AS MessageText,
                 m.reply_to_message_id AS ReplyToMessageId,
@@ -234,6 +242,8 @@ public sealed class DirectMessageRepository : IDirectMessageRepository
                 m.sender_user_id AS SenderUserId,
                 sender.username AS SenderUsername,
                 sender.display_name AS SenderDisplayName,
+                COALESCE(sender.is_supporter, FALSE) AS SenderIsSupporter,
+                sender.supporter_tier AS SenderSupporterTier,
                 m.recipient_user_id AS RecipientUserId,
                 m.message_text AS MessageText,
                 m.reply_to_message_id AS ReplyToMessageId,
@@ -434,6 +444,8 @@ public sealed class DirectMessageRepository : IDirectMessageRepository
             SenderUserId = row.SenderUserId,
             SenderUsername = row.SenderUsername,
             SenderDisplayName = row.SenderDisplayName,
+            SenderIsSupporter = row.SenderIsSupporter,
+            SenderSupporterBadgeLabel = GetSupporterBadgeLabel(row.SenderSupporterTier),
             RecipientUserId = row.RecipientUserId,
             MessageText = row.MessageText,
             ReplyToMessageId = row.ReplyToMessageId,
@@ -455,6 +467,8 @@ public sealed class DirectMessageRepository : IDirectMessageRepository
         public Guid SenderUserId { get; set; }
         public string SenderUsername { get; set; } = string.Empty;
         public string SenderDisplayName { get; set; } = string.Empty;
+        public bool SenderIsSupporter { get; set; }
+        public string? SenderSupporterTier { get; set; }
         public Guid RecipientUserId { get; set; }
         public string MessageText { get; set; } = string.Empty;
         public Guid? ReplyToMessageId { get; set; }
@@ -464,5 +478,15 @@ public sealed class DirectMessageRepository : IDirectMessageRepository
         public DateTime SentAt { get; set; }
         public DateTime? ReadAt { get; set; }
         public string ReactionsJson { get; set; } = "[]";
+    }
+
+    private static string? GetSupporterBadgeLabel(string? tier)
+    {
+        if (string.IsNullOrWhiteSpace(tier))
+            return null;
+
+        return string.Equals(tier, "supporter", StringComparison.OrdinalIgnoreCase)
+            ? "Supporter"
+            : "Member";
     }
 }

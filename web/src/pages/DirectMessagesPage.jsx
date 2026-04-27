@@ -153,6 +153,11 @@ function ConversationRow({ item, active, onClick }) {
               <div className="break-words text-sm font-semibold leading-5 text-white">
                 {item.otherDisplayName || item.otherUsername}
               </div>
+              {item.otherIsSupporter ? (
+                <div className="mt-1 inline-flex rounded-full border border-amber-300/18 bg-amber-400/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-amber-100">
+                  {item.otherSupporterBadgeLabel || "Supporter"}
+                </div>
+              ) : null}
               <div
                 className={`mt-1 line-clamp-2 break-words text-[11px] leading-4 ${
                   item.isOnline ? "text-emerald-300" : "text-neutral-500"
@@ -623,6 +628,8 @@ export default function DirectMessagesPage() {
         userId: message.senderUserId,
         username: message.senderUsername,
         displayName: message.senderDisplayName,
+        isSupporter: message.senderIsSupporter,
+        supporterBadgeLabel: message.senderSupporterBadgeLabel,
         messageType: "user",
       })),
     [messages]
@@ -819,6 +826,11 @@ export default function DirectMessagesPage() {
                         {selectedConversation.otherDisplayName ||
                           selectedConversation.otherUsername}
                       </div>
+                      {selectedConversation.otherIsSupporter ? (
+                        <div className="mt-1 inline-flex rounded-full border border-amber-300/18 bg-amber-400/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-amber-100">
+                          {selectedConversation.otherSupporterBadgeLabel || "Supporter"}
+                        </div>
+                      ) : null}
                       <div
                         className={`mt-1 truncate text-[12px] ${
                           selectedConversation.isOnline ? "text-emerald-300" : "text-neutral-400"
