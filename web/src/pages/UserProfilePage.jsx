@@ -34,15 +34,26 @@ function formatPresence(profile) {
   }).format(new Date(profile.lastSeenAt))}`;
 }
 
-function StatCard({ label, value }) {
+function Panel({ children, className = "" }) {
   return (
-    <div className="rounded-[18px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] px-4 py-3">
+    <div
+      className={`rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-4 sm:p-5 ${className}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+function StatCard({ label, value, detail }) {
+  return (
+    <div className="rounded-[18px] border border-white/8 bg-black/20 px-4 py-3">
       <div className="text-[10px] uppercase tracking-[0.14em] text-neutral-500">
         {label}
       </div>
       <div className="mt-1 text-[18px] font-semibold tracking-[-0.03em] text-white">
         {value}
       </div>
+      {detail ? <div className="mt-1 text-[12px] text-neutral-400">{detail}</div> : null}
     </div>
   );
 }
@@ -69,14 +80,11 @@ export default function UserProfilePage() {
 
       try {
         const data = await getUserProfile(userId);
-        if (!isMounted) return;
-        setProfile(data);
+        if (isMounted) setProfile(data);
       } catch {
-        if (!isMounted) return;
-        setError("Could not load this profile.");
+        if (isMounted) setError("Could not load this profile.");
       } finally {
-        if (!isMounted) return;
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     }
 
@@ -109,7 +117,7 @@ export default function UserProfilePage() {
         <AppTopBar
           eyebrow="Profile"
           title={profile?.displayName || "Player profile"}
-          description="DM identity, current status, and all-time game stats."
+          description="A simple DM profile view: who this is, their current status, and their long-term stats."
           actions={[
             {
               label: "Back to my profile",
@@ -129,69 +137,68 @@ export default function UserProfilePage() {
         ) : null}
 
         {isLoading ? (
-          <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-10 text-center text-sm text-neutral-500">
+          <Panel className="px-4 py-10 text-center text-sm text-neutral-500">
             Loading profile...
-          </div>
+          </Panel>
         ) : profile ? (
           <div className="space-y-6">
-            <section className="rounded-[22px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.1),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-5 sm:rounded-[26px]">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-                <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full border border-white/10 bg-white/[0.05]">
-                  {profile.avatarUrl ? (
-                    <img
-                      src={profile.avatarUrl}
-                      alt={profile.displayName || profile.username}
-                      className="h-full w-full object-cover"
+            <Panel className="rounded-[28px] bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.14),transparent_26%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.012))] p-5 sm:p-6">
+              <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                <div className="flex min-w-0 items-start gap-4">
+                  <div className="relative h-20 w-20 shrink-0 sm:h-24 sm:w-24">
+                    <div className="h-full w-full overflow-hidden rounded-full border border-white/10 bg-white/[0.05]">
+                      {profile.avatarUrl ? (
+                        <img
+                          src={profile.avatarUrl}
+                          alt={profile.displayName || profile.username}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-2xl font-semibold text-white">
+                          {getInitials(profile.displayName || profile.username)}
+                        </div>
+                      )}
+                    </div>
+                    <span
+                      className={`absolute bottom-0 right-0 h-4 w-4 rounded-full border-2 border-neutral-950 ${
+                        profile.isOnline ? "bg-emerald-400" : "bg-neutral-600"
+                      }`}
                     />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xl font-semibold text-white">
-                      {getInitials(profile.displayName || profile.username)}
-                    </div>
-                  )}
-                  <span
-                    className={`absolute bottom-0 right-0 h-4 w-4 rounded-full border-2 border-neutral-950 ${
-                      profile.isOnline ? "bg-emerald-400" : "bg-neutral-600"
-                    }`}
-                  />
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
-                    DM profile
-                  </div>
-                  <div className="mt-1.5 break-words text-[28px] font-semibold tracking-[-0.03em] text-white">
-                    {profile.displayName || profile.username}
-                  </div>
-                  <div className="mt-1 break-all text-sm text-neutral-400">
-                    @{profile.username}
-                  </div>
-                  <div className="mt-3 inline-flex rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-neutral-300">
-                    {formatPresence(profile)}
                   </div>
 
-                  <div className="mt-4 rounded-[18px] border border-white/8 bg-black/20 px-4 py-3">
-                    <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
-                      Status
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[10px] uppercase tracking-[0.18em] text-blue-300/70">
+                      DM profile
                     </div>
-                    <div className="mt-1 text-sm leading-6 text-white">
-                      {profile.statusMessage || "No status set right now."}
+                    <div className="mt-2 break-words text-[28px] font-semibold tracking-[-0.04em] text-white sm:text-[34px]">
+                      {profile.displayName || profile.username}
+                    </div>
+                    <div className="mt-1 break-all text-sm text-neutral-400">
+                      @{profile.username}
+                    </div>
+
+                    <div className="mt-3 inline-flex rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-neutral-300">
+                      {formatPresence(profile)}
+                    </div>
+
+                    <div className="mt-4 rounded-[18px] border border-white/8 bg-black/20 px-4 py-3">
+                      <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
+                        Current status
+                      </div>
+                      <div className="mt-1 text-sm leading-6 text-white">
+                        {profile.statusMessage || "No status set right now."}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </section>
 
-            <section>
-              <div className="mb-3">
-                <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500">
-                  Stats
-                </div>
-                <div className="mt-1 text-[19px] font-semibold tracking-[-0.03em] text-white">
-                  All-time numbers
+                <div className="grid gap-3 sm:grid-cols-2 lg:w-[24rem]">
+                  <StatCard label="Presence" value={profile.isOnline ? "Online" : "Offline"} />
+                  <StatCard label="Best speed" value={formatFastest(stats.fastestCorrectAnswerMs)} />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
                 <StatCard label="Battle Trivia correct" value={stats.totalCorrectAnswers ?? 0} />
                 <StatCard
                   label="Word Scramble correct"
@@ -200,18 +207,43 @@ export default function UserProfilePage() {
                 <StatCard label="Weekly wins" value={stats.weeklyWins ?? 0} />
                 <StatCard label="Fastest correct" value={formatFastest(stats.fastestCorrectAnswerMs)} />
               </div>
-            </section>
+            </Panel>
 
-            <div className="rounded-[22px] border border-white/10 bg-white/[0.03] p-5">
-              <div className="text-sm text-neutral-400">
-                Want to update your own photo, status, or account details?
-              </div>
-              <Link
-                to="/profile"
-                className="mt-3 inline-flex rounded-[16px] bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-500"
-              >
-                Edit my profile
-              </Link>
+            <div className="grid gap-6 lg:grid-cols-[1fr_22rem]">
+              <Panel>
+                <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500">
+                  What to know
+                </div>
+                <div className="mt-2 text-[20px] font-semibold tracking-[-0.03em] text-white">
+                  A clean read on this player
+                </div>
+                <div className="mt-2 text-sm leading-6 text-neutral-400">
+                  This page focuses on the basics you need inside DMs: their name, whether they are around, what status they set, and the long-term game numbers that tell you how established they are.
+                </div>
+
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <StatCard label="Name shown" value={profile.displayName || profile.username} />
+                  <StatCard label="Username" value={`@${profile.username}`} />
+                </div>
+              </Panel>
+
+              <Panel>
+                <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500">
+                  Next step
+                </div>
+                <div className="mt-2 text-[20px] font-semibold tracking-[-0.03em] text-white">
+                  Need to update your own?
+                </div>
+                <div className="mt-2 text-sm leading-6 text-neutral-400">
+                  Photos, DM status, and your own account details live on your personal profile page.
+                </div>
+                <Link
+                  to="/profile"
+                  className="mt-4 inline-flex rounded-[16px] bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-500"
+                >
+                  Edit my profile
+                </Link>
+              </Panel>
             </div>
           </div>
         ) : null}

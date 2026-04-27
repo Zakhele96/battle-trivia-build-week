@@ -26,10 +26,10 @@ import { useSoundPreferences } from "../hooks/useSoundPreferences";
 import { useAuth } from "../hooks/useAuth";
 import { useTheme } from "../hooks/useTheme";
 import {
-  buildStreakCardSvg,
   buildPlayerRecapImageUrl,
   buildPlayerRecapUrl,
   buildShareUrl,
+  buildStreakCardSvg,
   buildTopTenCardSvg,
   downloadGeneratedCardPng,
   downloadImageUrlPng,
@@ -37,17 +37,17 @@ import {
 } from "../services/leaderboardShare";
 
 function formatFastest(ms) {
-  if (typeof ms !== "number") return "—";
+  if (typeof ms !== "number") return "-";
   if (ms < 1000) return `${ms} ms`;
   if (ms < 10000) return `${(ms / 1000).toFixed(2)}s`;
   return `${(ms / 1000).toFixed(1)}s`;
 }
 
 function formatDate(value) {
-  if (!value) return "—";
+  if (!value) return "-";
 
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
+  if (Number.isNaN(date.getTime())) return "-";
 
   return new Intl.DateTimeFormat(undefined, {
     month: "short",
@@ -65,109 +65,64 @@ function getInitials(value) {
   return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
 }
 
-function SectionHeader({ eyebrow, title, description, action }) {
+function SectionTitle({ eyebrow, title, description, action }) {
   return (
-    <div className="mb-3 flex flex-wrap items-end justify-between gap-2.5 sm:mb-4">
+    <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
       <div>
-        <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500 sm:text-[11px]">
+        <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500">
           {eyebrow}
         </div>
-        <div className="mt-1 text-[16px] font-semibold tracking-[-0.03em] text-white sm:text-[19px]">
+        <div className="mt-1 text-[19px] font-semibold tracking-[-0.03em] text-white">
           {title}
         </div>
         {description ? (
-          <div className="mt-1 text-[12px] leading-5 text-neutral-400 sm:mt-1.5 sm:text-[13px]">
+          <div className="mt-1 text-[13px] leading-6 text-neutral-400">
             {description}
           </div>
         ) : null}
       </div>
-
-      {action ? action : null}
+      {action || null}
     </div>
   );
 }
 
-function StatCard({ label, value }) {
+function Panel({ children, className = "" }) {
   return (
-    <div className="rounded-[18px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] px-3.5 py-3 sm:rounded-[20px] sm:px-4">
+    <div
+      className={`rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-4 sm:p-5 ${className}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+function StatCard({ label, value, detail }) {
+  return (
+    <div className="rounded-[18px] border border-white/8 bg-black/20 px-4 py-3">
       <div className="text-[10px] uppercase tracking-[0.14em] text-neutral-500">
         {label}
       </div>
-      <div className="mt-1 text-[18px] font-semibold tracking-[-0.03em] text-white sm:text-lg">
+      <div className="mt-1 text-[18px] font-semibold tracking-[-0.03em] text-white">
         {value}
       </div>
-    </div>
-  );
-}
-
-function GameBreakdownCard({
-  eyebrow,
-  title,
-  description,
-  accent = "blue",
-  stats = [],
-}) {
-  const accentClass =
-    accent === "violet"
-      ? "border-violet-400/18 bg-violet-500/10 text-violet-200"
-      : "border-blue-400/18 bg-blue-500/10 text-blue-200";
-
-  return (
-    <div className="rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-4 sm:rounded-[24px] sm:p-5">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
-            {eyebrow}
-          </div>
-          <div className="mt-1.5 text-[18px] font-semibold tracking-[-0.03em] text-white">
-            {title}
-          </div>
-          <div className="mt-1 text-[12px] leading-5 text-neutral-400">
-            {description}
-          </div>
-        </div>
-
-        <div
-          className={`rounded-full border px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] ${accentClass}`}
-        >
-          Stats
-        </div>
-      </div>
-
-      <div className="mt-4 grid grid-cols-2 gap-3">
-        {stats.map((item) => (
-          <StatCard key={item.label} label={item.label} value={item.value} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function EmptyBlock({ message }) {
-  return (
-    <div className="rounded-[18px] border border-white/8 bg-white/[0.03] px-4 py-6 text-sm text-neutral-500">
-      {message}
+      {detail ? <div className="mt-1 text-[12px] text-neutral-400">{detail}</div> : null}
     </div>
   );
 }
 
 function HistoryItem({ item }) {
   return (
-    <div className="rounded-[16px] border border-white/8 bg-black/20 px-3.5 py-3 sm:rounded-[18px] sm:px-4">
+    <div className="rounded-[18px] border border-white/8 bg-black/20 px-4 py-3">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="truncate text-sm font-medium text-white">
             {item.title || "Battle Trivia session"}
           </div>
-          <div className="mt-1 text-[11px] text-neutral-500">
-            {formatDate(item.endedAt)}
-          </div>
+          <div className="mt-1 text-[11px] text-neutral-500">{formatDate(item.endedAt)}</div>
         </div>
 
         <div className="shrink-0 text-right">
-          <div className="text-sm font-semibold text-blue-300">
-            {item.score} pts
-          </div>
+          <div className="text-sm font-semibold text-blue-300">{item.score} pts</div>
           <div className="mt-1 text-[11px] text-neutral-500">#{item.rank}</div>
         </div>
       </div>
@@ -175,221 +130,92 @@ function HistoryItem({ item }) {
   );
 }
 
-function IdentityCard({ profile, authUser }) {
+function HeroCard({ profile, authUser, stats, playerMomentum }) {
   const displayName =
     profile?.displayName ||
     authUser?.displayName ||
     profile?.username ||
     authUser?.username ||
     "Player";
-
   const username = profile?.username || authUser?.username || "username";
   const avatarUrl = profile?.avatarUrl || authUser?.avatarUrl || null;
   const statusMessage = profile?.statusMessage || authUser?.statusMessage || "";
+  const email = profile?.email || authUser?.email || "-";
+  const phone = profile?.phoneNumber || authUser?.phoneNumber || "Not added";
   const providerLabel =
     authUser?.authProvider === "google" ? "Google account" : "BTS account";
 
   return (
-    <div className="rounded-[22px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.1),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-4 sm:rounded-[26px] sm:p-5">
-      <div className="flex items-start gap-4">
-        <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full border border-white/10 bg-white/[0.05] sm:h-16 sm:w-16">
-          {avatarUrl ? (
-            <img
-              src={avatarUrl}
-              alt={displayName}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-base font-semibold text-white sm:text-lg">
-              {getInitials(displayName)}
+    <Panel className="rounded-[28px] bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.14),transparent_26%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.012))] p-5 sm:p-6">
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex min-w-0 items-start gap-4">
+          <div className="h-20 w-20 shrink-0 overflow-hidden rounded-full border border-white/10 bg-white/[0.05] sm:h-24 sm:w-24">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-2xl font-semibold text-white">
+                {getInitials(displayName)}
+              </div>
+            )}
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-blue-300/70">
+              Your profile at a glance
             </div>
-          )}
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500 sm:text-[11px]">
-            Account identity
-          </div>
-
-          <div className="mt-1.5 text-[22px] font-semibold tracking-[-0.03em] text-white sm:text-[24px]">
-            {displayName}
-          </div>
-
-          <div className="mt-1 text-sm text-neutral-400">@{username}</div>
-
-          <div className="mt-3 inline-flex rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-neutral-300">
-            {providerLabel}
-          </div>
-
-          <div className="mt-3 rounded-[16px] border border-white/8 bg-black/20 px-4 py-3">
-            <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
-              DM status
+            <div className="mt-2 break-words text-[28px] font-semibold tracking-[-0.04em] text-white sm:text-[34px]">
+              {displayName}
             </div>
-            <div className="mt-1 text-sm leading-6 text-white">
-              {statusMessage || "No status set right now."}
+            <div className="mt-1 break-all text-sm text-neutral-400">@{username}</div>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-neutral-300">
+                {providerLabel}
+              </div>
+              <div className="rounded-full border border-emerald-400/16 bg-emerald-500/10 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-emerald-100">
+                {statusMessage ? "DM status set" : "No DM status yet"}
+              </div>
             </div>
+
+            <div className="mt-4 rounded-[18px] border border-white/8 bg-black/20 px-4 py-3">
+              <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
+                What people see in direct messages
+              </div>
+              <div className="mt-1 text-sm leading-6 text-white">
+                {statusMessage || "No status set right now."}
+              </div>
+            </div>
+
+            {playerMomentum ? (
+              <div className="mt-4 rounded-[18px] border border-violet-400/18 bg-violet-500/10 px-4 py-3">
+                <div className="text-[10px] uppercase tracking-[0.16em] text-violet-100/75">
+                  This week
+                </div>
+                <div className="mt-1 text-sm text-white">{playerMomentum.title}</div>
+                <div className="mt-1 text-[12px] leading-5 text-violet-100/80">
+                  {playerMomentum.detail}
+                </div>
+              </div>
+            ) : null}
           </div>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2 lg:w-[24rem]">
+          <StatCard label="Email" value={email} />
+          <StatCard label="Phone" value={phone} />
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <div className="rounded-[16px] border border-white/8 bg-black/20 px-4 py-3">
-          <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
-            Email
-          </div>
-          <div className="mt-1 text-sm text-white">
-            {profile?.email || authUser?.email || "—"}
-          </div>
-        </div>
-
-        <div className="rounded-[16px] border border-white/8 bg-black/20 px-4 py-3">
-          <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
-            Phone
-          </div>
-          <div className="mt-1 text-sm text-white">
-            {profile?.phoneNumber || authUser?.phoneNumber || "Not added"}
-          </div>
-        </div>
+      <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatCard label="Battle Trivia correct" value={stats.totalCorrectAnswers ?? 0} />
+        <StatCard
+          label="Word Scramble correct"
+          value={stats.wordScrambleCorrectAnswers ?? 0}
+        />
+        <StatCard label="Weekly wins" value={stats.weeklyWins ?? 0} />
+        <StatCard label="Fastest correct" value={formatFastest(stats.fastestCorrectAnswerMs)} />
       </div>
-    </div>
-  );
-}
-
-function SignInMethodCard({ isGoogleAccount }) {
-  return (
-    <div className="rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-4 sm:rounded-[24px] sm:p-5">
-      <div className="mb-3 text-sm font-semibold text-white">Sign-in method</div>
-
-      <div className="rounded-[16px] border border-white/8 bg-black/20 px-4 py-4">
-        <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
-          Provider
-        </div>
-
-        <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-sm font-medium text-white">
-          {isGoogleAccount ? "Google" : "BTS"}
-        </div>
-
-        <div className="mt-3 text-sm text-neutral-400">
-          {isGoogleAccount
-            ? "This account signs in with Google, so password changes are not needed here."
-            : "This account uses your BTS password for sign-in."}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function GrowthInviteCard({
-  growth,
-  onCopyInvite,
-  onShareInvite,
-  onDownloadCard,
-  onDownloadStreakCard,
-  onDownloadTopTenCard,
-  onShareRecap,
-  onDownloadRecap,
-  momentum,
-  canDownloadTopTenCard = false,
-}) {
-  const showMomentum = Boolean(momentum);
-
-  return (
-    <div className="rounded-[22px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.12),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-4 sm:rounded-[24px] sm:p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div className="text-[10px] uppercase tracking-[0.16em] text-emerald-300/70">
-            Invite loop
-          </div>
-          <div className="mt-1.5 text-[18px] font-semibold tracking-[-0.03em] text-white">
-            Bring people into your weekly race
-          </div>
-          <div className="mt-1 text-[12px] leading-5 text-neutral-400">
-            Share your BTS page, post your rank and recap cards, and turn your own progress into sign-ups.
-          </div>
-        </div>
-
-        <div className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-emerald-100">
-          Growth ready
-        </div>
-      </div>
-
-      <div className="mt-4 grid grid-cols-3 gap-3">
-        <StatCard label="Share views" value={growth?.shareViews ?? 0} />
-        <StatCard label="Join clicks" value={growth?.joinClicks ?? 0} />
-        <StatCard label="Sign-ups" value={growth?.referredSignups ?? 0} />
-      </div>
-
-      {showMomentum ? (
-        <div className="mt-4 rounded-[18px] border border-violet-400/18 bg-violet-500/10 px-4 py-3">
-          <div className="text-[10px] uppercase tracking-[0.16em] text-violet-100/75">
-            Momentum
-          </div>
-          <div className="mt-1 text-sm text-white">{momentum.title}</div>
-          <div className="mt-1 text-[12px] leading-5 text-violet-100/80">
-            {momentum.detail}
-          </div>
-        </div>
-      ) : null}
-
-      <div className="mt-4 grid gap-2 sm:grid-cols-3">
-        <button
-          type="button"
-          onClick={onCopyInvite}
-          className="rounded-[16px] bg-white px-4 py-3 text-sm font-semibold text-neutral-950 transition hover:bg-neutral-200"
-        >
-          Copy invite link
-        </button>
-        <button
-          type="button"
-          onClick={onShareInvite}
-          className="rounded-[16px] border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/15"
-        >
-          Share invite page
-        </button>
-        <button
-          type="button"
-          onClick={onDownloadCard}
-          className="rounded-[16px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
-        >
-          Download rank card
-        </button>
-      </div>
-
-      <div className="mt-2 grid gap-2 sm:grid-cols-2">
-        <button
-          type="button"
-          onClick={onShareRecap}
-          className="rounded-[16px] border border-violet-400/20 bg-violet-500/10 px-4 py-3 text-sm font-semibold text-violet-100 transition hover:bg-violet-500/15"
-        >
-          Share weekly recap
-        </button>
-        <button
-          type="button"
-          onClick={onDownloadRecap}
-          className="rounded-[16px] border border-amber-300/18 bg-amber-400/10 px-4 py-3 text-sm font-semibold text-amber-100 transition hover:bg-amber-400/15"
-        >
-          Download weekly recap
-        </button>
-      </div>
-
-      <div className="mt-2 grid gap-2 sm:grid-cols-2">
-        <button
-          type="button"
-          onClick={onDownloadStreakCard}
-          className="rounded-[16px] border border-orange-400/20 bg-orange-500/10 px-4 py-3 text-sm font-semibold text-orange-100 transition hover:bg-orange-500/15"
-        >
-          Download streak card
-        </button>
-        <button
-          type="button"
-          onClick={onDownloadTopTenCard}
-          disabled={!canDownloadTopTenCard}
-          className="rounded-[16px] border border-cyan-300/18 bg-cyan-400/10 px-4 py-3 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/15 disabled:cursor-not-allowed disabled:opacity-45"
-        >
-          {canDownloadTopTenCard ? "Download top 10 card" : "Top 10 card locked"}
-        </button>
-      </div>
-    </div>
+    </Panel>
   );
 }
 
@@ -416,71 +242,6 @@ function ChoiceIndicator({ active, isLight = false }) {
   );
 }
 
-function ThemeCard({ themePreference, setThemePreference, isLight = false }) {
-  const options = [
-    {
-      value: "system",
-      label: "Follow device",
-      description: "Switch automatically with your phone or desktop theme.",
-    },
-    {
-      value: "dark",
-      label: "Dark",
-      description: "Keep the current dark look everywhere.",
-    },
-    {
-      value: "light",
-      label: "Light",
-      description: "Use the lighter app appearance.",
-    },
-  ];
-
-  return (
-    <div className="rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-4 sm:rounded-[24px] sm:p-5">
-      <div className="mb-4">
-        <div className="text-sm font-semibold text-white">Theme</div>
-        <div className="mt-1 text-sm text-neutral-400">
-          Choose how the app should look for you.
-        </div>
-      </div>
-
-      <div className="space-y-3" role="radiogroup" aria-label="Theme preference">
-        {options.map((option) => {
-          const active = themePreference === option.value;
-
-          return (
-            <button
-              key={option.value}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              onClick={() => setThemePreference(option.value)}
-              className={`w-full rounded-[16px] border px-4 py-3 text-left transition ${
-                active
-                  ? "border-blue-300/22 bg-blue-500/10"
-                  : "border-white/10 bg-white/[0.03] hover:border-white/15 hover:bg-white/[0.05]"
-              }`}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="text-sm font-medium text-white">
-                    {option.label}
-                  </div>
-                  <div className="mt-1 text-[12px] leading-5 text-neutral-400">
-                    {option.description}
-                  </div>
-                </div>
-
-                <ChoiceIndicator active={active} isLight={isLight} />
-              </div>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 function PreferenceToggle({
   label,
   description,
@@ -504,14 +265,73 @@ function PreferenceToggle({
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-sm font-medium text-white">{label}</div>
-          <div className="mt-1 text-[12px] leading-5 text-neutral-400">
-            {description}
-          </div>
+          <div className="mt-1 text-[12px] leading-5 text-neutral-400">{description}</div>
         </div>
-
         <ChoiceIndicator active={active} isLight={isLight} />
       </div>
     </button>
+  );
+}
+
+function ThemeCard({ themePreference, setThemePreference, isLight = false }) {
+  const options = [
+    {
+      value: "system",
+      label: "Follow device",
+      description: "Switch automatically with your phone or desktop theme.",
+    },
+    {
+      value: "dark",
+      label: "Dark",
+      description: "Keep the darker look everywhere.",
+    },
+    {
+      value: "light",
+      label: "Light",
+      description: "Use the lighter app appearance.",
+    },
+  ];
+
+  return (
+    <Panel>
+      <div className="mb-4">
+        <div className="text-sm font-semibold text-white">Theme</div>
+        <div className="mt-1 text-sm text-neutral-400">
+          Pick how the app should look for you.
+        </div>
+      </div>
+
+      <div className="space-y-3" role="radiogroup" aria-label="Theme preference">
+        {options.map((option) => {
+          const active = themePreference === option.value;
+
+          return (
+            <button
+              key={option.value}
+              type="button"
+              role="radio"
+              aria-checked={active}
+              onClick={() => setThemePreference(option.value)}
+              className={`w-full rounded-[16px] border px-4 py-3 text-left transition ${
+                active
+                  ? "border-blue-300/22 bg-blue-500/10"
+                  : "border-white/10 bg-white/[0.03] hover:border-white/15 hover:bg-white/[0.05]"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-sm font-medium text-white">{option.label}</div>
+                  <div className="mt-1 text-[12px] leading-5 text-neutral-400">
+                    {option.description}
+                  </div>
+                </div>
+                <ChoiceIndicator active={active} isLight={isLight} />
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </Panel>
   );
 }
 
@@ -523,19 +343,18 @@ function SoundCard({
   isLight = false,
 }) {
   return (
-    <div className="rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-4 sm:rounded-[24px] sm:p-5">
+    <Panel>
       <div className="mb-4">
         <div className="text-sm font-semibold text-white">Sound</div>
         <div className="mt-1 text-sm text-neutral-400">
-          Keep game feedback lively with local sound cues that only play on your
-          device.
+          Control local game sounds on this device.
         </div>
       </div>
 
       <div className="space-y-3">
         <PreferenceToggle
           label="Sound effects"
-          description="Play a soft chime when you answer correctly in Battle Trivia or solve a Word Scramble round."
+          description="Play feedback sounds when you answer or solve correctly."
           active={soundEffectsEnabled}
           onToggle={setSoundEffectsEnabled}
           isLight={isLight}
@@ -543,13 +362,34 @@ function SoundCard({
 
         <PreferenceToggle
           label="Timer warnings"
-          description="Play subtle end-of-round cues in the final seconds so you can react faster on mobile."
+          description="Play subtle end-of-round cues in the final seconds."
           active={timerWarningsEnabled}
           onToggle={setTimerWarningsEnabled}
           isLight={isLight}
         />
       </div>
-    </div>
+    </Panel>
+  );
+}
+
+function SignInMethodCard({ isGoogleAccount }) {
+  return (
+    <Panel>
+      <div className="text-sm font-semibold text-white">Sign-in method</div>
+      <div className="mt-4 rounded-[16px] border border-white/8 bg-black/20 px-4 py-4">
+        <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
+          Provider
+        </div>
+        <div className="mt-2 inline-flex rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-sm font-medium text-white">
+          {isGoogleAccount ? "Google" : "BTS"}
+        </div>
+        <div className="mt-3 text-sm text-neutral-400">
+          {isGoogleAccount
+            ? "This account signs in with Google, so password changes are not needed here."
+            : "This account uses your BTS password for sign-in."}
+        </div>
+      </div>
+    </Panel>
   );
 }
 
@@ -582,22 +422,23 @@ export default function ProfilePage() {
 
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [growthMessage, setGrowthMessage] = useState("");
+  const [friendMessage, setFriendMessage] = useState("");
 
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [isLoadingProgression, setIsLoadingProgression] = useState(true);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const [isLoadingMissions, setIsLoadingMissions] = useState(true);
+  const [isLoadingFriends, setIsLoadingFriends] = useState(true);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
-  const [growthMessage, setGrowthMessage] = useState("");
+
   const [playerMomentum, setPlayerMomentum] = useState(null);
   const [currentCombinedStanding, setCurrentCombinedStanding] = useState(null);
   const [missions, setMissions] = useState(null);
-  const [isLoadingMissions, setIsLoadingMissions] = useState(true);
   const [friendNetwork, setFriendNetwork] = useState(null);
-  const [isLoadingFriends, setIsLoadingFriends] = useState(true);
   const [friendSearchQuery, setFriendSearchQuery] = useState("");
   const [friendSearchResults, setFriendSearchResults] = useState([]);
-  const [friendMessage, setFriendMessage] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -615,11 +456,9 @@ export default function ProfilePage() {
         setAvatarUrl(data?.avatarUrl || "");
         setStatusMessage(data?.statusMessage || "");
       } catch {
-        if (!isMounted) return;
-        setError("Failed to load profile.");
+        if (isMounted) setError("Failed to load profile.");
       } finally {
-        if (!isMounted) return;
-        setIsLoadingProfile(false);
+        if (isMounted) setIsLoadingProfile(false);
       }
     }
 
@@ -638,14 +477,11 @@ export default function ProfilePage() {
 
       try {
         const data = await getMyProgression();
-        if (!isMounted) return;
-        setProgression(data);
+        if (isMounted) setProgression(data);
       } catch {
-        if (!isMounted) return;
-        setError("Failed to load progression.");
+        if (isMounted) setError("Failed to load progression.");
       } finally {
-        if (!isMounted) return;
-        setIsLoadingProgression(false);
+        if (isMounted) setIsLoadingProgression(false);
       }
     }
 
@@ -669,11 +505,9 @@ export default function ProfilePage() {
         setHistory(Array.isArray(data?.items) ? data.items : []);
         setTotalPages(data?.totalPages || 1);
       } catch {
-        if (!isMounted) return;
-        setError("Failed to load profile history.");
+        if (isMounted) setError("Failed to load profile history.");
       } finally {
-        if (!isMounted) return;
-        setIsLoadingHistory(false);
+        if (isMounted) setIsLoadingHistory(false);
       }
     }
 
@@ -706,9 +540,7 @@ export default function ProfilePage() {
         setCurrentCombinedStanding(currentRow);
 
         if (previousRow) {
-          const delta = currentRow
-            ? previousRow.rank - currentRow.rank
-            : 0;
+          const delta = currentRow ? previousRow.rank - currentRow.rank : 0;
 
           setPlayerMomentum({
             title: currentRow
@@ -739,9 +571,10 @@ export default function ProfilePage() {
           setPlayerMomentum(null);
         }
       } catch {
-        if (!isMounted) return;
-        setCurrentCombinedStanding(null);
-        setPlayerMomentum(null);
+        if (isMounted) {
+          setCurrentCombinedStanding(null);
+          setPlayerMomentum(null);
+        }
       }
     }
 
@@ -760,14 +593,11 @@ export default function ProfilePage() {
 
       try {
         const data = await getMyMissions();
-        if (!isMounted) return;
-        setMissions(data);
+        if (isMounted) setMissions(data);
       } catch {
-        if (!isMounted) return;
-        setMissions(null);
+        if (isMounted) setMissions(null);
       } finally {
-        if (!isMounted) return;
-        setIsLoadingMissions(false);
+        if (isMounted) setIsLoadingMissions(false);
       }
     }
 
@@ -786,14 +616,11 @@ export default function ProfilePage() {
 
       try {
         const data = await getMyFriendNetwork();
-        if (!isMounted) return;
-        setFriendNetwork(data);
+        if (isMounted) setFriendNetwork(data);
       } catch {
-        if (!isMounted) return;
-        setFriendNetwork(null);
+        if (isMounted) setFriendNetwork(null);
       } finally {
-        if (!isMounted) return;
-        setIsLoadingFriends(false);
+        if (isMounted) setIsLoadingFriends(false);
       }
     }
 
@@ -808,9 +635,16 @@ export default function ProfilePage() {
   const growth = useMemo(() => profile?.growth || {}, [profile]);
   const loginProvider = localStorage.getItem("bts_login_provider");
   const isGoogleAccount = loginProvider === "google";
+  const isLight = resolvedTheme === "light";
+  const lightModeUndoFilter = isLight
+    ? {
+        filter:
+          "invert(1) hue-rotate(180deg) saturate(1.08) contrast(1.08) brightness(0.97)",
+      }
+    : undefined;
 
-  async function handleSaveProfile(e) {
-    e.preventDefault();
+  async function handleSaveProfile(event) {
+    event.preventDefault();
     setError("");
     setMessage("");
 
@@ -846,20 +680,18 @@ export default function ProfilePage() {
     }
   }
 
-  async function handleChangePassword(e) {
-    e.preventDefault();
+  async function handleChangePassword(event) {
+    event.preventDefault();
     setError("");
     setMessage("");
 
     try {
       setIsSavingPassword(true);
-
       await changeMyPassword({
         currentPassword,
         newPassword,
         confirmPassword,
       });
-
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -876,7 +708,7 @@ export default function ProfilePage() {
     navigate("/login", { replace: true });
   }
 
-  const handleAvatarFileChange = async (event) => {
+  async function handleAvatarFileChange(event) {
     const file = event.target.files?.[0];
     event.target.value = "";
 
@@ -905,15 +737,13 @@ export default function ProfilePage() {
     } catch {
       setError("Could not load that profile picture.");
     }
-  };
+  }
 
   const handleCopyInvite = async () => {
     if (!authUser?.id) return;
 
     try {
-      await navigator.clipboard.writeText(
-        buildShareUrl("combined", "current", authUser.id)
-      );
+      await navigator.clipboard.writeText(buildShareUrl("combined", "current", authUser.id));
       setGrowthMessage("Invite link copied.");
     } catch {
       setGrowthMessage("Could not copy invite link.");
@@ -930,11 +760,7 @@ export default function ProfilePage() {
 
     try {
       if (navigator.share) {
-        await navigator.share({
-          title: `${playerName} on BTS`,
-          text,
-          url,
-        });
+        await navigator.share({ title: `${playerName} on BTS`, text, url });
         setGrowthMessage("Share sheet opened.");
         return;
       }
@@ -972,11 +798,7 @@ export default function ProfilePage() {
 
     try {
       if (navigator.share) {
-        await navigator.share({
-          title: "My BTS weekly recap",
-          text,
-          url,
-        });
+        await navigator.share({ title: "My BTS weekly recap", text, url });
         setGrowthMessage("Weekly recap share sheet opened.");
         return;
       }
@@ -1114,16 +936,6 @@ export default function ProfilePage() {
     }
   };
 
-
-
-  const isLight = resolvedTheme === "light";
-  const lightModeUndoFilter = isLight
-    ? {
-        filter:
-          "invert(1) hue-rotate(180deg) saturate(1.08) contrast(1.08) brightness(0.97)",
-      }
-    : undefined;
-
   return (
     <div
       className={`profile-page min-h-screen bg-neutral-950 text-white ${
@@ -1137,8 +949,17 @@ export default function ProfilePage() {
         <AppTopBar
           eyebrow="Profile"
           title="Your account"
-          description="Manage your details, security, progression, and history."
-          actions={[]}
+          description="See who you are in BTS, update what shows in DMs, and check how your week is going."
+          actions={[
+            {
+              label: "View standings",
+              to: "/leaderboards?mode=combined&period=current",
+            },
+            {
+              label: "Open activity",
+              to: "/activity",
+            },
+          ]}
         />
 
         {error ? (
@@ -1153,147 +974,75 @@ export default function ProfilePage() {
           </div>
         ) : null}
 
-        <div className="mb-6 sm:mb-7">
-          <IdentityCard profile={profile} authUser={authUser} />
+        <div className="mb-6">
+          <HeroCard
+            profile={profile}
+            authUser={authUser}
+            stats={stats}
+            playerMomentum={playerMomentum}
+          />
         </div>
 
-        <section className="mb-6 sm:mb-7">
-          <SectionHeader
-            eyebrow="Growth"
-            title="Invite and flex"
-            description="Turn your own profile and leaderboard energy into shareable invites, recap cards, and real sign-ups."
-          />
-
-          <GrowthInviteCard
-            growth={growth}
-            onCopyInvite={handleCopyInvite}
-            onShareInvite={handleShareInvite}
-            onDownloadCard={handleDownloadGrowthCard}
-            onDownloadStreakCard={handleDownloadStreakCard}
-            onDownloadTopTenCard={handleDownloadTopTenCard}
-            onShareRecap={handleShareWeeklyRecap}
-            onDownloadRecap={handleDownloadWeeklyRecap}
-            momentum={playerMomentum}
-            canDownloadTopTenCard={Boolean(
-              currentCombinedStanding && currentCombinedStanding.rank <= 10
-            )}
-          />
-
-          {growthMessage ? (
-            <div className="mt-3 text-sm text-neutral-400">{growthMessage}</div>
-          ) : null}
-        </section>
-
-        <section className="mb-6 sm:mb-7">
-          <SectionHeader
-            eyebrow="Missions"
-            title="Daily and weekly goals"
-            description="Short loops, streak targets, and reward pacing that keep the week moving."
-          />
-
-          <ProfileMissionsCard missions={missions} loading={isLoadingMissions} />
-        </section>
-
-        <section className="mb-6 sm:mb-7">
-          <SectionHeader
-            eyebrow="Friends"
-            title="Build your real competition circle"
-            description="Add friends, accept requests, and set up the people you will compare against on the leaderboard."
-          />
-
-          <ProfileFriendsCard
-            searchQuery={friendSearchQuery}
-            onSearchQueryChange={setFriendSearchQuery}
-            onSearch={handleFriendSearch}
-            searchResults={friendSearchResults}
-            network={friendNetwork}
-            loading={isLoadingFriends}
-            onSendRequest={handleSendFriendRequest}
-            onAcceptRequest={handleAcceptFriendRequest}
-            onDeclineRequest={handleDeclineFriendRequest}
-          />
-
-          {friendMessage ? (
-            <div className="mt-3 text-sm text-neutral-400">{friendMessage}</div>
-          ) : null}
-        </section>
-
-        <section className="mb-6 sm:mb-7">
-          <SectionHeader
-            eyebrow="Progress"
-            title="Progression and achievements"
-            description="Track how your account is developing over time."
-          />
-
-          <div className="grid gap-4 lg:grid-cols-[1.02fr_0.98fr] lg:gap-5">
-            <ProfileProgressCard
-              progression={progression}
-              loading={isLoadingProgression}
-            />
-
-            <ProfileAchievementsCard
-              progression={progression}
-              loading={isLoadingProgression}
-            />
-          </div>
-        </section>
-
-        <div className="grid gap-6 lg:grid-cols-[1.02fr_0.98fr] lg:gap-5">
+        <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="space-y-6">
             <section>
-              <SectionHeader
-                eyebrow="Account"
-                title="Details"
-                description="Update the basics of your account here."
+              <SectionTitle
+                eyebrow="Edit"
+                title="Account details"
+                description="Change the name, photo, and DM status people see."
               />
 
-              <div className="rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-4 sm:rounded-[24px] sm:p-5">
+              <Panel>
                 {isLoadingProfile ? (
-                  <EmptyBlock message="Loading profile..." />
+                  <div className="text-sm text-neutral-500">Loading profile...</div>
                 ) : (
                   <form onSubmit={handleSaveProfile} className="space-y-4">
-                    <div>
-                      <label className="mb-2 block text-[11px] uppercase tracking-[0.14em] text-neutral-500">
-                        Username
-                      </label>
-                      <input
-                        value={profile?.username || authUser?.username || ""}
-                        disabled
-                        className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-neutral-400 outline-none"
-                      />
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <label className="mb-2 block text-[11px] uppercase tracking-[0.14em] text-neutral-500">
+                          Username
+                        </label>
+                        <input
+                          value={profile?.username || authUser?.username || ""}
+                          disabled
+                          className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-neutral-400 outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-[11px] uppercase tracking-[0.14em] text-neutral-500">
+                          Email
+                        </label>
+                        <input
+                          value={profile?.email || authUser?.email || ""}
+                          disabled
+                          className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-neutral-400 outline-none"
+                        />
+                      </div>
                     </div>
 
-                    <div>
-                      <label className="mb-2 block text-[11px] uppercase tracking-[0.14em] text-neutral-500">
-                        Email
-                      </label>
-                      <input
-                        value={profile?.email || authUser?.email || ""}
-                        disabled
-                        className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-neutral-400 outline-none"
-                      />
-                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <label className="mb-2 block text-[11px] uppercase tracking-[0.14em] text-neutral-500">
+                          Display name
+                        </label>
+                        <input
+                          value={displayName}
+                          onChange={(event) => setDisplayName(event.target.value)}
+                          className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none focus:border-blue-400/20"
+                        />
+                      </div>
 
-                    <div>
-                      <label className="mb-2 block text-[11px] uppercase tracking-[0.14em] text-neutral-500">
-                        Display name
-                      </label>
-                      <input
-                        value={displayName}
-                        onChange={(e) => setDisplayName(e.target.value)}
-                        className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none focus:border-blue-400/20"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="mb-2 block text-[11px] uppercase tracking-[0.14em] text-neutral-500">
-                        Phone number
-                      </label>
-                      <input
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
-                        className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none focus:border-blue-400/20"
-                      />
+                      <div>
+                        <label className="mb-2 block text-[11px] uppercase tracking-[0.14em] text-neutral-500">
+                          Phone number
+                        </label>
+                        <input
+                          value={phoneNumber}
+                          onChange={(event) => setPhoneNumber(event.target.value)}
+                          className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none focus:border-blue-400/20"
+                        />
+                      </div>
                     </div>
 
                     <div>
@@ -1302,13 +1051,13 @@ export default function ProfilePage() {
                       </label>
                       <textarea
                         value={statusMessage}
-                        onChange={(e) => setStatusMessage(e.target.value.slice(0, 120))}
+                        onChange={(event) => setStatusMessage(event.target.value.slice(0, 120))}
                         rows={3}
                         placeholder="Available for late-night trivia smoke."
                         className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none focus:border-blue-400/20"
                       />
                       <div className="mt-1 text-[11px] text-neutral-500">
-                        Shows in direct messages and on your DM profile.
+                        This only shows in direct messages and the DM profile page.
                       </div>
                     </div>
 
@@ -1373,48 +1122,42 @@ export default function ProfilePage() {
                     </div>
                   </form>
                 )}
-              </div>
+              </Panel>
             </section>
 
             <section>
-              <SectionHeader
-                eyebrow="Security"
-                title="Sign-in and password"
-                description="Keep your access method clear and up to date."
+              <SectionTitle
+                eyebrow="Access"
+                title="Sign-in and preferences"
+                description="Manage how you sign in and how the app behaves on your device."
               />
 
-              {!isGoogleAccount ? (
-                <div className="grid gap-4">
-                  <div className="rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-4 sm:rounded-[24px] sm:p-5">
-                    <div className="mb-4 text-sm font-semibold text-white">
-                      Change password
-                    </div>
-
+              <div className="space-y-4">
+                {!isGoogleAccount ? (
+                  <Panel>
+                    <div className="mb-4 text-sm font-semibold text-white">Change password</div>
                     <form onSubmit={handleChangePassword} className="space-y-4">
                       <input
                         type="password"
                         value={currentPassword}
-                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        onChange={(event) => setCurrentPassword(event.target.value)}
                         placeholder="Current password"
                         className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none focus:border-blue-400/20"
                       />
-
                       <input
                         type="password"
                         value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
+                        onChange={(event) => setNewPassword(event.target.value)}
                         placeholder="New password"
                         className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none focus:border-blue-400/20"
                       />
-
                       <input
                         type="password"
                         value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        onChange={(event) => setConfirmPassword(event.target.value)}
                         placeholder="Confirm new password"
                         className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none focus:border-blue-400/20"
                       />
-
                       <button
                         type="submit"
                         disabled={isSavingPassword}
@@ -1423,151 +1166,54 @@ export default function ProfilePage() {
                         {isSavingPassword ? "Updating..." : "Update password"}
                       </button>
                     </form>
-                  </div>
-
-                  <ThemeCard
-                    themePreference={themePreference}
-                    setThemePreference={setThemePreference}
-                    isLight={isLight}
-                  />
-                  <SoundCard
-                    soundEffectsEnabled={soundEffectsEnabled}
-                    timerWarningsEnabled={timerWarningsEnabled}
-                    setSoundEffectsEnabled={setSoundEffectsEnabled}
-                    setTimerWarningsEnabled={setTimerWarningsEnabled}
-                    isLight={isLight}
-                  />
-                </div>
-              ) : (
-                <div className="grid gap-4">
+                  </Panel>
+                ) : (
                   <SignInMethodCard isGoogleAccount={isGoogleAccount} />
-                  <ThemeCard
-                    themePreference={themePreference}
-                    setThemePreference={setThemePreference}
-                    isLight={isLight}
-                  />
-                  <SoundCard
-                    soundEffectsEnabled={soundEffectsEnabled}
-                    timerWarningsEnabled={timerWarningsEnabled}
-                    setSoundEffectsEnabled={setSoundEffectsEnabled}
-                    setTimerWarningsEnabled={setTimerWarningsEnabled}
-                    isLight={isLight}
-                  />
-                </div>
-              )}
+                )}
+
+                <ThemeCard
+                  themePreference={themePreference}
+                  setThemePreference={setThemePreference}
+                  isLight={isLight}
+                />
+
+                <SoundCard
+                  soundEffectsEnabled={soundEffectsEnabled}
+                  timerWarningsEnabled={timerWarningsEnabled}
+                  setSoundEffectsEnabled={setSoundEffectsEnabled}
+                  setTimerWarningsEnabled={setTimerWarningsEnabled}
+                  isLight={isLight}
+                />
+              </div>
             </section>
           </div>
 
           <div className="space-y-6">
             <section>
-              <SectionHeader
-                eyebrow="Stats"
-                title="All-time numbers"
-                description="A compact cross-account snapshot without repeating the full game breakdown below."
-                action={
-                  <Link
-                    to="/leaderboards?mode=combined&period=current"
-                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.035] px-3 py-1.5 text-[11px] font-medium text-white transition hover:border-white/15 hover:bg-white/[0.05] sm:rounded-[18px] sm:px-4 sm:py-2 sm:text-sm"
-                  >
-                    View standings
-                    <span aria-hidden="true">→</span>
-                  </Link>
-                }
+              <SectionTitle
+                eyebrow="Progress"
+                title="How your account is growing"
+                description="Level progress and achievements in one place."
               />
 
-              <div className="grid grid-cols-2 gap-3">
-                <StatCard
-                  label="Battle Trivia correct"
-                  value={stats.totalCorrectAnswers ?? 0}
-                />
-                <StatCard
-                  label="Word Scramble correct"
-                  value={stats.wordScrambleCorrectAnswers ?? 0}
-                />
-                <StatCard
-                  label="Weekly wins"
-                  value={stats.weeklyWins ?? 0}
-                />
-                <StatCard
-                  label="Fastest correct"
-                  value={formatFastest(stats.fastestCorrectAnswerMs)}
-                />
+              <div className="grid gap-4">
+                <ProfileProgressCard progression={progression} loading={isLoadingProgression} />
+                <ProfileAchievementsCard progression={progression} loading={isLoadingProgression} />
               </div>
             </section>
 
             <section>
-              <SectionHeader
-                eyebrow="Games"
-                title="Game breakdown"
-                description="Separate cards keep Battle Trivia and Word Scramble stats tidy."
-              />
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <GameBreakdownCard
-                  eyebrow="Battle Trivia"
-                  title="Performance"
-                  description="Your long-term Battle Trivia profile."
-                  accent="blue"
-                  stats={[
-                    {
-                      label: "Correct answers",
-                      value: stats.totalCorrectAnswers ?? 0,
-                    },
-                    {
-                      label: "Best streak",
-                      value: `x${stats.bestStreak ?? 0}`,
-                    },
-                    {
-                      label: "Weekly wins",
-                      value: stats.weeklyWins ?? 0,
-                    },
-                    {
-                      label: "Fastest correct",
-                      value: formatFastest(stats.fastestCorrectAnswerMs),
-                    },
-                  ]}
-                />
-
-                <GameBreakdownCard
-                  eyebrow="Word Scramble"
-                  title="Performance"
-                  description="Your all-time correct solves in Word Scramble."
-                  accent="violet"
-                  stats={[
-                    {
-                      label: "Correct answers",
-                      value: stats.wordScrambleCorrectAnswers ?? 0,
-                    },
-                    {
-                      label: "Mode",
-                      value: "Word Scramble",
-                    },
-                  ]}
-                />
-              </div>
-            </section>
-
-            <section>
-              <SectionHeader
+              <SectionTitle
                 eyebrow="History"
-                title="Battle Trivia history"
-                description="Your recent results, with the full activity view one tap away."
-                action={
-                  <Link
-                    to="/activity"
-                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.035] px-3 py-1.5 text-[11px] font-medium text-white transition hover:border-white/15 hover:bg-white/[0.05] sm:rounded-[18px] sm:px-4 sm:py-2 sm:text-sm"
-                  >
-                    Open activity
-                    <span aria-hidden="true">→</span>
-                  </Link>
-                }
+                title="Recent Battle Trivia results"
+                description="Your latest finishes without needing to open the full activity page."
               />
 
-              <div className="rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-4 sm:rounded-[24px] sm:p-5">
+              <Panel>
                 {isLoadingHistory ? (
-                  <EmptyBlock message="Loading history..." />
+                  <div className="text-sm text-neutral-500">Loading history...</div>
                 ) : history.length === 0 ? (
-                  <EmptyBlock message="No history yet." />
+                  <div className="text-sm text-neutral-500">No history yet.</div>
                 ) : (
                   <div className="space-y-2.5">
                     {history.map((item) => (
@@ -1591,9 +1237,7 @@ export default function ProfilePage() {
                       <button
                         type="button"
                         disabled={page >= totalPages}
-                        onClick={() =>
-                          setPage((prev) => Math.min(totalPages, prev + 1))
-                        }
+                        onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
                         className="rounded-[14px] border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white transition hover:bg-white/[0.06] disabled:opacity-50"
                       >
                         Next
@@ -1601,10 +1245,118 @@ export default function ProfilePage() {
                     </div>
                   </div>
                 )}
-              </div>
+              </Panel>
             </section>
           </div>
         </div>
+
+        <section className="mt-6">
+          <SectionTitle
+            eyebrow="Missions"
+            title="Daily and weekly goals"
+            description="Short goals that tell you what to do next."
+          />
+          <ProfileMissionsCard missions={missions} loading={isLoadingMissions} />
+        </section>
+
+        <section className="mt-6">
+          <SectionTitle
+            eyebrow="Friends"
+            title="People you compete with"
+            description="Search, add, and manage the people you want on your board."
+          />
+          <ProfileFriendsCard
+            searchQuery={friendSearchQuery}
+            onSearchQueryChange={setFriendSearchQuery}
+            onSearch={handleFriendSearch}
+            searchResults={friendSearchResults}
+            network={friendNetwork}
+            loading={isLoadingFriends}
+            onSendRequest={handleSendFriendRequest}
+            onAcceptRequest={handleAcceptFriendRequest}
+            onDeclineRequest={handleDeclineFriendRequest}
+          />
+          {friendMessage ? <div className="mt-3 text-sm text-neutral-400">{friendMessage}</div> : null}
+        </section>
+
+        <section className="mt-6">
+          <SectionTitle
+            eyebrow="Share"
+            title="Invite and flex"
+            description="Share your page, your cards, and your weekly recap from one simpler block."
+          />
+
+          <Panel>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <StatCard label="Share views" value={growth?.shareViews ?? 0} />
+              <StatCard label="Join clicks" value={growth?.joinClicks ?? 0} />
+              <StatCard label="Sign-ups" value={growth?.referredSignups ?? 0} />
+            </div>
+
+            <div className="mt-4 grid gap-2 sm:grid-cols-3">
+              <button
+                type="button"
+                onClick={handleCopyInvite}
+                className="rounded-[16px] bg-white px-4 py-3 text-sm font-semibold text-neutral-950 transition hover:bg-neutral-200"
+              >
+                Copy invite link
+              </button>
+              <button
+                type="button"
+                onClick={handleShareInvite}
+                className="rounded-[16px] border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/15"
+              >
+                Share invite page
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadGrowthCard}
+                className="rounded-[16px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
+              >
+                Download rank card
+              </button>
+            </div>
+
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={handleShareWeeklyRecap}
+                className="rounded-[16px] border border-violet-400/20 bg-violet-500/10 px-4 py-3 text-sm font-semibold text-violet-100 transition hover:bg-violet-500/15"
+              >
+                Share weekly recap
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadWeeklyRecap}
+                className="rounded-[16px] border border-amber-300/18 bg-amber-400/10 px-4 py-3 text-sm font-semibold text-amber-100 transition hover:bg-amber-400/15"
+              >
+                Download weekly recap
+              </button>
+            </div>
+
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={handleDownloadStreakCard}
+                className="rounded-[16px] border border-orange-400/20 bg-orange-500/10 px-4 py-3 text-sm font-semibold text-orange-100 transition hover:bg-orange-500/15"
+              >
+                Download streak card
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadTopTenCard}
+                disabled={!currentCombinedStanding || currentCombinedStanding.rank > 10}
+                className="rounded-[16px] border border-cyan-300/18 bg-cyan-400/10 px-4 py-3 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/15 disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                {currentCombinedStanding && currentCombinedStanding.rank <= 10
+                  ? "Download top 10 card"
+                  : "Top 10 card locked"}
+              </button>
+            </div>
+
+            {growthMessage ? <div className="mt-3 text-sm text-neutral-400">{growthMessage}</div> : null}
+          </Panel>
+        </section>
       </div>
     </div>
   );
