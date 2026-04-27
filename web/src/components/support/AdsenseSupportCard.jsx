@@ -7,7 +7,10 @@ import {
 
 export default function AdsenseSupportCard() {
   const adRef = useRef(null);
-  const isReady = Boolean(ADSENSE_CLIENT && ADSENSE_SLOT);
+
+  const hasClientId = Boolean(ADSENSE_CLIENT);
+  const hasSlotId = Boolean(ADSENSE_SLOT);
+  const isReady = hasClientId && hasSlotId;
 
   useEffect(() => {
     if (!isReady) return;
@@ -16,23 +19,33 @@ export default function AdsenseSupportCard() {
 
     try {
       if (adRef.current?.dataset.loaded === "true") return;
+
       window.adsbygoogle = window.adsbygoogle || [];
       window.adsbygoogle.push({});
+
       if (adRef.current) {
         adRef.current.dataset.loaded = "true";
       }
     } catch {
-      // AdSense can fail silently before account approval or on localhost.
+      // AdSense can fail silently before account approval,
+      // on localhost, or when blocked by browser extensions.
     }
   }, [isReady]);
 
   if (!isReady) {
     return (
       <div className="rounded-[22px] border border-dashed border-white/12 bg-black/20 p-4">
-        <div className="text-sm font-semibold text-white">Ad space ready</div>
+        <div className="text-sm font-semibold text-white">Ad space reserved</div>
+
         <div className="mt-2 text-sm leading-6 text-neutral-400">
-          Add `VITE_ADSENSE_CLIENT_ID` and `VITE_ADSENSE_SUPPORT_SLOT_ID` to show a
-          live Google ad unit here once your AdSense account is approved.
+          {hasClientId
+            ? "AdSense publisher ID is configured. Add a support-page ad slot ID when you create the ad unit."
+            : "Add your AdSense publisher ID and support-page ad slot ID to show a live Google ad unit here."}
+        </div>
+
+        <div className="mt-3 rounded-[16px] bg-white/[0.03] p-3 text-xs leading-5 text-neutral-500">
+          Current status: client ID {hasClientId ? "found" : "missing"}, slot ID{" "}
+          {hasSlotId ? "found" : "missing"}.
         </div>
       </div>
     );
@@ -43,6 +56,7 @@ export default function AdsenseSupportCard() {
       <div className="mb-3 text-[10px] uppercase tracking-[0.18em] text-neutral-500">
         Advertisement
       </div>
+
       <ins
         ref={adRef}
         className="adsbygoogle block min-h-[180px] w-full overflow-hidden rounded-[18px] bg-white/[0.03]"
