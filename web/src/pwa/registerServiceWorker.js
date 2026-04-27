@@ -1,4 +1,4 @@
-export function registerServiceWorker() {
+export function registerServiceWorker(onUpdateReady) {
   if (!("serviceWorker" in navigator)) {
     return;
   }
@@ -8,7 +8,7 @@ export function registerServiceWorker() {
       const registration = await navigator.serviceWorker.register("/sw.js");
 
       if (registration.waiting) {
-        registration.waiting.postMessage({ type: "SKIP_WAITING" });
+        onUpdateReady?.(registration);
       }
 
       registration.addEventListener("updatefound", () => {
@@ -20,7 +20,7 @@ export function registerServiceWorker() {
             worker.state === "installed" &&
             navigator.serviceWorker.controller
           ) {
-            worker.postMessage({ type: "SKIP_WAITING" });
+            onUpdateReady?.(registration);
           }
         });
       });

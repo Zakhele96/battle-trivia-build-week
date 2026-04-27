@@ -19,6 +19,7 @@ import AlertsPage from "./pages/AlertsPage";
 import DirectMessagesPage from "./pages/DirectMessagesPage";
 import AppSeo from "./components/seo/AppSeo";
 import PwaInstallPrompt from "./components/pwa/PwaInstallPrompt";
+import PwaUpdatePrompt from "./components/pwa/PwaUpdatePrompt";
 
 function PublicOnlyRoute({ children }) {
   const { isAuthenticated, isInitializing } = useAuth();
@@ -43,6 +44,7 @@ export default function App() {
     <>
       <AppSeo />
       <PwaInstallPrompt />
+      <PwaUpdatePrompt />
       <Routes>
         <Route
           path="/login"
