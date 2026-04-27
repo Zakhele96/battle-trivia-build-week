@@ -348,11 +348,17 @@ public sealed class DirectMessageRepository : IDirectMessageRepository
 
     public async Task ToggleReactionAsync(Guid messageId, Guid userId, string emoji)
     {
-        const string deleteSql = """
+        const string getExistingSql = """
+            SELECT emoji
+            FROM direct_message_reactions
+            WHERE direct_message_id = @MessageId
+              AND user_id = @UserId;
+            """;
+
+        const string deleteAllSql = """
             DELETE FROM direct_message_reactions
             WHERE direct_message_id = @MessageId
-              AND user_id = @UserId
-              AND emoji = @Emoji;
+              AND user_id = @UserId;
             """;
 
         const string insertSql = """
@@ -371,11 +377,28 @@ public sealed class DirectMessageRepository : IDirectMessageRepository
             """;
 
         using var connection = _context.CreateConnection();
-        var deleted = await connection.ExecuteAsync(deleteSql, new { MessageId = messageId, UserId = userId, Emoji = emoji });
-        if (deleted == 0)
+        connection.Open();
+        using var transaction = connection.BeginTransaction();
+
+        var existingEmoji = (await connection.QueryAsync<string>(
+            getExistingSql,
+            new { MessageId = messageId, UserId = userId },
+            transaction)).ToList();
+
+        await connection.ExecuteAsync(
+            deleteAllSql,
+            new { MessageId = messageId, UserId = userId },
+            transaction);
+
+        if (!(existingEmoji.Count == 1 && string.Equals(existingEmoji[0], emoji, StringComparison.Ordinal)))
         {
-            await connection.ExecuteAsync(insertSql, new { MessageId = messageId, UserId = userId, Emoji = emoji });
+            await connection.ExecuteAsync(
+                insertSql,
+                new { MessageId = messageId, UserId = userId, Emoji = emoji },
+                transaction);
         }
+
+        transaction.Commit();
     }
 
     public async Task<List<ChatMessageReactionResponse>> GetReactionsAsync(Guid messageId, Guid currentUserId)

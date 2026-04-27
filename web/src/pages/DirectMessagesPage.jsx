@@ -19,10 +19,11 @@ function applyOptimisticReaction(messages, messageId, emoji) {
 
     const existingReactions = Array.isArray(message.reactions) ? message.reactions : [];
     const targetReaction = existingReactions.find((reaction) => reaction.emoji === emoji);
+    const currentReaction = existingReactions.find((reaction) => reaction.reactedByMe);
 
     let nextReactions;
 
-    if (targetReaction?.reactedByMe) {
+    if (targetReaction?.reactedByMe && currentReaction?.emoji === emoji) {
       nextReactions = existingReactions
         .map((reaction) =>
           reaction.emoji === emoji
@@ -34,25 +35,45 @@ function applyOptimisticReaction(messages, messageId, emoji) {
             : reaction
         )
         .filter((reaction) => Number(reaction.count || 0) > 0);
-    } else if (targetReaction) {
-      nextReactions = existingReactions.map((reaction) =>
-        reaction.emoji === emoji
-          ? {
-              ...reaction,
-              count: Number(reaction.count || 0) + 1,
-              reactedByMe: true,
-            }
-          : reaction
-      );
     } else {
-      nextReactions = [
-        ...existingReactions,
-        {
-          emoji,
-          count: 1,
-          reactedByMe: true,
-        },
-      ];
+      const reactionsWithoutMine = existingReactions
+        .map((reaction) => {
+          if (!reaction.reactedByMe) {
+            return reaction;
+          }
+
+          return {
+            ...reaction,
+            count: Math.max(0, Number(reaction.count || 0) - 1),
+            reactedByMe: false,
+          };
+        })
+        .filter((reaction) => Number(reaction.count || 0) > 0);
+
+      const nextTargetReaction = reactionsWithoutMine.find(
+        (reaction) => reaction.emoji === emoji
+      );
+
+      if (nextTargetReaction) {
+        nextReactions = reactionsWithoutMine.map((reaction) =>
+          reaction.emoji === emoji
+            ? {
+                ...reaction,
+                count: Number(reaction.count || 0) + 1,
+                reactedByMe: true,
+              }
+            : reaction
+        );
+      } else {
+        nextReactions = [
+          ...reactionsWithoutMine,
+          {
+            emoji,
+            count: 1,
+            reactedByMe: true,
+          },
+        ];
+      }
     }
 
     return {
