@@ -24,10 +24,14 @@ public sealed class UserRepository : IUserRepository
                 phone_number AS PhoneNumber,
                 password_hash AS PasswordHash,
                 google_sub AS GoogleSub,
+                facebook_user_id AS FacebookUserId,
                 auth_provider AS AuthProvider,
                 avatar_url AS AvatarUrl,
                 status_message AS StatusMessage,
                 email_verified AS EmailVerified,
+                email_verification_code_hash AS EmailVerificationCodeHash,
+                email_verification_expires_at AS EmailVerificationExpiresAt,
+                email_verification_sent_at AS EmailVerificationSentAt,
                 is_active AS IsActive,
                 is_admin AS IsAdmin,
                 created_at AS CreatedAt,
@@ -51,10 +55,14 @@ public sealed class UserRepository : IUserRepository
                 phone_number AS PhoneNumber,
                 password_hash AS PasswordHash,
                 google_sub AS GoogleSub,
+                facebook_user_id AS FacebookUserId,
                 auth_provider AS AuthProvider,
                 avatar_url AS AvatarUrl,
                 status_message AS StatusMessage,
                 email_verified AS EmailVerified,
+                email_verification_code_hash AS EmailVerificationCodeHash,
+                email_verification_expires_at AS EmailVerificationExpiresAt,
+                email_verification_sent_at AS EmailVerificationSentAt,
                 is_active AS IsActive,
                 is_admin AS IsAdmin,
                 created_at AS CreatedAt,
@@ -93,10 +101,14 @@ public sealed class UserRepository : IUserRepository
                 phone_number AS PhoneNumber,
                 password_hash AS PasswordHash,
                 google_sub AS GoogleSub,
+                facebook_user_id AS FacebookUserId,
                 auth_provider AS AuthProvider,
                 avatar_url AS AvatarUrl,
                 status_message AS StatusMessage,
                 email_verified AS EmailVerified,
+                email_verification_code_hash AS EmailVerificationCodeHash,
+                email_verification_expires_at AS EmailVerificationExpiresAt,
+                email_verification_sent_at AS EmailVerificationSentAt,
                 is_active AS IsActive,
                 is_admin AS IsAdmin,
                 created_at AS CreatedAt,
@@ -120,10 +132,14 @@ public sealed class UserRepository : IUserRepository
                 phone_number AS PhoneNumber,
                 password_hash AS PasswordHash,
                 google_sub AS GoogleSub,
+                facebook_user_id AS FacebookUserId,
                 auth_provider AS AuthProvider,
                 avatar_url AS AvatarUrl,
                 status_message AS StatusMessage,
                 email_verified AS EmailVerified,
+                email_verification_code_hash AS EmailVerificationCodeHash,
+                email_verification_expires_at AS EmailVerificationExpiresAt,
+                email_verification_sent_at AS EmailVerificationSentAt,
                 is_active AS IsActive,
                 is_admin AS IsAdmin,
                 created_at AS CreatedAt,
@@ -147,10 +163,14 @@ public sealed class UserRepository : IUserRepository
                 phone_number AS PhoneNumber,
                 password_hash AS PasswordHash,
                 google_sub AS GoogleSub,
+                facebook_user_id AS FacebookUserId,
                 auth_provider AS AuthProvider,
                 avatar_url AS AvatarUrl,
                 status_message AS StatusMessage,
                 email_verified AS EmailVerified,
+                email_verification_code_hash AS EmailVerificationCodeHash,
+                email_verification_expires_at AS EmailVerificationExpiresAt,
+                email_verification_sent_at AS EmailVerificationSentAt,
                 is_active AS IsActive,
                 is_admin AS IsAdmin,
                 created_at AS CreatedAt,
@@ -179,6 +199,9 @@ public sealed class UserRepository : IUserRepository
                 avatar_url AS AvatarUrl,
                 status_message AS StatusMessage,
                 email_verified AS EmailVerified,
+                email_verification_code_hash AS EmailVerificationCodeHash,
+                email_verification_expires_at AS EmailVerificationExpiresAt,
+                email_verification_sent_at AS EmailVerificationSentAt,
                 is_active AS IsActive,
                 is_admin AS IsAdmin,
                 created_at AS CreatedAt,
@@ -202,10 +225,14 @@ public sealed class UserRepository : IUserRepository
                 phone_number,
                 password_hash,
                 google_sub,
+                facebook_user_id,
                 auth_provider,
                 avatar_url,
                 status_message,
                 email_verified,
+                email_verification_code_hash,
+                email_verification_expires_at,
+                email_verification_sent_at,
                 is_active,
                 is_admin,
                 created_at,
@@ -219,10 +246,14 @@ public sealed class UserRepository : IUserRepository
                 @PhoneNumber,
                 @PasswordHash,
                 @GoogleSub,
+                @FacebookUserId,
                 @AuthProvider,
                 @AvatarUrl,
                 @StatusMessage,
                 @EmailVerified,
+                @EmailVerificationCodeHash,
+                @EmailVerificationExpiresAt,
+                @EmailVerificationSentAt,
                 @IsActive,
                 @IsAdmin,
                 @CreatedAt,
@@ -243,6 +274,9 @@ public sealed class UserRepository : IUserRepository
                 avatar_url = @AvatarUrl,
                 status_message = @StatusMessage,
                 email_verified = @EmailVerified,
+                email_verification_code_hash = NULL,
+                email_verification_expires_at = NULL,
+                email_verification_sent_at = NULL,
                 updated_at = NOW()
             WHERE id = @Id;
             """;
@@ -256,6 +290,85 @@ public sealed class UserRepository : IUserRepository
             user.AvatarUrl,
             user.StatusMessage,
             user.EmailVerified
+        });
+    }
+
+    public async Task<User?> GetByFacebookUserIdAsync(string facebookUserId)
+    {
+        const string sql = """
+            SELECT
+                id,
+                username,
+                display_name AS DisplayName,
+                email,
+                phone_number AS PhoneNumber,
+                password_hash AS PasswordHash,
+                google_sub AS GoogleSub,
+                facebook_user_id AS FacebookUserId,
+                auth_provider AS AuthProvider,
+                avatar_url AS AvatarUrl,
+                status_message AS StatusMessage,
+                email_verified AS EmailVerified,
+                is_active AS IsActive,
+                is_admin AS IsAdmin,
+                created_at AS CreatedAt,
+                updated_at AS UpdatedAt
+            FROM users
+            WHERE facebook_user_id = @FacebookUserId;
+            """;
+
+        using var connection = _context.CreateConnection();
+        return await connection.QuerySingleOrDefaultAsync<User>(sql, new { FacebookUserId = facebookUserId });
+    }
+
+    public async Task LinkFacebookAsync(User user)
+    {
+        const string sql = """
+            UPDATE users
+            SET facebook_user_id = @FacebookUserId,
+                auth_provider = @AuthProvider,
+                avatar_url = @AvatarUrl,
+                status_message = @StatusMessage,
+                email_verified = @EmailVerified,
+                email_verification_code_hash = NULL,
+                email_verification_expires_at = NULL,
+                email_verification_sent_at = NULL,
+                updated_at = NOW()
+            WHERE id = @Id;
+            """;
+
+        using var connection = _context.CreateConnection();
+        await connection.ExecuteAsync(sql, new
+        {
+            user.Id,
+            user.FacebookUserId,
+            user.AuthProvider,
+            user.AvatarUrl,
+            user.StatusMessage,
+            user.EmailVerified
+        });
+    }
+
+    public async Task UpdateEmailVerificationAsync(Guid userId, string? codeHash, DateTime? expiresAt, DateTime? sentAt, bool emailVerified)
+    {
+        const string sql = """
+            UPDATE users
+            SET email_verification_code_hash = @CodeHash,
+                email_verification_expires_at = @ExpiresAt,
+                email_verification_sent_at = @SentAt,
+                email_verified = @EmailVerified,
+                updated_at = NOW()
+            WHERE id = @UserId;
+            """;
+
+        using var connection = _context.CreateConnection();
+        await connection.ExecuteAsync(sql, new
+        {
+            UserId = userId,
+            CodeHash = codeHash,
+            ExpiresAt = expiresAt,
+            SentAt = sentAt,
+            EmailVerified = emailVerified
         });
     }
 

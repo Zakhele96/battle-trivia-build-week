@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.SignalR;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+builder.Services.AddHttpClient();
 
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<IUserIdProvider, SignalRUserIdProvider>();
@@ -127,6 +128,7 @@ builder.Services.AddScoped<AdminLeaderboardSponsorService>();
 builder.Services.AddScoped<RoomModerationStateService>();
 builder.Services.AddScoped<ProfileService>();
 builder.Services.AddScoped<UserSchemaService>();
+builder.Services.AddScoped<EmailDeliveryService>();
 builder.Services.AddScoped<ProgressionRealtimeService>();
 builder.Services.AddScoped<GameLeaderboardService>();
 builder.Services.AddScoped<MentionNotificationService>();

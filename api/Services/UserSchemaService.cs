@@ -19,6 +19,9 @@ public sealed class UserSchemaService
                 ADD COLUMN IF NOT EXISTS google_sub TEXT NULL;
 
             ALTER TABLE users
+                ADD COLUMN IF NOT EXISTS facebook_user_id TEXT NULL;
+
+            ALTER TABLE users
                 ADD COLUMN IF NOT EXISTS auth_provider VARCHAR(20) NOT NULL DEFAULT 'local';
 
             ALTER TABLE users
@@ -30,9 +33,22 @@ public sealed class UserSchemaService
             ALTER TABLE users
                 ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE;
 
+            ALTER TABLE users
+                ADD COLUMN IF NOT EXISTS email_verification_code_hash TEXT NULL;
+
+            ALTER TABLE users
+                ADD COLUMN IF NOT EXISTS email_verification_expires_at TIMESTAMP NULL;
+
+            ALTER TABLE users
+                ADD COLUMN IF NOT EXISTS email_verification_sent_at TIMESTAMP NULL;
+
             CREATE UNIQUE INDEX IF NOT EXISTS ux_users_google_sub
                 ON users(google_sub)
                 WHERE google_sub IS NOT NULL;
+
+            CREATE UNIQUE INDEX IF NOT EXISTS ux_users_facebook_user_id
+                ON users(facebook_user_id)
+                WHERE facebook_user_id IS NOT NULL;
             """;
 
         using var connection = _context.CreateConnection();

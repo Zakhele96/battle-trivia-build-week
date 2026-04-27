@@ -1,11 +1,82 @@
-function NetworkList({ title, items = [], emptyMessage, actionLabel, onAction, tone = "blue" }) {
+import { Link } from "react-router-dom";
+
+function getInitials(value) {
+  if (!value) return "P";
+
+  const parts = String(value).trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+
+  return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
+}
+
+function FriendAvatar({ name, avatarUrl }) {
+  return (
+    <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full border border-white/10 bg-white/[0.05]">
+      {avatarUrl ? (
+        <img src={avatarUrl} alt={name} className="h-full w-full object-cover" />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-white">
+          {getInitials(name)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PlayerMeta({ item }) {
+  const displayName = item.displayName || item.username;
+  const statusLine = item.statusMessage || `@${item.username}`;
+
+  return (
+    <div className="min-w-0 flex-1">
+      <div className="break-words text-sm font-medium text-white">{displayName}</div>
+      <div className="mt-1 break-all text-[11px] text-neutral-500">@{item.username}</div>
+      <div className="mt-1 break-words text-[12px] leading-5 text-neutral-400">
+        {statusLine}
+      </div>
+    </div>
+  );
+}
+
+function PlayerRowActions({ item, actionLabel, onAction, tone = "blue", disabled = false }) {
   const buttonClass =
     tone === "emerald"
       ? "border-emerald-400/20 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/15"
       : tone === "rose"
-      ? "border-rose-400/20 bg-rose-500/10 text-rose-100 hover:bg-rose-500/15"
-      : "border-blue-300/18 bg-blue-400/10 text-blue-100 hover:bg-blue-400/15";
+        ? "border-rose-400/20 bg-rose-500/10 text-rose-100 hover:bg-rose-500/15"
+        : "border-blue-300/18 bg-blue-400/10 text-blue-100 hover:bg-blue-400/15";
 
+  return (
+    <div className="flex shrink-0 flex-wrap gap-2 self-start">
+      <Link
+        to={`/profile/${item.userId}`}
+        className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-white/[0.08]"
+      >
+        View profile
+      </Link>
+
+      {onAction ? (
+        <button
+          type="button"
+          onClick={() => onAction(item)}
+          disabled={disabled}
+          className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] transition disabled:cursor-not-allowed disabled:opacity-45 ${buttonClass}`}
+        >
+          {actionLabel}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+function NetworkList({
+  title,
+  items = [],
+  emptyMessage,
+  actionLabel,
+  onAction,
+  tone = "blue",
+}) {
   return (
     <div className="rounded-[18px] border border-white/8 bg-black/20 p-4">
       <div className="mb-3 text-[10px] uppercase tracking-[0.16em] text-neutral-500">
@@ -19,24 +90,22 @@ function NetworkList({ title, items = [], emptyMessage, actionLabel, onAction, t
           {items.map((item) => (
             <div
               key={`${title}-${item.friendshipId || item.userId}`}
-              className="flex items-center justify-between gap-3 rounded-[14px] border border-white/8 bg-white/[0.03] px-3 py-2.5"
+              className="flex flex-col gap-3 rounded-[14px] border border-white/8 bg-white/[0.03] px-3 py-3"
             >
-              <div className="min-w-0">
-                <div className="truncate text-sm font-medium text-white">
-                  {item.displayName || item.username}
-                </div>
-                <div className="mt-1 text-[11px] text-neutral-500">@{item.username}</div>
+              <div className="flex items-start gap-3">
+                <FriendAvatar
+                  name={item.displayName || item.username}
+                  avatarUrl={item.avatarUrl}
+                />
+                <PlayerMeta item={item} />
               </div>
 
-              {onAction ? (
-                <button
-                  type="button"
-                  onClick={() => onAction(item)}
-                  className={`shrink-0 rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] transition ${buttonClass}`}
-                >
-                  {actionLabel}
-                </button>
-              ) : null}
+              <PlayerRowActions
+                item={item}
+                actionLabel={actionLabel}
+                onAction={onAction}
+                tone={tone}
+              />
             </div>
           ))}
         </div>
@@ -99,31 +168,30 @@ export default function ProfileFriendsCard({
                 player.status === "accepted"
                   ? "Friends"
                   : player.status === "pending" && player.initiatedByMe
-                  ? "Pending"
-                  : player.status === "pending"
-                  ? "Awaiting you"
-                  : "Add friend";
+                    ? "Pending"
+                    : player.status === "pending"
+                      ? "Awaiting you"
+                      : "Add friend";
 
               return (
                 <div
                   key={player.userId}
-                  className="flex items-center justify-between gap-3 rounded-[14px] border border-white/8 bg-white/[0.03] px-3 py-2.5"
+                  className="flex flex-col gap-3 rounded-[14px] border border-white/8 bg-white/[0.03] px-3 py-3"
                 >
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-medium text-white">
-                      {player.displayName || player.username}
-                    </div>
-                    <div className="mt-1 text-[11px] text-neutral-500">@{player.username}</div>
+                  <div className="flex items-start gap-3">
+                    <FriendAvatar
+                      name={player.displayName || player.username}
+                      avatarUrl={player.avatarUrl}
+                    />
+                    <PlayerMeta item={player} />
                   </div>
 
-                  <button
-                    type="button"
+                  <PlayerRowActions
+                    item={player}
+                    actionLabel={actionLabel}
+                    onAction={onSendRequest}
                     disabled={player.status !== "none"}
-                    onClick={() => onSendRequest?.(player)}
-                    className="shrink-0 rounded-full border border-blue-300/18 bg-blue-400/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-blue-100 transition hover:bg-blue-400/15 disabled:cursor-not-allowed disabled:opacity-45"
-                  >
-                    {actionLabel}
-                  </button>
+                  />
                 </div>
               );
             })}

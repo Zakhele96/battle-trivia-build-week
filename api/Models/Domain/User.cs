@@ -14,8 +14,12 @@ public sealed class User
     public bool IsAdmin { get; set; }
 
     public string? GoogleSub { get; set; }
+    public string? FacebookUserId { get; set; }
     public string AuthProvider { get; set; } = "local";
     public string? AvatarUrl { get; set; }
     public string? StatusMessage { get; set; }
     public bool EmailVerified { get; set; }
+    public string? EmailVerificationCodeHash { get; set; }
+    public DateTime? EmailVerificationExpiresAt { get; set; }
+    public DateTime? EmailVerificationSentAt { get; set; }
 }

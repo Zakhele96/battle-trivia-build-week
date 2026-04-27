@@ -12,4 +12,5 @@ public sealed class UserResponse
     public string? StatusMessage { get; set; }
     public string AuthProvider { get; set; } = "local";
     public bool HasPassword { get; set; }
+    public bool EmailVerified { get; set; }
 }

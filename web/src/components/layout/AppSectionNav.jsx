@@ -356,29 +356,40 @@ export default function AppSectionNav() {
 
   const mobileNav = (
     <div
-      className={`pointer-events-none fixed inset-x-0 bottom-0 z-50 isolate sm:hidden [backface-visibility:hidden] [contain:paint] [transform:translateZ(0)] [will-change:transform] ${
+      className={`pointer-events-none fixed inset-x-0 bottom-0 z-50 isolate overflow-visible sm:hidden [backface-visibility:hidden] [transform:translateZ(0)] [will-change:transform] ${
         isKeyboardOpen ? "hidden" : ""
       }`}
     >
-      {isMoreOpen ? (
-        <button
-          type="button"
-          aria-label="Close more navigation"
-          className="pointer-events-auto absolute inset-0 bg-black/45 backdrop-blur-[2px]"
-          onClick={() => setIsMoreOpen(false)}
-        />
-      ) : null}
-      <div ref={moreTrayRef} className={mobileShellClassName}>
-        <div className="mx-auto max-w-[38rem]">
+      <div ref={moreTrayRef} className={`${mobileShellClassName} relative overflow-visible`}>
+        <div className="relative mx-auto max-w-[38rem] overflow-visible">
           {isMoreOpen ? (
             <div
-              className={`mb-2 rounded-[24px] border p-2 shadow-[0_18px_32px_rgba(0,0,0,0.22)] ${
+              className={`pointer-events-auto absolute bottom-[calc(100%+0.7rem)] right-0 z-[60] w-[min(18.5rem,calc(100vw-1.5rem))] overflow-hidden rounded-[26px] border p-2 shadow-[0_22px_44px_rgba(0,0,0,0.28)] transition-all duration-200 ease-out ${
                 isLight
-                  ? "border-[#d9c7aa] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(244,234,218,0.98))]"
-                  : "border-white/10 bg-neutral-900/96"
+                  ? "border-[#d9c7aa] bg-[linear-gradient(180deg,rgba(255,255,255,0.985),rgba(244,234,218,0.98))]"
+                  : "border-white/10 bg-[linear-gradient(180deg,rgba(22,26,35,0.98),rgba(10,13,20,0.96))] backdrop-blur-xl"
               }`}
+              style={{
+                transformOrigin: "bottom right",
+                animation: "bts-mobile-more-in 180ms ease-out",
+              }}
             >
-              <div className="grid grid-cols-2 gap-2">
+              <div
+                className={`pointer-events-none absolute -bottom-2 right-7 h-4 w-4 rotate-45 border-r border-b ${
+                  isLight
+                    ? "border-[#d9c7aa] bg-[rgb(244,234,218)]"
+                    : "border-white/10 bg-[rgb(13,17,24)]"
+                }`}
+              />
+
+              <div className="mb-2 flex items-center justify-between px-2 pb-1 pt-1">
+                <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500">
+                  More options
+                </div>
+                <div className="text-[10px] text-neutral-500">Tap away to close</div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-2">
                 {MOBILE_MORE_ITEMS.map((item) => {
                   const Icon = item.icon;
                   const active = isItemActive(item, location.pathname);
@@ -396,7 +407,7 @@ export default function AppSectionNav() {
                       to={item.to}
                       end={item.exact}
                       onClick={() => setIsMoreOpen(false)}
-                      className={`relative flex min-h-[4.5rem] items-center gap-3 rounded-[18px] px-3 py-3 text-left text-[12px] font-medium transition ${itemClassName}`}
+                      className={`relative flex min-h-[4.2rem] items-center gap-3 rounded-[18px] px-3 py-3 text-left text-[12px] font-medium transition ${itemClassName}`}
                     >
                       <div className="relative">
                         <NavIconShell active={active} isLight={isLight} mobile>
@@ -508,9 +519,21 @@ export default function AppSectionNav() {
               <span className="max-w-full truncate px-1 tracking-[0.01em]">More</span>
             </button>
           </div>
-          </div>
         </div>
       </div>
+      <style>{`
+        @keyframes bts-mobile-more-in {
+          0% {
+            opacity: 0;
+            transform: translateY(10px) scale(0.94);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+      `}</style>
+    </div>
   );
 
   return (

@@ -13,6 +13,8 @@ function normalizeUser(user) {
   return {
     ...user,
     isAdmin: Boolean(user.isAdmin),
+    emailVerified:
+      typeof user.emailVerified === "boolean" ? user.emailVerified : true,
     authProvider: user.authProvider || "local",
     hasPassword:
       typeof user.hasPassword === "boolean" ? user.hasPassword : true,
@@ -53,6 +55,9 @@ export function AuthProvider({ children }) {
     if (window.google?.accounts?.id) {
       window.google.accounts.id.disableAutoSelect();
       window.google.accounts.id.cancel();
+    }
+    if (window.FB?.getAuthResponse()) {
+      window.FB.logout(() => {});
     }
   } catch {
     // ignore GIS cleanup errors

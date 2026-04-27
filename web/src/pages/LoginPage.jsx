@@ -1,8 +1,13 @@
 import { useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { googleLogin, login as loginRequest } from "../api/authApi";
+import {
+  googleLogin,
+  login as loginRequest,
+  resendVerification,
+  verifyEmail,
+} from "../api/authApi";
+import EmailVerificationPanel from "../components/auth/EmailVerificationPanel";
 import GoogleAuthButton from "../components/auth/GoogleAuthButton";
-import OAuthPlaceholderButtons from "../components/auth/OAuthPlaceholderButtons";
 import { useAuth } from "../hooks/useAuth";
 import { useTheme } from "../hooks/useTheme";
 
@@ -73,7 +78,7 @@ function AuthShell({ title, description, children, footer, isLight }) {
                     Identity
                   </div>
                   <div className="mt-2 text-sm font-semibold text-white">
-                    Google, Facebook, or BTS
+                    Google or BTS
                   </div>
                 </div>
               </div>
@@ -115,7 +120,12 @@ export default function LoginPage() {
     password: "",
   });
   const [error, setError] = useState("");
+  const [verificationError, setVerificationError] = useState("");
+  const [verificationMessage, setVerificationMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showVerificationPanel, setShowVerificationPanel] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState("");
+  const [verificationOtp, setVerificationOtp] = useState("");
 
   const from = location.state?.from?.pathname || "/";
   const referralQuery = useMemo(() => {
@@ -133,12 +143,15 @@ export default function LoginPage() {
   }, [searchParams]);
   const hasReferral = Boolean(searchParams.get("ref"));
 
-  const handleChange = (e) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleChange = (event) => {
+    setForm((previous) => ({
+      ...previous,
+      [event.target.name]: event.target.value,
+    }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setError("");
     setIsSubmitting(true);
 
@@ -151,7 +164,15 @@ export default function LoginPage() {
       login(data, "local");
       navigate(from, { replace: true });
     } catch (err) {
-      setError(err?.response?.data?.message || "Login failed.");
+      const nextError = err?.response?.data;
+      if (nextError?.requiresEmailVerification) {
+        setShowVerificationPanel(true);
+        setVerificationEmail(nextError.email || form.emailOrUsername.trim());
+        setVerificationMessage(nextError.message || "Verify your email before logging in.");
+        setVerificationError("");
+      } else {
+        setError(nextError?.message || "Login failed.");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -178,17 +199,56 @@ export default function LoginPage() {
     }
   };
 
-  const handlePlaceholderProvider = (provider) => {
-    setError(
-      `${provider} sign-in still needs provider credentials and callback setup before it can go live here.`
-    );
+  const handleVerifyEmail = async (event) => {
+    event.preventDefault();
+    setVerificationError("");
+    setVerificationMessage("");
+    setIsSubmitting(true);
+
+    try {
+      const data = await verifyEmail({
+        email: verificationEmail,
+        otp: verificationOtp,
+      });
+      login(data, "local");
+      navigate(from, { replace: true });
+    } catch (err) {
+      setVerificationError(
+        err?.response?.data?.message || "Could not verify that code."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setVerificationError("");
+    setVerificationMessage("");
+    setIsSubmitting(true);
+
+    try {
+      const data = await resendVerification({ email: verificationEmail });
+      setVerificationMessage(
+        data?.message || "A new verification code has been sent."
+      );
+    } catch (err) {
+      setVerificationError(
+        err?.response?.data?.message || "Could not resend the verification code."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <AuthShell
       isLight={resolvedTheme === "light"}
       title="Welcome back"
-      description="Sign in with your BTS account or continue with Google. Facebook is surfaced here next and just needs provider setup to go live."
+      description={
+        showVerificationPanel
+          ? "Your local account still needs email verification. Enter the code we sent, then you'll be logged straight in."
+          : "Sign in with your BTS account or continue with Google."
+      }
       footer={
         <p className="text-sm text-neutral-400">
           Don&apos;t have an account?{" "}
@@ -202,72 +262,98 @@ export default function LoginPage() {
       }
     >
       <div className="min-w-0 space-y-5">
-        {hasReferral ? (
+        {!showVerificationPanel && hasReferral ? (
           <div className="rounded-[18px] border border-blue-400/20 bg-blue-500/10 px-4 py-3 text-sm text-blue-100">
             You came in through a BTS player invite. Log in if you already have an account, or register to join the challenge.
           </div>
         ) : null}
 
-        <GoogleAuthButton
-          onCredential={handleGoogleLogin}
-          disabled={isSubmitting}
-          label="Continue with Google"
-        />
-
-        <OAuthPlaceholderButtons onProviderClick={handlePlaceholderProvider} />
-
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="h-px min-w-0 flex-1 bg-white/10" />
-          <span className="shrink-0 text-[10px] uppercase tracking-[0.18em] text-neutral-500">
-            or sign in with BTS
-          </span>
-          <div className="h-px min-w-0 flex-1 bg-white/10" />
-        </div>
-
-        <form onSubmit={handleSubmit} className="min-w-0 space-y-4">
-          <div className="min-w-0">
-            <label className="mb-2 block text-[11px] uppercase tracking-[0.14em] text-neutral-500">
-              Email or username
-            </label>
-            <input
-              name="emailOrUsername"
-              placeholder="you@example.com or username"
-              value={form.emailOrUsername}
-              onChange={handleChange}
-              disabled={isSubmitting}
-              className="block w-full min-w-0 rounded-[18px] border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400/20 disabled:opacity-60"
+        {showVerificationPanel ? (
+          <>
+            <EmailVerificationPanel
+              email={verificationEmail}
+              otp={verificationOtp}
+              onOtpChange={setVerificationOtp}
+              onVerify={handleVerifyEmail}
+              onResend={handleResendVerification}
+              onBack={() => {
+                setShowVerificationPanel(false);
+                setVerificationError("");
+                setVerificationMessage("");
+              }}
+              isSubmitting={isSubmitting}
+              message={verificationMessage}
+              error={verificationError}
+              title="Verify your email before login"
+              description="This BTS account was created with email and password, so it needs one email check first."
             />
-          </div>
 
-          <div className="min-w-0">
-            <label className="mb-2 block text-[11px] uppercase tracking-[0.14em] text-neutral-500">
-              Password
-            </label>
-            <input
-              name="password"
-              type="password"
-              placeholder="Your password"
-              value={form.password}
-              onChange={handleChange}
-              disabled={isSubmitting}
-              className="block w-full min-w-0 rounded-[18px] border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400/20 disabled:opacity-60"
-            />
-          </div>
-
-          {error ? (
-            <div className="rounded-[16px] border border-red-900/35 bg-red-950/25 px-4 py-3 text-sm text-red-300/90">
-              {error}
+            <div className="text-sm text-neutral-500">
+              Once the code is accepted, BTS signs you in immediately.
             </div>
-          ) : null}
+          </>
+        ) : (
+          <>
+            <GoogleAuthButton
+              onCredential={handleGoogleLogin}
+              disabled={isSubmitting}
+              label="Continue with Google"
+            />
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full rounded-[18px] bg-[linear-gradient(180deg,rgba(64,156,255,1)_0%,rgba(10,132,255,1)_100%)] px-4 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(37,99,235,0.24)] transition hover:-translate-y-[1px] hover:shadow-[0_18px_34px_rgba(37,99,235,0.3)] disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isSubmitting ? "Logging in..." : "Login"}
-          </button>
-        </form>
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="h-px min-w-0 flex-1 bg-white/10" />
+              <span className="shrink-0 text-[10px] uppercase tracking-[0.18em] text-neutral-500">
+                or sign in with BTS
+              </span>
+              <div className="h-px min-w-0 flex-1 bg-white/10" />
+            </div>
+
+            <form onSubmit={handleSubmit} className="min-w-0 space-y-4">
+              <div className="min-w-0">
+                <label className="mb-2 block text-[11px] uppercase tracking-[0.14em] text-neutral-500">
+                  Email or username
+                </label>
+                <input
+                  name="emailOrUsername"
+                  placeholder="you@example.com or username"
+                  value={form.emailOrUsername}
+                  onChange={handleChange}
+                  disabled={isSubmitting}
+                  className="block w-full min-w-0 rounded-[18px] border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400/20 disabled:opacity-60"
+                />
+              </div>
+
+              <div className="min-w-0">
+                <label className="mb-2 block text-[11px] uppercase tracking-[0.14em] text-neutral-500">
+                  Password
+                </label>
+                <input
+                  name="password"
+                  type="password"
+                  placeholder="Your password"
+                  value={form.password}
+                  onChange={handleChange}
+                  disabled={isSubmitting}
+                  className="block w-full min-w-0 rounded-[18px] border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400/20 disabled:opacity-60"
+                />
+              </div>
+
+              {error ? (
+                <div className="rounded-[16px] border border-red-900/35 bg-red-950/25 px-4 py-3 text-sm text-red-300/90">
+                  {error}
+                </div>
+              ) : null}
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full rounded-[18px] bg-[linear-gradient(180deg,rgba(64,156,255,1)_0%,rgba(10,132,255,1)_100%)] px-4 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(37,99,235,0.24)] transition hover:-translate-y-[1px] hover:shadow-[0_18px_34px_rgba(37,99,235,0.3)] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSubmitting ? "Logging in..." : "Login"}
+              </button>
+            </form>
+          </>
+        )}
       </div>
     </AuthShell>
   );

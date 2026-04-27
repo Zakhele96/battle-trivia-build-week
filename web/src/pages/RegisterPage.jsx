@@ -1,8 +1,13 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { googleLogin, register as registerRequest } from "../api/authApi";
+import {
+  googleLogin,
+  register as registerRequest,
+  resendVerification,
+  verifyEmail,
+} from "../api/authApi";
+import EmailVerificationPanel from "../components/auth/EmailVerificationPanel";
 import GoogleAuthButton from "../components/auth/GoogleAuthButton";
-import OAuthPlaceholderButtons from "../components/auth/OAuthPlaceholderButtons";
 import { useAuth } from "../hooks/useAuth";
 import { useTheme } from "../hooks/useTheme";
 
@@ -69,7 +74,7 @@ function AuthShell({ title, description, children, footer, isLight }) {
                     Access
                   </div>
                   <div className="mt-2 text-sm font-semibold text-white">
-                    Google, Facebook, or BTS
+                    Google or BTS
                   </div>
                 </div>
 
@@ -122,7 +127,12 @@ export default function RegisterPage() {
     password: "",
   });
   const [error, setError] = useState("");
+  const [verificationError, setVerificationError] = useState("");
+  const [verificationMessage, setVerificationMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isVerificationStep, setIsVerificationStep] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState("");
+  const [verificationOtp, setVerificationOtp] = useState("");
   const referralPayload = useMemo(() => {
     const ref = searchParams.get("ref");
 
@@ -160,6 +170,16 @@ export default function RegisterPage() {
         ...referralPayload,
       });
 
+      if (data?.requiresEmailVerification) {
+        setIsVerificationStep(true);
+        setVerificationEmail(data.pendingEmail || form.email.trim());
+        setVerificationOtp("");
+        setVerificationMessage(
+          data.message || "We sent a verification code to your email."
+        );
+        return;
+      }
+
       login(data, "local");
       navigate("/", { replace: true });
     } catch (err) {
@@ -187,17 +207,56 @@ export default function RegisterPage() {
     }
   };
 
-  const handlePlaceholderProvider = (provider) => {
-    setError(
-      `${provider} sign-in still needs provider credentials and callback setup before it can go live here.`
-    );
+  const handleVerifyEmail = async (event) => {
+    event.preventDefault();
+    setVerificationError("");
+    setVerificationMessage("");
+    setIsSubmitting(true);
+
+    try {
+      const data = await verifyEmail({
+        email: verificationEmail,
+        otp: verificationOtp,
+      });
+      login(data, "local");
+      navigate("/", { replace: true });
+    } catch (err) {
+      setVerificationError(
+        err?.response?.data?.message || "Could not verify that code."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setVerificationError("");
+    setVerificationMessage("");
+    setIsSubmitting(true);
+
+    try {
+      const data = await resendVerification({ email: verificationEmail });
+      setVerificationMessage(
+        data?.message || "A new verification code has been sent."
+      );
+    } catch (err) {
+      setVerificationError(
+        err?.response?.data?.message || "Could not resend the verification code."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <AuthShell
       isLight={resolvedTheme === "light"}
       title="Create your account"
-      description="Start with BTS details or continue instantly with Google. Facebook is surfaced here next and just needs provider setup to go live."
+      description={
+        isVerificationStep
+          ? "One last step: confirm your email with the code we sent before you enter BTS."
+          : "Start with BTS details or continue instantly with Google."
+      }
       footer={
         <p className="text-sm text-neutral-400">
           Already have an account?{" "}
@@ -208,29 +267,49 @@ export default function RegisterPage() {
       }
     >
       <div className="min-w-0 space-y-5">
-        {hasReferral ? (
+        {isVerificationStep ? (
+          <EmailVerificationPanel
+            email={verificationEmail}
+            otp={verificationOtp}
+            onOtpChange={setVerificationOtp}
+            onVerify={handleVerifyEmail}
+            onResend={handleResendVerification}
+            onBack={() => {
+              setIsVerificationStep(false);
+              setVerificationError("");
+              setVerificationMessage("");
+            }}
+            isSubmitting={isSubmitting}
+            message={verificationMessage}
+            error={verificationError}
+            title="Verify your email to finish sign-up"
+            description="Local BTS accounts only go live after email verification, so enter the 6-digit code we sent you."
+          />
+        ) : null}
+
+        {!isVerificationStep && hasReferral ? (
           <div className="rounded-[18px] border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
             This sign-up link came from a BTS player challenge. Create your account and jump straight into the weekly race.
           </div>
         ) : null}
 
-        <GoogleAuthButton
-          onCredential={handleGoogleLogin}
-          disabled={isSubmitting}
-          label="Continue with Google"
-        />
+        {!isVerificationStep ? (
+          <>
+            <GoogleAuthButton
+              onCredential={handleGoogleLogin}
+              disabled={isSubmitting}
+              label="Continue with Google"
+            />
 
-        <OAuthPlaceholderButtons onProviderClick={handlePlaceholderProvider} />
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="h-px min-w-0 flex-1 bg-white/10" />
+              <span className="shrink-0 text-[10px] uppercase tracking-[0.18em] text-neutral-500">
+                or create a BTS account
+              </span>
+              <div className="h-px min-w-0 flex-1 bg-white/10" />
+            </div>
 
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="h-px min-w-0 flex-1 bg-white/10" />
-          <span className="shrink-0 text-[10px] uppercase tracking-[0.18em] text-neutral-500">
-            or create a BTS account
-          </span>
-          <div className="h-px min-w-0 flex-1 bg-white/10" />
-        </div>
-
-        <form onSubmit={handleSubmit} className="min-w-0 space-y-4">
+            <form onSubmit={handleSubmit} className="min-w-0 space-y-4">
           <div className="min-w-0">
             <label className="mb-2 block text-[11px] uppercase tracking-[0.14em] text-neutral-500">
               Username
@@ -316,7 +395,9 @@ export default function RegisterPage() {
           >
             {isSubmitting ? "Creating account..." : "Create account"}
           </button>
-        </form>
+            </form>
+          </>
+        ) : null}
       </div>
     </AuthShell>
   );

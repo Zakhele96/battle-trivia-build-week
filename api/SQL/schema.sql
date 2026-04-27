@@ -8,10 +8,14 @@ CREATE TABLE IF NOT EXISTS users (
     phone_number VARCHAR(20),
     password_hash TEXT,
     google_sub TEXT,
+    facebook_user_id TEXT,
     auth_provider VARCHAR(20) NOT NULL DEFAULT 'local',
     avatar_url TEXT,
     status_message VARCHAR(120),
     email_verified BOOLEAN NOT NULL DEFAULT FALSE,
+    email_verification_code_hash TEXT,
+    email_verification_expires_at TIMESTAMP,
+    email_verification_sent_at TIMESTAMP,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     is_admin BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -21,6 +25,10 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE UNIQUE INDEX IF NOT EXISTS ux_users_google_sub
 ON users(google_sub)
 WHERE google_sub IS NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS ux_users_facebook_user_id
+ON users(facebook_user_id)
+WHERE facebook_user_id IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS rooms (
     id UUID PRIMARY KEY,

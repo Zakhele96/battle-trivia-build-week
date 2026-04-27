@@ -14,5 +14,8 @@ public interface IUserRepository
     Task UpdatePasswordHashAsync(Guid userId, string passwordHash);
     Task SetAdminAsync(Guid userId, bool isAdmin);
     Task<User?> GetByGoogleSubAsync(string googleSub);
+    Task<User?> GetByFacebookUserIdAsync(string facebookUserId);
     Task LinkGoogleAsync(User user);
+    Task LinkFacebookAsync(User user);
+    Task UpdateEmailVerificationAsync(Guid userId, string? codeHash, DateTime? expiresAt, DateTime? sentAt, bool emailVerified);
 }

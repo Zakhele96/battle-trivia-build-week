@@ -65,6 +65,100 @@ function getInitials(value) {
   return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
 }
 
+function getAuthProviderLabel(provider) {
+  return provider === "google"
+    ? "Google account"
+    : provider === "facebook"
+      ? "Facebook account"
+      : "BTS account";
+}
+
+function getAvatarCropMetrics(pendingAvatar, crop, frameSize) {
+  if (!pendingAvatar?.naturalWidth || !pendingAvatar?.naturalHeight) {
+    return null;
+  }
+
+  const zoom = Math.max(1, Number(crop?.zoom || 1));
+  const baseScale = Math.max(
+    frameSize / pendingAvatar.naturalWidth,
+    frameSize / pendingAvatar.naturalHeight
+  );
+  const scaledWidth = pendingAvatar.naturalWidth * baseScale * zoom;
+  const scaledHeight = pendingAvatar.naturalHeight * baseScale * zoom;
+  const maxOffsetX = Math.max(0, (scaledWidth - frameSize) / 2);
+  const maxOffsetY = Math.max(0, (scaledHeight - frameSize) / 2);
+  const offsetX = ((Number(crop?.x || 0) || 0) / 100) * maxOffsetX;
+  const offsetY = ((Number(crop?.y || 0) || 0) / 100) * maxOffsetY;
+
+  return {
+    scaledWidth,
+    scaledHeight,
+    offsetX,
+    offsetY,
+  };
+}
+
+function readImageDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
+    reader.onerror = () => reject(new Error("Could not read image."));
+    reader.readAsDataURL(file);
+  });
+}
+
+function loadImageDimensions(src) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () =>
+      resolve({
+        naturalWidth: image.naturalWidth,
+        naturalHeight: image.naturalHeight,
+      });
+    image.onerror = () => reject(new Error("Could not load image."));
+    image.src = src;
+  });
+}
+
+async function buildCroppedAvatar(src, crop, outputSize = 512) {
+  const image = await new Promise((resolve, reject) => {
+    const nextImage = new Image();
+    nextImage.onload = () => resolve(nextImage);
+    nextImage.onerror = () => reject(new Error("Could not load image."));
+    nextImage.src = src;
+  });
+
+  const metrics = getAvatarCropMetrics(
+    {
+      naturalWidth: image.naturalWidth,
+      naturalHeight: image.naturalHeight,
+    },
+    crop,
+    outputSize
+  );
+
+  if (!metrics) {
+    throw new Error("Could not crop image.");
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = outputSize;
+  canvas.height = outputSize;
+
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("Could not crop image.");
+  }
+
+  const drawX = outputSize / 2 - metrics.scaledWidth / 2 + metrics.offsetX;
+  const drawY = outputSize / 2 - metrics.scaledHeight / 2 + metrics.offsetY;
+
+  context.clearRect(0, 0, outputSize, outputSize);
+  context.drawImage(image, drawX, drawY, metrics.scaledWidth, metrics.scaledHeight);
+
+  return canvas.toDataURL("image/jpeg", 0.92);
+}
+
 function SectionTitle({ eyebrow, title, description, action }) {
   return (
     <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
@@ -130,6 +224,134 @@ function HistoryItem({ item }) {
   );
 }
 
+function AvatarCropModal({
+  pendingAvatar,
+  crop,
+  onCropChange,
+  onCancel,
+  onApply,
+  isApplying = false,
+}) {
+  const previewMetrics = getAvatarCropMetrics(pendingAvatar, crop, 240);
+
+  if (!pendingAvatar || !previewMetrics) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm">
+      <div className="w-full max-w-[34rem] rounded-[28px] border border-white/10 bg-neutral-950 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.45)] sm:p-6">
+        <div className="text-[10px] uppercase tracking-[0.18em] text-blue-300/70">
+          Profile picture
+        </div>
+        <div className="mt-2 text-[24px] font-semibold tracking-[-0.04em] text-white">
+          Frame your photo
+        </div>
+        <div className="mt-2 text-sm leading-6 text-neutral-400">
+          Adjust the crop now. BTS saves a centered square version so your photo stays clean in DMs and profile views.
+        </div>
+
+        <div className="mt-5 flex justify-center">
+          <div className="relative h-[240px] w-[240px] overflow-hidden rounded-[32px] border border-white/10 bg-black/30 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
+            <img
+              src={pendingAvatar.src}
+              alt="Crop preview"
+              className="absolute max-w-none select-none"
+              style={{
+                width: `${previewMetrics.scaledWidth}px`,
+                height: `${previewMetrics.scaledHeight}px`,
+                left: `calc(50% - ${previewMetrics.scaledWidth / 2}px + ${previewMetrics.offsetX}px)`,
+                top: `calc(50% - ${previewMetrics.scaledHeight / 2}px + ${previewMetrics.offsetY}px)`,
+              }}
+            />
+          </div>
+        </div>
+
+        <div className="mt-5 space-y-4">
+          <div>
+            <div className="mb-2 flex items-center justify-between text-[11px] uppercase tracking-[0.14em] text-neutral-500">
+              <span>Zoom</span>
+              <span>{crop.zoom.toFixed(2)}x</span>
+            </div>
+            <input
+              type="range"
+              min="1"
+              max="2.6"
+              step="0.01"
+              value={crop.zoom}
+              onChange={(event) =>
+                onCropChange((previous) => ({
+                  ...previous,
+                  zoom: Number(event.target.value),
+                }))
+              }
+              className="w-full"
+            />
+          </div>
+
+          <div>
+            <div className="mb-2 flex items-center justify-between text-[11px] uppercase tracking-[0.14em] text-neutral-500">
+              <span>Left / right</span>
+              <span>{crop.x}</span>
+            </div>
+            <input
+              type="range"
+              min="-100"
+              max="100"
+              step="1"
+              value={crop.x}
+              onChange={(event) =>
+                onCropChange((previous) => ({
+                  ...previous,
+                  x: Number(event.target.value),
+                }))
+              }
+              className="w-full"
+            />
+          </div>
+
+          <div>
+            <div className="mb-2 flex items-center justify-between text-[11px] uppercase tracking-[0.14em] text-neutral-500">
+              <span>Up / down</span>
+              <span>{crop.y}</span>
+            </div>
+            <input
+              type="range"
+              min="-100"
+              max="100"
+              step="1"
+              value={crop.y}
+              onChange={(event) =>
+                onCropChange((previous) => ({
+                  ...previous,
+                  y: Number(event.target.value),
+                }))
+              }
+              className="w-full"
+            />
+          </div>
+        </div>
+
+        <div className="mt-6 flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={onApply}
+            disabled={isApplying}
+            className="rounded-[16px] bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:opacity-60"
+          >
+            {isApplying ? "Applying..." : "Use this photo"}
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-[16px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function HeroCard({ profile, authUser, stats, playerMomentum }) {
   const displayName =
     profile?.displayName ||
@@ -143,7 +365,7 @@ function HeroCard({ profile, authUser, stats, playerMomentum }) {
   const email = profile?.email || authUser?.email || "-";
   const phone = profile?.phoneNumber || authUser?.phoneNumber || "Not added";
   const providerLabel =
-    authUser?.authProvider === "google" ? "Google account" : "BTS account";
+    getAuthProviderLabel(authUser?.authProvider || "local");
 
   return (
     <Panel className="rounded-[28px] bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.14),transparent_26%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.012))] p-5 sm:p-6">
@@ -372,7 +594,14 @@ function SoundCard({
   );
 }
 
-function SignInMethodCard({ isGoogleAccount }) {
+function SignInMethodCard({ authProvider }) {
+  const providerLabel =
+    authProvider === "google"
+      ? "Google"
+      : authProvider === "facebook"
+        ? "Facebook"
+        : "BTS";
+
   return (
     <Panel>
       <div className="text-sm font-semibold text-white">Sign-in method</div>
@@ -381,12 +610,14 @@ function SignInMethodCard({ isGoogleAccount }) {
           Provider
         </div>
         <div className="mt-2 inline-flex rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-sm font-medium text-white">
-          {isGoogleAccount ? "Google" : "BTS"}
+          {providerLabel}
         </div>
         <div className="mt-3 text-sm text-neutral-400">
-          {isGoogleAccount
+          {authProvider === "google"
             ? "This account signs in with Google, so password changes are not needed here."
-            : "This account uses your BTS password for sign-in."}
+            : authProvider === "facebook"
+              ? "This account signs in with Facebook, so password changes are not needed here."
+              : "This account uses your BTS password for sign-in."}
         </div>
       </div>
     </Panel>
@@ -415,6 +646,8 @@ export default function ProfilePage() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
+  const [pendingAvatar, setPendingAvatar] = useState(null);
+  const [avatarCrop, setAvatarCrop] = useState({ zoom: 1, x: 0, y: 0 });
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -432,6 +665,7 @@ export default function ProfilePage() {
   const [isLoadingFriends, setIsLoadingFriends] = useState(true);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
+  const [isApplyingAvatarCrop, setIsApplyingAvatarCrop] = useState(false);
 
   const [playerMomentum, setPlayerMomentum] = useState(null);
   const [currentCombinedStanding, setCurrentCombinedStanding] = useState(null);
@@ -634,7 +868,8 @@ export default function ProfilePage() {
   const stats = useMemo(() => profile?.stats || {}, [profile]);
   const growth = useMemo(() => profile?.growth || {}, [profile]);
   const loginProvider = localStorage.getItem("bts_login_provider");
-  const isGoogleAccount = loginProvider === "google";
+  const authProvider = authUser?.authProvider || loginProvider || "local";
+  const isLocalAccount = authProvider === "local";
   const isLight = resolvedTheme === "light";
   const lightModeUndoFilter = isLight
     ? {
@@ -725,18 +960,41 @@ export default function ProfilePage() {
     }
 
     try {
-      const nextAvatarUrl = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
-        reader.onerror = () => reject(new Error("Could not read image."));
-        reader.readAsDataURL(file);
-      });
+      const nextAvatarUrl = await readImageDataUrl(file);
+      const dimensions = await loadImageDimensions(nextAvatarUrl);
 
       setError("");
-      setAvatarUrl(nextAvatarUrl);
+      setPendingAvatar({
+        src: nextAvatarUrl,
+        naturalWidth: dimensions.naturalWidth,
+        naturalHeight: dimensions.naturalHeight,
+      });
+      setAvatarCrop({ zoom: 1, x: 0, y: 0 });
     } catch {
       setError("Could not load that profile picture.");
     }
+  }
+
+  async function handleApplyAvatarCrop() {
+    if (!pendingAvatar) return;
+
+    try {
+      setIsApplyingAvatarCrop(true);
+      const nextAvatarUrl = await buildCroppedAvatar(pendingAvatar.src, avatarCrop);
+      setAvatarUrl(nextAvatarUrl);
+      setPendingAvatar(null);
+      setError("");
+      setMessage("Photo updated. Save profile when you're ready.");
+    } catch {
+      setError("Could not crop that profile picture.");
+    } finally {
+      setIsApplyingAvatarCrop(false);
+    }
+  }
+
+  function handleCancelAvatarCrop() {
+    setPendingAvatar(null);
+    setAvatarCrop({ zoom: 1, x: 0, y: 0 });
   }
 
   const handleCopyInvite = async () => {
@@ -1083,7 +1341,7 @@ export default function ProfilePage() {
 
                         <div className="flex flex-wrap gap-2">
                           <label className="inline-flex cursor-pointer rounded-[16px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08]">
-                            Upload photo
+                            Upload and frame photo
                             <input
                               type="file"
                               accept="image/*"
@@ -1094,12 +1352,19 @@ export default function ProfilePage() {
 
                           <button
                             type="button"
-                            onClick={() => setAvatarUrl("")}
+                            onClick={() => {
+                              setAvatarUrl("");
+                              setPendingAvatar(null);
+                            }}
                             className="rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
                           >
                             Remove photo
                           </button>
                         </div>
+                      </div>
+
+                      <div className="mt-2 text-[11px] text-neutral-500">
+                        Photos open in a quick square cropper first so the DM avatar stays clean.
                       </div>
                     </div>
 
@@ -1133,7 +1398,7 @@ export default function ProfilePage() {
               />
 
               <div className="space-y-4">
-                {!isGoogleAccount ? (
+                {isLocalAccount ? (
                   <Panel>
                     <div className="mb-4 text-sm font-semibold text-white">Change password</div>
                     <form onSubmit={handleChangePassword} className="space-y-4">
@@ -1168,7 +1433,7 @@ export default function ProfilePage() {
                     </form>
                   </Panel>
                 ) : (
-                  <SignInMethodCard isGoogleAccount={isGoogleAccount} />
+                  <SignInMethodCard authProvider={authProvider} />
                 )}
 
                 <ThemeCard
@@ -1358,6 +1623,15 @@ export default function ProfilePage() {
           </Panel>
         </section>
       </div>
+
+      <AvatarCropModal
+        pendingAvatar={pendingAvatar}
+        crop={avatarCrop}
+        onCropChange={setAvatarCrop}
+        onCancel={handleCancelAvatarCrop}
+        onApply={handleApplyAvatarCrop}
+        isApplying={isApplyingAvatarCrop}
+      />
     </div>
   );
 }

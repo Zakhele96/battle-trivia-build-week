@@ -20,7 +20,7 @@ This API powers:
 - Dapper
 - PostgreSQL
 - SignalR
-- JWT Authentication
+- JWT authentication
 
 ## Project Structure
 
@@ -35,13 +35,15 @@ This API powers:
 
 - .NET 8 SDK
 - PostgreSQL
-- Visual Studio / VS Code / Rider
+- Visual Studio, VS Code, or Rider
 
 ## Local Development
 
-### 1. Configure appsettings
+### 1. Configure app settings
 
-Update `appsettings.json` or `appsettings.Development.json`:
+Update `appsettings.Development.json` or use user secrets.
+
+Minimum local configuration:
 
 ```json
 {
@@ -53,128 +55,214 @@ Update `appsettings.json` or `appsettings.Development.json`:
     "Audience": "Bts.Client",
     "Key": "YOUR_LONG_SECRET_KEY",
     "ExpiryMinutes": 10080
+  },
+  "Smtp": {
+    "Host": "smtp.your-provider.com",
+    "Port": "587",
+    "Username": "YOUR_SMTP_USERNAME",
+    "Password": "YOUR_SMTP_PASSWORD",
+    "FromEmail": "no-reply@your-domain.com",
+    "FromName": "BTS",
+    "EnableSsl": "true"
   }
 }
+```
 
-2. Create the database
+Recommended for local secrets:
 
-Create a PostgreSQL database called:
+```powershell
+dotnet user-secrets set "Smtp:Host" "smtp.your-provider.com" --project c:\projects\api
+dotnet user-secrets set "Smtp:Port" "587" --project c:\projects\api
+dotnet user-secrets set "Smtp:Username" "YOUR_SMTP_USERNAME" --project c:\projects\api
+dotnet user-secrets set "Smtp:Password" "YOUR_SMTP_PASSWORD" --project c:\projects\api
+dotnet user-secrets set "Smtp:FromEmail" "no-reply@your-domain.com" --project c:\projects\api
+dotnet user-secrets set "Smtp:FromName" "BTS" --project c:\projects\api
+dotnet user-secrets set "Smtp:EnableSsl" "true" --project c:\projects\api
+```
 
-bts_db
-3. Run SQL scripts
+### 2. Email verification flow
 
-Use the scripts inside SQL/ to create and seed the database.
+Local email/password sign-up now requires email verification before first login.
+
+Required SMTP settings:
+
+- `Smtp:Host`
+- `Smtp:Port`
+- `Smtp:Username`
+- `Smtp:Password`
+- `Smtp:FromEmail`
+- `Smtp:FromName`
+- `Smtp:EnableSsl`
+
+The API sends a 6-digit OTP and blocks login until the code is verified.
+
+### 3. Create the database
+
+Create a PostgreSQL database called `bts_db`.
+
+### 4. Run SQL scripts
+
+Use the scripts inside `SQL/` to create and seed the database.
 
 Typical order:
 
-schema.sql
-seed.sql
+1. `schema.sql`
+2. `seed.sql`
 
 If you have a current production-ready database dump, restore that instead.
 
-4. Run the API
+### 5. Run the API
+
+```powershell
 dotnet restore
 dotnet run
+```
 
 Default local API URL is usually:
 
-https://localhost:7020
-http://localhost:5258
+- `https://localhost:7020`
+- `http://localhost:5001`
 
 Check your terminal output for the exact ports.
 
-CORS
+## CORS
 
 The API should allow the frontend origins for both local and production.
 
 Typical allowed origins include:
 
-http://localhost:5173
-https://localhost:5173
-https://brotechnodevs.co.za
-https://www.brotechnodevs.co.za
-SignalR
+- `http://localhost:5173`
+- `http://localhost:5174`
+- `https://brotechnodevs.co.za`
+- `https://www.brotechnodevs.co.za`
+
+## SignalR
 
 The chat hub is exposed at:
 
-/hubs/chat
+- `/hubs/chat`
 
 This is used for:
 
-live room chat
-Battle Trivia round updates
-Word Scramble updates
-moderation events
-leaderboard events
-Authentication
+- live room chat
+- Battle Trivia round updates
+- Word Scramble updates
+- moderation events
+- leaderboard events
+
+## Authentication
 
 The API uses JWT bearer authentication.
 
 Main auth endpoints include:
 
-POST /api/auth/register
-POST /api/auth/login
-GET /api/auth/me
-Main Features
-Rooms
-list rooms
-get room details
-get room messages
-session status
-Battle Trivia
-live rounds
-answer submissions
-score updates
-leaderboard
-weekly results
-Word Scramble
-live rounds
-answer/guess submissions
-round state updates
-leaderboard
-weekly results
-Moderation
-delete messages
-mute users
-room moderation history
-slow mode
-Profile
-profile update
-password change
-stats/history
-achievements/progression
-Production Deployment
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `POST /api/auth/verify-email`
+- `POST /api/auth/resend-verification`
+- `POST /api/auth/google`
+- `POST /api/auth/facebook`
+- `GET /api/auth/me`
+
+## Main Features
+
+Rooms:
+
+- list rooms
+- get room details
+- get room messages
+- session status
+
+Battle Trivia:
+
+- live rounds
+- answer submissions
+- score updates
+- leaderboard
+- weekly results
+
+Word Scramble:
+
+- live rounds
+- answer and guess submissions
+- round state updates
+- leaderboard
+- weekly results
+
+Moderation:
+
+- delete messages
+- mute users
+- room moderation history
+- slow mode
+
+Profile:
+
+- profile update
+- password change
+- stats and history
+- achievements and progression
+
+## Production Deployment
 
 The API is designed to run in Docker.
 
 Production container settings:
 
-ASPNETCORE_ENVIRONMENT=Production
-ASPNETCORE_HTTP_PORTS=8080
+- `ASPNETCORE_ENVIRONMENT=Production`
+- `ASPNETCORE_HTTP_PORTS=8080`
 
 The production database connection is passed via environment variable:
 
-ConnectionStrings__DefaultConnection
+- `ConnectionStrings__DefaultConnection`
 
-Production JWT values are also passed via environment variables.
+Production JWT and SMTP values should also be passed via environment variables or a secrets manager.
 
-Docker
+Recommended SMTP environment variables:
+
+- `Smtp__Host`
+- `Smtp__Port`
+- `Smtp__Username`
+- `Smtp__Password`
+- `Smtp__FromEmail`
+- `Smtp__FromName`
+- `Smtp__EnableSsl`
+
+## Docker
 
 Typical Docker build:
 
+```powershell
 docker compose build api
 docker compose up -d api
-Useful Commands
-Build
+```
+
+## Useful Commands
+
+Build:
+
+```powershell
 dotnet build
-Publish
+```
+
+Publish:
+
+```powershell
 dotnet publish -c Release
-Run tests
+```
+
+Run tests:
+
+```powershell
 dotnet test
-Notes
-Do not commit real production secrets
-Keep production .env values on the server
-Prefer restoring the latest real database instead of relying on outdated schema files if the schema has drifted
-Status
+```
+
+## Notes
+
+- Do not commit real production secrets
+- Keep production secret values on the server
+- Prefer restoring the latest real database instead of relying on outdated schema files if the schema has drifted
+
+## Status
 
 This API currently supports the live production BTS platform and is intended to work together with the web frontend project.

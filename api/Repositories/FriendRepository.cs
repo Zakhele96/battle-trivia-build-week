@@ -131,6 +131,8 @@ public sealed class FriendRepository : IFriendRepository
                 f.id AS FriendshipId,
                 u.username AS Username,
                 u.display_name AS DisplayName,
+                u.avatar_url AS AvatarUrl,
+                u.status_message AS StatusMessage,
                 'accepted' AS Status,
                 (f.requester_user_id = @UserId) AS InitiatedByMe,
                 f.updated_at AS UpdatedAt
@@ -158,6 +160,8 @@ public sealed class FriendRepository : IFriendRepository
                 f.id AS FriendshipId,
                 u.username AS Username,
                 u.display_name AS DisplayName,
+                u.avatar_url AS AvatarUrl,
+                u.status_message AS StatusMessage,
                 f.status AS Status,
                 FALSE AS InitiatedByMe,
                 f.updated_at AS UpdatedAt
@@ -182,6 +186,8 @@ public sealed class FriendRepository : IFriendRepository
                 f.id AS FriendshipId,
                 u.username AS Username,
                 u.display_name AS DisplayName,
+                u.avatar_url AS AvatarUrl,
+                u.status_message AS StatusMessage,
                 f.status AS Status,
                 TRUE AS InitiatedByMe,
                 f.updated_at AS UpdatedAt

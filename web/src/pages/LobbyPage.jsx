@@ -328,7 +328,11 @@ function DashboardHero({ user, isFirstTimeUser, isLight = false }) {
   const displayName = user?.displayName || user?.username || "Player";
   const greeting = user?.displayName ? `Welcome, ${user.displayName}` : "Welcome";
   const providerLabel =
-    user?.authProvider === "google" ? "Google sign-in" : "BTS sign-in";
+    user?.authProvider === "google"
+      ? "Google sign-in"
+      : user?.authProvider === "facebook"
+        ? "Facebook sign-in"
+        : "BTS sign-in";
 
   return (
     <div

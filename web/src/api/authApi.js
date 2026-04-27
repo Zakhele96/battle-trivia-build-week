@@ -25,3 +25,20 @@ export async function googleLogin(payload) {
   const { data } = await api.post("/auth/google", body);
   return data;
 }
+
+export async function facebookLogin(payload) {
+  const body =
+    typeof payload === "string" ? { accessToken: payload } : payload;
+  const { data } = await api.post("/auth/facebook", body);
+  return data;
+}
+
+export async function verifyEmail(payload) {
+  const { data } = await api.post("/auth/verify-email", payload);
+  return data;
+}
+
+export async function resendVerification(payload) {
+  const { data } = await api.post("/auth/resend-verification", payload);
+  return data;
+}
