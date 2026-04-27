@@ -237,8 +237,9 @@ function AvatarCropModal({
   if (!pendingAvatar || !previewMetrics) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm">
-      <div className="w-full max-w-[34rem] rounded-[28px] border border-white/10 bg-neutral-950 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.45)] sm:p-6">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 px-4 py-6 backdrop-blur-sm">
+      <div className="flex min-h-full items-center justify-center">
+        <div className="w-full max-w-[34rem] rounded-[28px] border border-white/10 bg-neutral-950 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.45)] sm:p-6">
         <div className="text-[10px] uppercase tracking-[0.18em] text-blue-300/70">
           Profile picture
         </div>
@@ -250,7 +251,7 @@ function AvatarCropModal({
         </div>
 
         <div className="mt-5 flex justify-center">
-          <div className="relative h-[240px] w-[240px] overflow-hidden rounded-[32px] border border-white/10 bg-black/30 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
+          <div className="relative aspect-square w-full max-w-[240px] overflow-hidden rounded-[32px] border border-white/10 bg-black/30 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
             <img
               src={pendingAvatar.src}
               alt="Crop preview"
@@ -347,6 +348,7 @@ function AvatarCropModal({
             Cancel
           </button>
         </div>
+      </div>
       </div>
     </div>
   );

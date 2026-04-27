@@ -154,7 +154,7 @@ function ConversationRow({ item, active, onClick }) {
                 {item.otherDisplayName || item.otherUsername}
               </div>
               <div
-                className={`mt-1 truncate text-[11px] ${
+                className={`mt-1 line-clamp-2 break-words text-[11px] leading-4 ${
                   item.isOnline ? "text-emerald-300" : "text-neutral-500"
                 }`}
               >
@@ -174,7 +174,7 @@ function ConversationRow({ item, active, onClick }) {
             </div>
           </div>
 
-          <div className="mt-2 truncate text-[12px] text-neutral-400">
+          <div className="mt-2 line-clamp-2 break-words text-[12px] leading-5 text-neutral-400">
             {item.lastMessageText
               ? `${isSentByMe ? "You: " : ""}${item.lastMessageText}`
               : "Start the conversation."}
@@ -216,7 +216,7 @@ function FriendStarterRow({ friend, onStart }) {
                 </div>
               ) : null}
             </div>
-            <div className="mt-1 truncate text-[11px] text-neutral-500">
+            <div className="mt-1 line-clamp-2 break-words text-[11px] leading-4 text-neutral-500">
               {friend.statusMessage || `@${friend.username}`}
             </div>
           </div>
@@ -230,7 +230,7 @@ function FriendStarterRow({ friend, onStart }) {
           </div>
         </div>
 
-        <div className="mt-2 block max-w-[11rem] min-w-0 truncate text-[12px] text-neutral-400 sm:max-w-none">
+        <div className="mt-2 block min-w-0 break-words text-[12px] leading-5 text-neutral-400 line-clamp-2 sm:max-w-none">
           {preview}
         </div>
       </div>
