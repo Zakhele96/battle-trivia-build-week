@@ -16,5 +16,6 @@ public sealed class User
     public string? GoogleSub { get; set; }
     public string AuthProvider { get; set; } = "local";
     public string? AvatarUrl { get; set; }
+    public string? StatusMessage { get; set; }
     public bool EmailVerified { get; set; }
 }

@@ -12,17 +12,20 @@ public sealed class ProfileService
     private readonly BattleTriviaProfileStatsService _battleTriviaProfileStatsService;
     private readonly GrowthAnalyticsService _growthAnalyticsService;
     private readonly DapperContext _context;
+    private readonly UserPresenceService _userPresenceService;
 
     public ProfileService(
         IUserRepository userRepository,
         BattleTriviaProfileStatsService battleTriviaProfileStatsService,
         GrowthAnalyticsService growthAnalyticsService,
-        DapperContext context)
+        DapperContext context,
+        UserPresenceService userPresenceService)
     {
         _userRepository = userRepository;
         _battleTriviaProfileStatsService = battleTriviaProfileStatsService;
         _growthAnalyticsService = growthAnalyticsService;
         _context = context;
+        _userPresenceService = userPresenceService;
     }
 
     public async Task<ProfileMeResponse?> GetMeAsync(Guid userId)
@@ -31,6 +34,77 @@ public sealed class ProfileService
         if (user is null || !user.IsActive)
             return null;
 
+        var stats = await BuildStatsAsync(userId);
+        var growth = await _growthAnalyticsService.GetUserSummaryAsync(userId);
+
+        return new ProfileMeResponse
+        {
+            Username = user.Username,
+            DisplayName = user.DisplayName,
+            Email = user.Email,
+            PhoneNumber = user.PhoneNumber,
+            AvatarUrl = user.AvatarUrl,
+            StatusMessage = user.StatusMessage,
+            IsAdmin = user.IsAdmin,
+            Stats = stats,
+            Growth = growth
+        };
+    }
+
+    public async Task<ProfileUserResponse?> GetUserAsync(Guid userId)
+    {
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user is null || !user.IsActive)
+            return null;
+
+        var lastSeenMap = await _userPresenceService.GetLastSeenManyAsync([userId]);
+
+        return new ProfileUserResponse
+        {
+            UserId = user.Id,
+            Username = user.Username,
+            DisplayName = user.DisplayName,
+            AvatarUrl = user.AvatarUrl,
+            StatusMessage = user.StatusMessage,
+            IsOnline = _userPresenceService.IsOnline(userId),
+            LastSeenAt = lastSeenMap.TryGetValue(userId, out var lastSeenAt) ? lastSeenAt : null,
+            Stats = await BuildStatsAsync(userId)
+        };
+    }
+
+    public async Task<ProfileMeResponse?> UpdateAsync(Guid userId, UpdateProfileRequest request)
+    {
+        var displayName = request.DisplayName?.Trim() ?? "";
+        if (string.IsNullOrWhiteSpace(displayName))
+            throw new InvalidOperationException("Display name is required.");
+
+        if (displayName.Length > 50)
+            throw new InvalidOperationException("Display name must be 50 characters or fewer.");
+
+        var statusMessage = string.IsNullOrWhiteSpace(request.StatusMessage)
+            ? null
+            : request.StatusMessage.Trim();
+        if (statusMessage?.Length > 120)
+            throw new InvalidOperationException("Status must be 120 characters or fewer.");
+
+        var avatarUrl = string.IsNullOrWhiteSpace(request.AvatarUrl)
+            ? null
+            : request.AvatarUrl.Trim();
+        if (avatarUrl?.Length > 1_000_000)
+            throw new InvalidOperationException("Profile picture is too large.");
+
+        await _userRepository.UpdateProfileAsync(
+            userId,
+            displayName,
+            string.IsNullOrWhiteSpace(request.PhoneNumber) ? null : request.PhoneNumber.Trim(),
+            avatarUrl,
+            statusMessage);
+
+        return await GetMeAsync(userId);
+    }
+
+    private async Task<ProfileStatsResponse> BuildStatsAsync(Guid userId)
+    {
         var stats = await _battleTriviaProfileStatsService.GetForUserAsync(userId);
         const string wordScrambleCorrectSql = """
             SELECT COUNT(*)::int
@@ -50,39 +124,15 @@ public sealed class ProfileService
         var wordScrambleCorrectAnswers = await connection.ExecuteScalarAsync<int>(
             wordScrambleCorrectSql,
             new { UserId = userId });
-        var growth = await _growthAnalyticsService.GetUserSummaryAsync(userId);
 
-        return new ProfileMeResponse
+        return new ProfileStatsResponse
         {
-            Username = user.Username,
-            DisplayName = user.DisplayName,
-            Email = user.Email,
-            PhoneNumber = user.PhoneNumber,
-            IsAdmin = user.IsAdmin,
-            Stats = new ProfileStatsResponse
-            {
-                TotalCorrectAnswers = stats.TotalCorrectAnswers,
-                WordScrambleCorrectAnswers = wordScrambleCorrectAnswers,
-                BestStreak = stats.BestStreak,
-                WeeklyWins = stats.WeeklyWins,
-                FastestCorrectAnswerMs = stats.FastestCorrectAnswerMs
-            },
-            Growth = growth
+            TotalCorrectAnswers = stats.TotalCorrectAnswers,
+            WordScrambleCorrectAnswers = wordScrambleCorrectAnswers,
+            BestStreak = stats.BestStreak,
+            WeeklyWins = stats.WeeklyWins,
+            FastestCorrectAnswerMs = stats.FastestCorrectAnswerMs
         };
-    }
-
-    public async Task<ProfileMeResponse?> UpdateAsync(Guid userId, UpdateProfileRequest request)
-    {
-        var displayName = request.DisplayName?.Trim() ?? "";
-        if (string.IsNullOrWhiteSpace(displayName))
-            throw new InvalidOperationException("Display name is required.");
-
-        await _userRepository.UpdateProfileAsync(
-            userId,
-            displayName,
-            string.IsNullOrWhiteSpace(request.PhoneNumber) ? null : request.PhoneNumber.Trim());
-
-        return await GetMeAsync(userId);
     }
 
     public async Task ChangePasswordAsync(Guid userId, ChangePasswordRequest request)

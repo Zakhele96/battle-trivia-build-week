@@ -1,4 +1,4 @@
-﻿using Bts.Api.Data;
+using Bts.Api.Data;
 using Bts.Api.Models.Domain;
 using Dapper;
 
@@ -26,6 +26,7 @@ public sealed class UserRepository : IUserRepository
                 google_sub AS GoogleSub,
                 auth_provider AS AuthProvider,
                 avatar_url AS AvatarUrl,
+                status_message AS StatusMessage,
                 email_verified AS EmailVerified,
                 is_active AS IsActive,
                 is_admin AS IsAdmin,
@@ -52,6 +53,7 @@ public sealed class UserRepository : IUserRepository
                 google_sub AS GoogleSub,
                 auth_provider AS AuthProvider,
                 avatar_url AS AvatarUrl,
+                status_message AS StatusMessage,
                 email_verified AS EmailVerified,
                 is_active AS IsActive,
                 is_admin AS IsAdmin,
@@ -93,6 +95,7 @@ public sealed class UserRepository : IUserRepository
                 google_sub AS GoogleSub,
                 auth_provider AS AuthProvider,
                 avatar_url AS AvatarUrl,
+                status_message AS StatusMessage,
                 email_verified AS EmailVerified,
                 is_active AS IsActive,
                 is_admin AS IsAdmin,
@@ -119,6 +122,7 @@ public sealed class UserRepository : IUserRepository
                 google_sub AS GoogleSub,
                 auth_provider AS AuthProvider,
                 avatar_url AS AvatarUrl,
+                status_message AS StatusMessage,
                 email_verified AS EmailVerified,
                 is_active AS IsActive,
                 is_admin AS IsAdmin,
@@ -145,6 +149,7 @@ public sealed class UserRepository : IUserRepository
                 google_sub AS GoogleSub,
                 auth_provider AS AuthProvider,
                 avatar_url AS AvatarUrl,
+                status_message AS StatusMessage,
                 email_verified AS EmailVerified,
                 is_active AS IsActive,
                 is_admin AS IsAdmin,
@@ -172,6 +177,7 @@ public sealed class UserRepository : IUserRepository
                 google_sub AS GoogleSub,
                 auth_provider AS AuthProvider,
                 avatar_url AS AvatarUrl,
+                status_message AS StatusMessage,
                 email_verified AS EmailVerified,
                 is_active AS IsActive,
                 is_admin AS IsAdmin,
@@ -198,6 +204,7 @@ public sealed class UserRepository : IUserRepository
                 google_sub,
                 auth_provider,
                 avatar_url,
+                status_message,
                 email_verified,
                 is_active,
                 is_admin,
@@ -214,6 +221,7 @@ public sealed class UserRepository : IUserRepository
                 @GoogleSub,
                 @AuthProvider,
                 @AvatarUrl,
+                @StatusMessage,
                 @EmailVerified,
                 @IsActive,
                 @IsAdmin,
@@ -233,6 +241,7 @@ public sealed class UserRepository : IUserRepository
             SET google_sub = @GoogleSub,
                 auth_provider = @AuthProvider,
                 avatar_url = @AvatarUrl,
+                status_message = @StatusMessage,
                 email_verified = @EmailVerified,
                 updated_at = NOW()
             WHERE id = @Id;
@@ -245,16 +254,19 @@ public sealed class UserRepository : IUserRepository
             user.GoogleSub,
             user.AuthProvider,
             user.AvatarUrl,
+            user.StatusMessage,
             user.EmailVerified
         });
     }
 
-    public async Task UpdateProfileAsync(Guid userId, string displayName, string? phoneNumber)
+    public async Task UpdateProfileAsync(Guid userId, string displayName, string? phoneNumber, string? avatarUrl, string? statusMessage)
     {
         const string sql = """
             UPDATE users
             SET display_name = @DisplayName,
                 phone_number = @PhoneNumber,
+                avatar_url = @AvatarUrl,
+                status_message = @StatusMessage,
                 updated_at = NOW()
             WHERE id = @UserId;
             """;
@@ -264,7 +276,9 @@ public sealed class UserRepository : IUserRepository
         {
             UserId = userId,
             DisplayName = displayName,
-            PhoneNumber = phoneNumber
+            PhoneNumber = phoneNumber,
+            AvatarUrl = avatarUrl,
+            StatusMessage = statusMessage
         });
     }
 

@@ -694,8 +694,8 @@ public sealed class ShareController : ControllerBase
     {
         var title = Encode(BuildTitle(card));
         var description = Encode(BuildDescription(card));
-        var sharer = Encode(card.SharerName);
-        var sponsor = card.Sponsor is null ? string.Empty : Encode(card.Sponsor.Name);
+        var sharer = Encode(TruncateForSvg(card.SharerName, 18));
+        var sponsor = card.Sponsor is null ? string.Empty : Encode(TruncateForSvg(card.Sponsor.Name, 32));
         var rank = card.Rank.HasValue ? $"#{card.Rank}" : "NEW";
         var score = card.Score.HasValue ? $"{card.Score} pts" : "Join now";
         var leaderboardLabel = Encode(card.Label);
@@ -759,8 +759,8 @@ public sealed class ShareController : ControllerBase
     {
         var title = Encode(BuildChallengeTitle(card));
         var description = Encode(BuildChallengeDescription(card));
-        var challenger = Encode(card.ChallengerName);
-        var rival = Encode(card.RivalName);
+        var challenger = Encode(TruncateForSvg(card.ChallengerName, 18));
+        var rival = Encode(TruncateForSvg(card.RivalName, 18));
         var challengerRank = card.ChallengerRow?.Rank is int challengerRankValue ? $"#{challengerRankValue}" : "NEW";
         var rivalRank = card.RivalRow?.Rank is int rivalRankValue ? $"#{rivalRankValue}" : "NEW";
         var challengerScore = $"{card.ChallengerRow?.Score ?? 0} pts";
@@ -857,8 +857,8 @@ public sealed class ShareController : ControllerBase
                 <g transform="translate(0,{index * 92})">
                   <rect x="0" y="0" width="470" height="76" rx="18" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.08)" />
                   <text x="24" y="46" fill="#bfdbfe" font-size="28" font-family="Segoe UI, Arial, sans-serif" font-weight="700">#{row.Rank}</text>
-                  <text x="102" y="34" fill="#ffffff" font-size="24" font-family="Segoe UI, Arial, sans-serif" font-weight="700">{Encode(string.IsNullOrWhiteSpace(row.DisplayName) ? row.Username : row.DisplayName)}</text>
-                  <text x="102" y="58" fill="#a1a1aa" font-size="16" font-family="Segoe UI, Arial, sans-serif">@{Encode(row.Username)}</text>
+                  <text x="102" y="34" fill="#ffffff" font-size="24" font-family="Segoe UI, Arial, sans-serif" font-weight="700">{Encode(TruncateForSvg(string.IsNullOrWhiteSpace(row.DisplayName) ? row.Username : row.DisplayName, 22))}</text>
+                  <text x="102" y="58" fill="#a1a1aa" font-size="16" font-family="Segoe UI, Arial, sans-serif">@{Encode(TruncateForSvg(row.Username, 24))}</text>
                   <text x="430" y="46" text-anchor="end" fill="#ffffff" font-size="24" font-family="Segoe UI, Arial, sans-serif" font-weight="700">{row.Score}</text>
                 </g>
                 """));
@@ -1046,10 +1046,10 @@ public sealed class ShareController : ControllerBase
 
     private static string BuildSquadSvg(SquadShareCardDto card)
     {
-        var title = Encode($"{card.SquadName} is recruiting");
+        var title = Encode($"{TruncateForSvg(card.SquadName, 22)} is recruiting");
         var subtitle = Encode(card.Label);
         var inviteCode = Encode(card.InviteCode);
-        var topName = Encode(card.LeaderboardRows.FirstOrDefault()?.DisplayName ?? card.LeaderboardRows.FirstOrDefault()?.Username ?? "Your crew");
+        var topName = Encode(TruncateForSvg(card.LeaderboardRows.FirstOrDefault()?.DisplayName ?? card.LeaderboardRows.FirstOrDefault()?.Username ?? "Your crew", 22));
         var topScore = card.LeaderboardRows.FirstOrDefault()?.Score ?? 0;
 
         return $$"""
@@ -1183,11 +1183,11 @@ public sealed class ShareController : ControllerBase
 
     private static string BuildSquadChallengeSvg(SquadChallengeCardDto card)
     {
-        var challenger = Encode(card.ChallengerSquad.SquadName);
-        var rival = Encode(card.RivalSquad.SquadName);
+        var challenger = Encode(TruncateForSvg(card.ChallengerSquad.SquadName, 18));
+        var rival = Encode(TruncateForSvg(card.RivalSquad.SquadName, 18));
         var challengerTop = card.ChallengerSquad.LeaderboardRows.FirstOrDefault();
         var rivalTop = card.RivalSquad.LeaderboardRows.FirstOrDefault();
-        var title = Encode($"{card.ChallengerSquad.SquadName} vs {card.RivalSquad.SquadName}");
+        var title = Encode($"{TruncateForSvg(card.ChallengerSquad.SquadName, 14)} vs {TruncateForSvg(card.RivalSquad.SquadName, 14)}");
         var label = Encode(card.Label);
 
         return $$"""
@@ -1203,13 +1203,13 @@ public sealed class ShareController : ControllerBase
           <text x="92" y="286" fill="#71717a" font-size="16" font-family="Segoe UI, Arial, sans-serif" letter-spacing="2">CHALLENGER SQUAD</text>
           <text x="92" y="346" fill="#ffffff" font-size="40" font-family="Segoe UI, Arial, sans-serif" font-weight="700">{{challenger}}</text>
           <text x="92" y="392" fill="#d4d4d8" font-size="22" font-family="Segoe UI, Arial, sans-serif">{{card.ChallengerSquad.MemberCount}} members</text>
-          <text x="92" y="430" fill="#bfdbfe" font-size="22" font-family="Segoe UI, Arial, sans-serif">Top: {{Encode(challengerTop?.DisplayName ?? challengerTop?.Username ?? "Waiting")}}</text>
+          <text x="92" y="430" fill="#bfdbfe" font-size="22" font-family="Segoe UI, Arial, sans-serif">Top: {{Encode(TruncateForSvg(challengerTop?.DisplayName ?? challengerTop?.Username ?? "Waiting", 22))}}</text>
           <text x="530" y="368" fill="#f9a8d4" font-size="50" font-family="Segoe UI, Arial, sans-serif" font-weight="800">VS</text>
           <rect x="676" y="246" width="420" height="220" rx="28" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)" />
           <text x="704" y="286" fill="#71717a" font-size="16" font-family="Segoe UI, Arial, sans-serif" letter-spacing="2">RIVAL SQUAD</text>
           <text x="704" y="346" fill="#ffffff" font-size="40" font-family="Segoe UI, Arial, sans-serif" font-weight="700">{{rival}}</text>
           <text x="704" y="392" fill="#d4d4d8" font-size="22" font-family="Segoe UI, Arial, sans-serif">{{card.RivalSquad.MemberCount}} members</text>
-          <text x="704" y="430" fill="#fed7aa" font-size="22" font-family="Segoe UI, Arial, sans-serif">Top: {{Encode(rivalTop?.DisplayName ?? rivalTop?.Username ?? "Waiting")}}</text>
+          <text x="704" y="430" fill="#fed7aa" font-size="22" font-family="Segoe UI, Arial, sans-serif">Top: {{Encode(TruncateForSvg(rivalTop?.DisplayName ?? rivalTop?.Username ?? "Waiting", 22))}}</text>
           <text x="64" y="548" fill="#f8fafc" font-size="26" font-family="Segoe UI, Arial, sans-serif" font-weight="700">Build your squad and turn the weekly board into a crew rivalry.</text>
         </svg>
         """;
@@ -1291,11 +1291,11 @@ public sealed class ShareController : ControllerBase
 
     private static string BuildPlayerRecapSvg(LeaderboardShareCardDto card)
     {
-        var title = Encode($"{card.SharerName}'s weekly recap");
+        var title = Encode($"{TruncateForSvg(card.SharerName, 18)}'s weekly recap");
         var rankText = card.Rank.HasValue ? $"#{card.Rank}" : "Played";
         var scoreText = $"{card.Score ?? 0} pts";
         var label = Encode(card.Label);
-        var player = Encode(card.SharerName);
+        var player = Encode(TruncateForSvg(card.SharerName, 20));
 
         return $$"""
         <svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
@@ -1390,10 +1390,10 @@ public sealed class ShareController : ControllerBase
 
     private static string BuildSquadRecapSvg(SquadShareCardDto card)
     {
-        var title = Encode($"{card.SquadName} weekly squad recap");
+        var title = Encode($"{TruncateForSvg(card.SquadName, 18)} weekly squad recap");
         var label = Encode(card.Label);
         var topRow = card.LeaderboardRows.FirstOrDefault();
-        var topName = Encode(topRow?.DisplayName ?? topRow?.Username ?? "Waiting");
+        var topName = Encode(TruncateForSvg(topRow?.DisplayName ?? topRow?.Username ?? "Waiting", 20));
         var topScore = $"{topRow?.Score ?? 0} pts";
 
         return $$"""
@@ -1407,7 +1407,7 @@ public sealed class ShareController : ControllerBase
           <text x="94" y="310" fill="#cbd5e1" font-size="34" font-family="Segoe UI, Arial, sans-serif">{{label}}</text>
           <rect x="94" y="402" width="892" height="540" rx="36" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)" />
           <text x="138" y="482" fill="#71717a" font-size="24" font-family="Segoe UI, Arial, sans-serif" letter-spacing="3">SQUAD</text>
-          <text x="138" y="596" fill="#ffffff" font-size="66" font-family="Segoe UI, Arial, sans-serif" font-weight="700">{{Encode(card.SquadName)}}</text>
+          <text x="138" y="596" fill="#ffffff" font-size="66" font-family="Segoe UI, Arial, sans-serif" font-weight="700">{{Encode(TruncateForSvg(card.SquadName, 20))}}</text>
           <text x="138" y="698" fill="#d1fae5" font-size="44" font-family="Segoe UI, Arial, sans-serif">{{card.MemberCount}} members</text>
           <text x="138" y="782" fill="#ffffff" font-size="34" font-family="Segoe UI, Arial, sans-serif">Top finisher: {{topName}}</text>
           <text x="94" y="1128" fill="#f8fafc" font-size="52" font-family="Segoe UI, Arial, sans-serif" font-weight="700">Wrapped the week and posted the squad receipts.</text>
@@ -1419,5 +1419,14 @@ public sealed class ShareController : ControllerBase
     private static string Encode(string? value)
     {
         return WebUtility.HtmlEncode(value ?? string.Empty);
+    }
+
+    private static string TruncateForSvg(string? value, int maxLength)
+    {
+        var text = (value ?? string.Empty).Trim();
+        if (text.Length <= maxLength)
+            return text;
+
+        return $"{text[..Math.Max(0, maxLength - 1)].TrimEnd()}…";
     }
 }

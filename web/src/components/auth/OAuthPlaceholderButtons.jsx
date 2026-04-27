@@ -12,8 +12,7 @@ function OAuthPlaceholderButton({ provider, onClick }) {
 
 export default function OAuthPlaceholderButtons({ onProviderClick }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      <OAuthPlaceholderButton provider="Apple" onClick={onProviderClick} />
+    <div className="grid gap-3">
       <OAuthPlaceholderButton provider="Facebook" onClick={onProviderClick} />
     </div>
   );

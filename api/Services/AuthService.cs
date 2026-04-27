@@ -55,6 +55,7 @@ public sealed class AuthService
             GoogleSub = null,
             AuthProvider = "local",
             AvatarUrl = null,
+            StatusMessage = null,
             EmailVerified = false,
             IsActive = true,
             IsAdmin = false,
@@ -159,6 +160,7 @@ public sealed class AuthService
                     GoogleSub = payload.Subject,
                     AuthProvider = "google",
                     AvatarUrl = payload.Picture,
+                    StatusMessage = null,
                     EmailVerified = payload.EmailVerified,
                     IsActive = true,
                     IsAdmin = false,
@@ -253,6 +255,7 @@ public sealed class AuthService
         Email = user.Email,
         PhoneNumber = user.PhoneNumber,
         AvatarUrl = user.AvatarUrl,
+        StatusMessage = user.StatusMessage,
         AuthProvider = string.IsNullOrWhiteSpace(user.AuthProvider) ? "local" : user.AuthProvider,
         HasPassword = !string.IsNullOrWhiteSpace(user.PasswordHash),
         IsAdmin = user.IsAdmin

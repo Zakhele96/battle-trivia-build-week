@@ -73,7 +73,7 @@ function AuthShell({ title, description, children, footer, isLight }) {
                     Identity
                   </div>
                   <div className="mt-2 text-sm font-semibold text-white">
-                    Google or BTS
+                    Google, Facebook, or BTS
                   </div>
                 </div>
               </div>
@@ -188,7 +188,7 @@ export default function LoginPage() {
     <AuthShell
       isLight={resolvedTheme === "light"}
       title="Welcome back"
-      description="Sign in with your BTS account or continue with Google. Apple and Facebook entry points are surfaced here and just need provider setup to go live."
+      description="Sign in with your BTS account or continue with Google. Facebook is surfaced here next and just needs provider setup to go live."
       footer={
         <p className="text-sm text-neutral-400">
           Don&apos;t have an account?{" "}

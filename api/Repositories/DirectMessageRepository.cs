@@ -139,6 +139,8 @@ public sealed class DirectMessageRepository : IDirectMessageRepository
                 uc.other_user_id AS OtherUserId,
                 u.username AS OtherUsername,
                 u.display_name AS OtherDisplayName,
+                u.avatar_url AS OtherAvatarUrl,
+                u.status_message AS OtherStatusMessage,
                 lm.message_text AS LastMessageText,
                 lm.sent_at AS LastMessageAt,
                 lm.sender_user_id AS LastMessageSenderUserId,

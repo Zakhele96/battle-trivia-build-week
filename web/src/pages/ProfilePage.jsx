@@ -184,7 +184,8 @@ function IdentityCard({ profile, authUser }) {
     "Player";
 
   const username = profile?.username || authUser?.username || "username";
-  const avatarUrl = authUser?.avatarUrl || null;
+  const avatarUrl = profile?.avatarUrl || authUser?.avatarUrl || null;
+  const statusMessage = profile?.statusMessage || authUser?.statusMessage || "";
   const providerLabel =
     authUser?.authProvider === "google" ? "Google account" : "BTS account";
 
@@ -218,6 +219,15 @@ function IdentityCard({ profile, authUser }) {
 
           <div className="mt-3 inline-flex rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-neutral-300">
             {providerLabel}
+          </div>
+
+          <div className="mt-3 rounded-[16px] border border-white/8 bg-black/20 px-4 py-3">
+            <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
+              DM status
+            </div>
+            <div className="mt-1 text-sm leading-6 text-white">
+              {statusMessage || "No status set right now."}
+            </div>
           </div>
         </div>
       </div>
@@ -545,7 +555,7 @@ function SoundCard({
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const { logout, user: authUser } = useAuth();
+  const { logout, setUser, user: authUser } = useAuth();
   const { themePreference, setThemePreference, resolvedTheme } = useTheme();
   const {
     soundEffectsEnabled,
@@ -563,6 +573,8 @@ export default function ProfilePage() {
 
   const [displayName, setDisplayName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [statusMessage, setStatusMessage] = useState("");
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -600,6 +612,8 @@ export default function ProfilePage() {
         setProfile(data);
         setDisplayName(data?.displayName || "");
         setPhoneNumber(data?.phoneNumber || "");
+        setAvatarUrl(data?.avatarUrl || "");
+        setStatusMessage(data?.statusMessage || "");
       } catch {
         if (!isMounted) return;
         setError("Failed to load profile.");
@@ -806,9 +820,24 @@ export default function ProfilePage() {
       const updated = await updateMyProfile({
         displayName,
         phoneNumber,
+        avatarUrl,
+        statusMessage,
       });
 
       setProfile(updated);
+      setAvatarUrl(updated?.avatarUrl || "");
+      setStatusMessage(updated?.statusMessage || "");
+      setUser((previous) =>
+        previous
+          ? {
+              ...previous,
+              displayName: updated?.displayName || previous.displayName,
+              phoneNumber: updated?.phoneNumber ?? previous.phoneNumber,
+              avatarUrl: updated?.avatarUrl ?? null,
+              statusMessage: updated?.statusMessage ?? "",
+            }
+          : previous
+      );
       setMessage("Profile updated.");
     } catch (err) {
       setError(err?.response?.data?.message || "Failed to update profile.");
@@ -846,6 +875,37 @@ export default function ProfilePage() {
     logout();
     navigate("/login", { replace: true });
   }
+
+  const handleAvatarFileChange = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setError("Choose an image file for your profile picture.");
+      return;
+    }
+
+    if (file.size > 750 * 1024) {
+      setError("Profile picture must be 750 KB or smaller.");
+      return;
+    }
+
+    try {
+      const nextAvatarUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
+        reader.onerror = () => reject(new Error("Could not read image."));
+        reader.readAsDataURL(file);
+      });
+
+      setError("");
+      setAvatarUrl(nextAvatarUrl);
+    } catch {
+      setError("Could not load that profile picture.");
+    }
+  };
 
   const handleCopyInvite = async () => {
     if (!authUser?.id) return;
@@ -1234,6 +1294,64 @@ export default function ProfilePage() {
                         onChange={(e) => setPhoneNumber(e.target.value)}
                         className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none focus:border-blue-400/20"
                       />
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-[11px] uppercase tracking-[0.14em] text-neutral-500">
+                        DM status
+                      </label>
+                      <textarea
+                        value={statusMessage}
+                        onChange={(e) => setStatusMessage(e.target.value.slice(0, 120))}
+                        rows={3}
+                        placeholder="Available for late-night trivia smoke."
+                        className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none focus:border-blue-400/20"
+                      />
+                      <div className="mt-1 text-[11px] text-neutral-500">
+                        Shows in direct messages and on your DM profile.
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-[11px] uppercase tracking-[0.14em] text-neutral-500">
+                        Profile picture
+                      </label>
+
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full border border-white/10 bg-white/[0.04]">
+                          {avatarUrl ? (
+                            <img
+                              src={avatarUrl}
+                              alt={displayName || profile?.username || authUser?.username || "Profile"}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-white">
+                              {getInitials(displayName || profile?.username || authUser?.username || "P")}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                          <label className="inline-flex cursor-pointer rounded-[16px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08]">
+                            Upload photo
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleAvatarFileChange}
+                              className="hidden"
+                            />
+                          </label>
+
+                          <button
+                            type="button"
+                            onClick={() => setAvatarUrl("")}
+                            className="rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
+                          >
+                            Remove photo
+                          </button>
+                        </div>
+                      </div>
                     </div>
 
                     <div className="flex flex-wrap gap-3 pt-1">

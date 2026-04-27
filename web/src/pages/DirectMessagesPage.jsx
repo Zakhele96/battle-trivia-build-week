@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import AppSectionNav from "../components/layout/AppSectionNav";
 import AppTopBar from "../components/layout/AppTopBar";
 import ChatStream from "../components/chat/ChatStream";
@@ -105,6 +105,25 @@ function formatMessageTime(value) {
   }).format(new Date(value));
 }
 
+function ProfileAvatar({ name, avatarUrl, isOnline, size = "h-11 w-11", textSize = "text-sm" }) {
+  return (
+    <div
+      className={`relative flex ${size} shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.2),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] font-semibold text-white ${textSize}`}
+    >
+      {avatarUrl ? (
+        <img src={avatarUrl} alt={name} className="h-full w-full object-cover" />
+      ) : (
+        (name || "U").charAt(0).toUpperCase()
+      )}
+      <span
+        className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-neutral-950 ${
+          isOnline ? "bg-emerald-400" : "bg-neutral-600"
+        }`}
+      />
+    </div>
+  );
+}
+
 function ConversationRow({ item, active, onClick }) {
   const isSentByMe =
     item.lastMessageSenderUserId && item.lastMessageSenderUserId !== item.otherUserId;
@@ -120,27 +139,24 @@ function ConversationRow({ item, active, onClick }) {
       }`}
     >
       <div className="flex items-start gap-3">
-        <div className="relative mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.2),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] text-sm font-semibold text-white">
-          {(item.otherDisplayName || item.otherUsername || "U").charAt(0).toUpperCase()}
-          <span
-            className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-neutral-950 ${
-              item.isOnline ? "bg-emerald-400" : "bg-neutral-600"
-            }`}
-          />
-        </div>
+        <ProfileAvatar
+          name={item.otherDisplayName || item.otherUsername || "U"}
+          avatarUrl={item.otherAvatarUrl}
+          isOnline={item.isOnline}
+        />
 
         <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <div className="truncate text-sm font-semibold text-white">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 flex-1 pr-1">
+              <div className="break-words text-sm font-semibold leading-5 text-white">
                 {item.otherDisplayName || item.otherUsername}
               </div>
               <div
-                className={`mt-1 text-[11px] ${
+                className={`mt-1 truncate text-[11px] ${
                   item.isOnline ? "text-emerald-300" : "text-neutral-500"
                 }`}
               >
-                {formatPresence(item)}
+                {item.otherStatusMessage || formatPresence(item)}
               </div>
             </div>
 
@@ -179,20 +195,17 @@ function FriendStarterRow({ friend, onStart }) {
       onClick={() => onStart?.(friend)}
       className="flex w-full min-w-0 items-center gap-3 overflow-hidden rounded-[18px] border border-white/8 bg-black/20 px-3 py-3 text-left transition hover:border-white/12 hover:bg-white/[0.05]"
     >
-      <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.2),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] text-sm font-semibold text-white">
-        {(friend.displayName || friend.username || "U").charAt(0).toUpperCase()}
-        <span
-          className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-neutral-950 ${
-            friend.conversation?.isOnline ? "bg-emerald-400" : "bg-neutral-600"
-          }`}
-        />
-      </div>
+      <ProfileAvatar
+        name={friend.displayName || friend.username || "U"}
+        avatarUrl={friend.avatarUrl || friend.conversation?.otherAvatarUrl}
+        isOnline={friend.conversation?.isOnline}
+      />
 
       <div className="min-w-0 flex-1 overflow-hidden">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1 overflow-hidden">
             <div className="flex min-w-0 items-center gap-2">
-              <div className="truncate text-sm font-medium text-white">
+              <div className="min-w-0 break-words text-sm font-medium leading-5 text-white">
                 {friend.displayName || friend.username}
               </div>
               {friend.conversation?.unreadCount > 0 ? (
@@ -202,7 +215,7 @@ function FriendStarterRow({ friend, onStart }) {
               ) : null}
             </div>
             <div className="mt-1 truncate text-[11px] text-neutral-500">
-              @{friend.username}
+              {friend.statusMessage || `@${friend.username}`}
             </div>
           </div>
 
@@ -252,6 +265,7 @@ function ReplyingToBar({ message, onCancel }) {
 
 export default function DirectMessagesPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const {
     conversations,
     isLoading: isLoadingConversations,
@@ -381,7 +395,7 @@ export default function DirectMessagesPage() {
       setError("");
 
       try {
-        const [network, nextConversations] = await Promise.all([
+        const [network] = await Promise.all([
           getMyFriendNetwork(),
           refreshConversations(),
         ]);
@@ -519,6 +533,11 @@ export default function DirectMessagesPage() {
 
   const handleBackToInbox = () => {
     setSearchParams({});
+  };
+
+  const handleOpenProfile = () => {
+    if (!selectedConversation?.otherUserId) return;
+    navigate(`/profile/${selectedConversation.otherUserId}`);
   };
 
   const handleStartConversation = async (friend) => {
@@ -776,32 +795,42 @@ export default function DirectMessagesPage() {
                     <span aria-hidden="true">&larr;</span>
                   </button>
 
-                  <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.2),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] text-base font-semibold text-white">
-                    {(selectedConversation.otherDisplayName ||
-                      selectedConversation.otherUsername ||
-                      "U").charAt(0).toUpperCase()}
-                    <span
-                      className={`absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full border-2 border-neutral-950 ${
-                        selectedConversation.isOnline ? "bg-emerald-400" : "bg-neutral-600"
-                      }`}
+                  <button
+                    type="button"
+                    onClick={handleOpenProfile}
+                    className="flex min-w-0 flex-1 items-center gap-3 rounded-[18px] p-1 text-left transition hover:bg-white/[0.04]"
+                  >
+                    <ProfileAvatar
+                      name={
+                        selectedConversation.otherDisplayName ||
+                        selectedConversation.otherUsername ||
+                        "U"
+                      }
+                      avatarUrl={selectedConversation.otherAvatarUrl}
+                      isOnline={selectedConversation.isOnline}
+                      size="h-12 w-12"
+                      textSize="text-base"
                     />
-                  </div>
 
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-[18px] font-semibold tracking-[-0.03em] text-white">
-                      {selectedConversation.otherDisplayName ||
-                        selectedConversation.otherUsername}
+                    <div className="min-w-0 flex-1">
+                      <div className="break-words text-[18px] font-semibold tracking-[-0.03em] text-white">
+                        {selectedConversation.otherDisplayName ||
+                          selectedConversation.otherUsername}
+                      </div>
+                      <div
+                        className={`mt-1 truncate text-[12px] ${
+                          selectedConversation.isOnline ? "text-emerald-300" : "text-neutral-400"
+                        }`}
+                      >
+                        {selectedConversation.otherStatusMessage ||
+                          formatPresence(selectedConversation)}
+                      </div>
                     </div>
-                    <div
-                      className={`mt-1 text-[12px] ${
-                        selectedConversation.isOnline
-                          ? "text-emerald-300"
-                          : "text-neutral-400"
-                      }`}
-                    >
-                      {formatPresence(selectedConversation)}
+
+                    <div className="hidden text-[11px] text-neutral-500 sm:block">
+                      Open profile
                     </div>
-                  </div>
+                  </button>
                 </div>
               ) : (
                 <div className="px-1 py-2 text-sm text-neutral-500">

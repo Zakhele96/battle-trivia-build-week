@@ -6,11 +6,21 @@ CREATE TABLE IF NOT EXISTS users (
     display_name VARCHAR(50) NOT NULL,
     email VARCHAR(120) NOT NULL UNIQUE,
     phone_number VARCHAR(20),
-    password_hash TEXT NOT NULL,
+    password_hash TEXT,
+    google_sub TEXT,
+    auth_provider VARCHAR(20) NOT NULL DEFAULT 'local',
+    avatar_url TEXT,
+    status_message VARCHAR(120),
+    email_verified BOOLEAN NOT NULL DEFAULT FALSE,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    is_admin BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS ux_users_google_sub
+ON users(google_sub)
+WHERE google_sub IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS rooms (
     id UUID PRIMARY KEY,

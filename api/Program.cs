@@ -126,6 +126,7 @@ builder.Services.AddScoped<AdminBattleTriviaSettingsService>();
 builder.Services.AddScoped<AdminLeaderboardSponsorService>();
 builder.Services.AddScoped<RoomModerationStateService>();
 builder.Services.AddScoped<ProfileService>();
+builder.Services.AddScoped<UserSchemaService>();
 builder.Services.AddScoped<ProgressionRealtimeService>();
 builder.Services.AddScoped<GameLeaderboardService>();
 builder.Services.AddScoped<MentionNotificationService>();
@@ -226,6 +227,8 @@ app.MapHub<Bts.Api.Hubs.ChatHub>("/hubs/chat");
 
 using (var scope = app.Services.CreateScope())
 {
+    var userSchemaService = scope.ServiceProvider.GetRequiredService<UserSchemaService>();
+    await userSchemaService.EnsureAsync();
     var schemaService = scope.ServiceProvider.GetRequiredService<LeaderboardSponsorSchemaService>();
     await schemaService.EnsureAsync();
     var growthSchemaService = scope.ServiceProvider.GetRequiredService<GrowthSchemaService>();

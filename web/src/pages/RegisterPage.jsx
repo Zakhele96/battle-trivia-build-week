@@ -69,7 +69,7 @@ function AuthShell({ title, description, children, footer, isLight }) {
                     Access
                   </div>
                   <div className="mt-2 text-sm font-semibold text-white">
-                    Google or BTS
+                    Google, Facebook, or BTS
                   </div>
                 </div>
 
@@ -197,7 +197,7 @@ export default function RegisterPage() {
     <AuthShell
       isLight={resolvedTheme === "light"}
       title="Create your account"
-      description="Start with BTS details or continue instantly with Google. Apple and Facebook entry points are surfaced here and just need provider setup to go live."
+      description="Start with BTS details or continue instantly with Google. Facebook is surfaced here next and just needs provider setup to go live."
       footer={
         <p className="text-sm text-neutral-400">
           Already have an account?{" "}

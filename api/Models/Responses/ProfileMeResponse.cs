@@ -6,6 +6,8 @@ public sealed class ProfileMeResponse
     public string DisplayName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string? PhoneNumber { get; set; }
+    public string? AvatarUrl { get; set; }
+    public string? StatusMessage { get; set; }
     public bool IsAdmin { get; set; }
     public ProfileStatsResponse Stats { get; set; } = new();
     public GrowthSummaryResponse Growth { get; set; } = new();

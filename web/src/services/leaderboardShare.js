@@ -190,6 +190,13 @@ function escapeSvg(value) {
     .replace(/'/g, "&#39;");
 }
 
+function truncateSvgText(value, maxLength = 24) {
+  const text = String(value ?? "").trim();
+  if (!text) return "";
+  if (text.length <= maxLength) return text;
+  return `${text.slice(0, Math.max(0, maxLength - 1)).trimEnd()}…`;
+}
+
 function slugify(value) {
   return String(value || "bts-rank-card")
     .toLowerCase()
@@ -281,8 +288,8 @@ export function buildTopThreeCardSvg({ rows = [], label = "Combined", period = "
       return `
         <rect x="${place.x}" y="${place.y}" width="300" height="360" rx="34" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)" />
         <text x="${place.x + 34}" y="${place.y + 56}" fill="${place.tone}" font-size="24" font-family="Segoe UI, Arial, sans-serif" font-weight="700">#${row.rank}</text>
-        <text x="${place.x + 34}" y="${place.y + 126}" fill="#ffffff" font-size="38" font-family="Segoe UI, Arial, sans-serif" font-weight="700">${escapeSvg(row.displayName || row.username || "Player")}</text>
-        <text x="${place.x + 34}" y="${place.y + 172}" fill="#9ca3af" font-size="22" font-family="Segoe UI, Arial, sans-serif">@${escapeSvg(row.username || "player")}</text>
+        <text x="${place.x + 34}" y="${place.y + 126}" fill="#ffffff" font-size="38" font-family="Segoe UI, Arial, sans-serif" font-weight="700">${escapeSvg(truncateSvgText(row.displayName || row.username || "Player", 16))}</text>
+        <text x="${place.x + 34}" y="${place.y + 172}" fill="#9ca3af" font-size="22" font-family="Segoe UI, Arial, sans-serif">@${escapeSvg(truncateSvgText(row.username || "player", 18))}</text>
         <text x="${place.x + 34}" y="${place.y + 250}" fill="#bfdbfe" font-size="72" font-family="Segoe UI, Arial, sans-serif" font-weight="700">${escapeSvg(row.score)}</text>
         <text x="${place.x + 34}" y="${place.y + 292}" fill="#ffffff" font-size="24" font-family="Segoe UI, Arial, sans-serif">points</text>
       `;
@@ -311,6 +318,8 @@ export function buildStreakCardSvg({
   weeklyWins = 0,
   totalCorrectAnswers = 0,
 }) {
+  const safePlayerName = truncateSvgText(playerName, 22);
+
   return `
     <svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
       <rect width="1080" height="1920" fill="#09090b" />
@@ -318,7 +327,7 @@ export function buildStreakCardSvg({
       <circle cx="900" cy="1600" r="310" fill="rgba(234,88,12,0.12)" />
       <rect x="44" y="44" width="992" height="1832" rx="42" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.08)" />
       <text x="92" y="128" fill="#fdba74" font-size="30" font-family="Segoe UI, Arial, sans-serif" letter-spacing="4">BTS STREAK CARD</text>
-      <text x="92" y="238" fill="#ffffff" font-size="76" font-family="Segoe UI, Arial, sans-serif" font-weight="700">${escapeSvg(playerName)}</text>
+      <text x="92" y="238" fill="#ffffff" font-size="76" font-family="Segoe UI, Arial, sans-serif" font-weight="700">${escapeSvg(safePlayerName)}</text>
       <text x="92" y="322" fill="#f59e0b" font-size="160" font-family="Segoe UI, Arial, sans-serif" font-weight="800">x${escapeSvg(bestStreak)}</text>
       <text x="92" y="390" fill="#ffffff" font-size="40" font-family="Segoe UI, Arial, sans-serif">best streak</text>
       <rect x="92" y="540" width="896" height="230" rx="34" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)" />
@@ -338,6 +347,8 @@ export function buildTopTenCardSvg({
   label = "Combined",
   period = "current",
 }) {
+  const safePlayerName = truncateSvgText(playerName, 22);
+
   return `
     <svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
       <rect width="1080" height="1920" fill="#09090b" />
@@ -345,7 +356,7 @@ export function buildTopTenCardSvg({
       <circle cx="930" cy="1580" r="290" fill="rgba(59,130,246,0.14)" />
       <rect x="44" y="44" width="992" height="1832" rx="42" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.08)" />
       <text x="92" y="128" fill="#6ee7b7" font-size="30" font-family="Segoe UI, Arial, sans-serif" letter-spacing="4">BTS TOP 10 PUSH</text>
-      <text x="92" y="238" fill="#ffffff" font-size="72" font-family="Segoe UI, Arial, sans-serif" font-weight="700">${escapeSvg(playerName)}</text>
+      <text x="92" y="238" fill="#ffffff" font-size="72" font-family="Segoe UI, Arial, sans-serif" font-weight="700">${escapeSvg(safePlayerName)}</text>
       <text x="92" y="310" fill="#cbd5e1" font-size="34" font-family="Segoe UI, Arial, sans-serif">${escapeSvg(label)} · ${escapeSvg(getPeriodLabel(period))}</text>
       <text x="92" y="504" fill="#86efac" font-size="190" font-family="Segoe UI, Arial, sans-serif" font-weight="800">#${escapeSvg(rank)}</text>
       <text x="92" y="582" fill="#ffffff" font-size="42" font-family="Segoe UI, Arial, sans-serif">still alive in the top 10</text>
@@ -364,6 +375,8 @@ export function buildRivalryCardSvg({
 }) {
   const challengerName = challenger?.displayName || challenger?.username || "You";
   const rivalName = rival?.displayName || rival?.username || "Rival";
+  const safeChallengerName = truncateSvgText(challengerName, 12);
+  const safeRivalName = truncateSvgText(rivalName, 12);
 
   return `
     <svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
@@ -376,12 +389,12 @@ export function buildRivalryCardSvg({
       <text x="92" y="280" fill="#cbd5e1" font-size="34" font-family="Segoe UI, Arial, sans-serif">${escapeSvg(getPeriodLabel(period))}</text>
       <rect x="92" y="420" width="380" height="520" rx="36" fill="rgba(59,130,246,0.09)" stroke="rgba(96,165,250,0.18)" />
       <text x="132" y="498" fill="#93c5fd" font-size="24" font-family="Segoe UI, Arial, sans-serif" letter-spacing="3">YOU</text>
-      <text x="132" y="598" fill="#ffffff" font-size="52" font-family="Segoe UI, Arial, sans-serif" font-weight="700">${escapeSvg(challengerName)}</text>
+      <text x="132" y="598" fill="#ffffff" font-size="52" font-family="Segoe UI, Arial, sans-serif" font-weight="700">${escapeSvg(safeChallengerName)}</text>
       <text x="132" y="716" fill="#bfdbfe" font-size="120" font-family="Segoe UI, Arial, sans-serif" font-weight="800">#${escapeSvg(challenger?.rank ?? "-")}</text>
       <text x="132" y="790" fill="#ffffff" font-size="34" font-family="Segoe UI, Arial, sans-serif">${escapeSvg(challenger?.score ?? 0)} pts</text>
       <rect x="608" y="420" width="380" height="520" rx="36" fill="rgba(249,115,22,0.09)" stroke="rgba(251,146,60,0.18)" />
       <text x="648" y="498" fill="#fdba74" font-size="24" font-family="Segoe UI, Arial, sans-serif" letter-spacing="3">RIVAL</text>
-      <text x="648" y="598" fill="#ffffff" font-size="52" font-family="Segoe UI, Arial, sans-serif" font-weight="700">${escapeSvg(rivalName)}</text>
+      <text x="648" y="598" fill="#ffffff" font-size="52" font-family="Segoe UI, Arial, sans-serif" font-weight="700">${escapeSvg(safeRivalName)}</text>
       <text x="648" y="716" fill="#fed7aa" font-size="120" font-family="Segoe UI, Arial, sans-serif" font-weight="800">#${escapeSvg(rival?.rank ?? "-")}</text>
       <text x="648" y="790" fill="#ffffff" font-size="34" font-family="Segoe UI, Arial, sans-serif">${escapeSvg(rival?.score ?? 0)} pts</text>
       <text x="500" y="690" fill="#f9a8d4" font-size="52" font-family="Segoe UI, Arial, sans-serif" font-weight="800">VS</text>

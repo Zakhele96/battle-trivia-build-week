@@ -38,6 +38,8 @@ public sealed class FriendService
                 FriendshipId = relationship?.Id,
                 Username = user.Username,
                 DisplayName = user.DisplayName,
+                AvatarUrl = user.AvatarUrl,
+                StatusMessage = user.StatusMessage,
                 Status = relationship?.Status ?? "none",
                 InitiatedByMe = relationship is not null && relationship.RequesterUserId == userId,
                 UpdatedAt = relationship?.UpdatedAt

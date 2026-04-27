@@ -10,7 +10,7 @@ public interface IUserRepository
     Task<User?> GetByUsernameAsync(string username);
     Task<User?> GetByEmailOrUsernameAsync(string emailOrUsername);
     Task CreateAsync(User user);
-    Task UpdateProfileAsync(Guid userId, string displayName, string? phoneNumber);
+    Task UpdateProfileAsync(Guid userId, string displayName, string? phoneNumber, string? avatarUrl, string? statusMessage);
     Task UpdatePasswordHashAsync(Guid userId, string passwordHash);
     Task SetAdminAsync(Guid userId, bool isAdmin);
     Task<User?> GetByGoogleSubAsync(string googleSub);

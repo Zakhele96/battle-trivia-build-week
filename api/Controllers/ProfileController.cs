@@ -43,6 +43,16 @@ public sealed class ProfileController : ControllerBase
         return Ok(profile);
     }
 
+    [HttpGet("users/{userId:guid}")]
+    public async Task<IActionResult> GetUser(Guid userId)
+    {
+        var profile = await _profileService.GetUserAsync(userId);
+        if (profile is null)
+            return NotFound();
+
+        return Ok(profile);
+    }
+
     [HttpGet("progression")]
     public async Task<IActionResult> GetProgression()
     {

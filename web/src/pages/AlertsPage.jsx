@@ -22,7 +22,7 @@ function AlertCard({ item, isRead = false, onMarkRead, onPrimaryAction }) {
           : "border-white/10 bg-white/[0.04]"
       }`}
     >
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
           <div className="mb-2 flex items-center gap-2">
             {!isRead ? (
@@ -46,7 +46,7 @@ function AlertCard({ item, isRead = false, onMarkRead, onPrimaryAction }) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 flex-wrap items-center gap-2 self-start sm:self-auto">
           {!isRead ? (
             <button
               type="button"

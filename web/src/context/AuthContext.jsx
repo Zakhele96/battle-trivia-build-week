@@ -89,6 +89,15 @@ export function AuthProvider({ children }) {
     bootstrap();
   }, [token, logout]);
 
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+      return;
+    }
+
+    localStorage.removeItem(USER_KEY);
+  }, [user]);
+
   const value = useMemo(
     () => ({
       token,
