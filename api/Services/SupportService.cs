@@ -10,10 +10,9 @@ namespace Bts.Api.Services;
 
 public sealed class SupportService
 {
-    private const string SupporterPlanCode = "supporter-monthly";
+    private const string SupporterPlanCode = "supporter-onceoff";
     private const string SupporterTier = "supporter";
     private const decimal SupporterAmount = 18m;
-    private const int MonthlyFrequency = 3;
     private readonly IUserRepository _userRepository;
     private readonly ISupportRepository _supportRepository;
     private readonly IConfiguration _configuration;
@@ -49,7 +48,7 @@ public sealed class SupportService
             MerchantReference = merchantReference,
             Amount = SupporterAmount,
             Currency = "ZAR",
-            BillingFrequency = MonthlyFrequency,
+            BillingFrequency = 0,
             BillingCycles = 0,
             PaymentStatus = "pending",
             CreatedAt = nowUtc,
@@ -75,13 +74,9 @@ public sealed class SupportService
             new("m_payment_id", merchantReference),
             new("amount", FormatAmount(SupporterAmount)),
             new("item_name", "BTS Supporter"),
-            new("item_description", "Monthly BTS Supporter subscription"),
+            new("item_description", "One-time BTS supporter payment for 30 days"),
             new("custom_str1", userId.ToString()),
             new("custom_str2", SupporterPlanCode),
-            new("subscription_type", "1"),
-            new("recurring_amount", FormatAmount(SupporterAmount)),
-            new("frequency", MonthlyFrequency.ToString(CultureInfo.InvariantCulture)),
-            new("cycles", "0"),
         };
 
         var signature = BuildSignature(fields, options.Passphrase);
@@ -220,6 +215,7 @@ public sealed class SupportService
     {
         var payload = fields
             .Where(field => !string.IsNullOrWhiteSpace(field.Value))
+            .OrderBy(field => field.Key, StringComparer.Ordinal)
             .Select(field => $"{field.Key}={Uri.EscapeDataString(field.Value.Trim()).Replace("%20", "+")}")
             .ToList();
 

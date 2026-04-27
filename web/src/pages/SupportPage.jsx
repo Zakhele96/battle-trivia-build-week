@@ -85,7 +85,7 @@ export default function SupportPage() {
         <AppTopBar
           eyebrow="Support BTS"
           title="Keep the app growing"
-          description="Two safe ways to help: a low-cost supporter plan and a simple ad-backed support page."
+          description="Two safe ways to help: a low-cost once-off supporter payment and a simple ad-backed support page."
           actions={[{ label: "Open profile", to: "/profile" }]}
         />
 
@@ -97,7 +97,7 @@ export default function SupportPage() {
                   BTS Supporter
                 </div>
                 <div className="mt-2 text-[28px] font-semibold tracking-[-0.04em] text-white">
-                  R18 / month
+                  R18 / 30 days
                 </div>
                 <div className="mt-2 max-w-[34rem] text-sm leading-6 text-neutral-300">
                   A low-cost supporter tier built for cosmetics and community support, not pay-to-win access.
@@ -105,7 +105,7 @@ export default function SupportPage() {
               </div>
               <StatusPill
                 active={isSupporter}
-                label={isSupporter ? `${supporterBadge} active` : "Payments coming soon"}
+                label={isSupporter ? `${supporterBadge} active` : "One-time support live"}
               />
             </div>
 
@@ -125,7 +125,7 @@ export default function SupportPage() {
                 <div className="mt-3 space-y-2 text-sm text-neutral-300">
                   <div>The account model now understands supporter status and supporter badges.</div>
                   <div>Room chat and DMs are ready to render supporter badges when an account is marked active.</div>
-                  <div>The purchase flow stays disabled until your recurring billing provider is connected.</div>
+                  <div>A once-off PayFast support payment now activates supporter status for 30 days.</div>
                 </div>
               </div>
             </div>
@@ -137,7 +137,7 @@ export default function SupportPage() {
                 disabled={isStartingCheckout}
                 className="rounded-[16px] bg-amber-400 px-4 py-3 text-sm font-semibold text-neutral-950 transition hover:bg-amber-300 disabled:opacity-60"
               >
-                {isStartingCheckout ? "Opening PayFast..." : "Subscribe with PayFast"}
+                {isStartingCheckout ? "Opening PayFast..." : "Support with PayFast"}
               </button>
               <Link
                 to="/messages"
@@ -175,7 +175,7 @@ export default function SupportPage() {
               <div className="mt-2 space-y-2 text-sm text-neutral-400">
                 <div>Your approved AdSense publisher ID.</div>
                 <div>A live support-page ad slot ID.</div>
-                <div>A recurring billing provider like PayFast or Peach Payments for the R18/month plan.</div>
+                <div>If you want automatic renewals later, recurring billing can still be added after launch.</div>
               </div>
             </div>
           </Panel>
