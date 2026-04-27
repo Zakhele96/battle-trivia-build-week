@@ -18,6 +18,7 @@ import SquadsPage from "./pages/SquadsPage";
 import AlertsPage from "./pages/AlertsPage";
 import DirectMessagesPage from "./pages/DirectMessagesPage";
 import AppSeo from "./components/seo/AppSeo";
+import PwaInstallPrompt from "./components/pwa/PwaInstallPrompt";
 
 function PublicOnlyRoute({ children }) {
   const { isAuthenticated, isInitializing } = useAuth();
@@ -41,6 +42,7 @@ export default function App() {
   return (
     <>
       <AppSeo />
+      <PwaInstallPrompt />
       <Routes>
         <Route
           path="/login"

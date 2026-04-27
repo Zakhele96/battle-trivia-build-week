@@ -8,6 +8,9 @@ import { AlertsProvider } from "./context/AlertsContext";
 import { DirectMessagesProvider } from "./context/DirectMessagesContext";
 import { MentionProvider } from "./context/MentionContext";
 import { ThemeProvider } from "./context/ThemeContext";
+import { registerServiceWorker } from "./pwa/registerServiceWorker";
+
+registerServiceWorker();
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
