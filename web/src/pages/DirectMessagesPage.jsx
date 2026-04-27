@@ -107,14 +107,16 @@ function formatMessageTime(value) {
 
 function ProfileAvatar({ name, avatarUrl, isOnline, size = "h-11 w-11", textSize = "text-sm" }) {
   return (
-    <div
-      className={`relative flex ${size} shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.2),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] font-semibold text-white ${textSize}`}
-    >
-      {avatarUrl ? (
-        <img src={avatarUrl} alt={name} className="h-full w-full object-cover" />
-      ) : (
-        (name || "U").charAt(0).toUpperCase()
-      )}
+    <div className={`relative ${size} shrink-0`}>
+      <div
+        className={`flex h-full w-full items-center justify-center overflow-hidden rounded-full border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.2),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] font-semibold text-white ${textSize}`}
+      >
+        {avatarUrl ? (
+          <img src={avatarUrl} alt={name} className="h-full w-full object-cover" />
+        ) : (
+          (name || "U").charAt(0).toUpperCase()
+        )}
+      </div>
       <span
         className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-neutral-950 ${
           isOnline ? "bg-emerald-400" : "bg-neutral-600"
