@@ -1,19 +1,9 @@
 import { useEffect, useRef } from "react";
-
-const ADSENSE_CLIENT = import.meta.env.VITE_ADSENSE_CLIENT_ID || "";
-const ADSENSE_SLOT = import.meta.env.VITE_ADSENSE_SUPPORT_SLOT_ID || "";
-
-function ensureAdsenseScript() {
-  if (typeof document === "undefined" || !ADSENSE_CLIENT) return;
-  if (document.querySelector('script[data-bts-adsense="true"]')) return;
-
-  const script = document.createElement("script");
-  script.async = true;
-  script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`;
-  script.crossOrigin = "anonymous";
-  script.dataset.btsAdsense = "true";
-  document.head.appendChild(script);
-}
+import {
+  ADSENSE_CLIENT,
+  ADSENSE_SUPPORT_SLOT as ADSENSE_SLOT,
+  ensureAdsenseScript,
+} from "./adsense";
 
 export default function AdsenseSupportCard() {
   const adRef = useRef(null);

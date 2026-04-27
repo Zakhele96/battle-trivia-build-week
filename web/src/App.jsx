@@ -21,6 +21,7 @@ import SupportPage from "./pages/SupportPage";
 import AppSeo from "./components/seo/AppSeo";
 import PwaInstallPrompt from "./components/pwa/PwaInstallPrompt";
 import PwaUpdatePrompt from "./components/pwa/PwaUpdatePrompt";
+import AdsenseAutoAds from "./components/support/AdsenseAutoAds";
 
 function PublicOnlyRoute({ children }) {
   const { isAuthenticated, isInitializing } = useAuth();
@@ -44,6 +45,7 @@ export default function App() {
   return (
     <>
       <AppSeo />
+      <AdsenseAutoAds />
       <PwaInstallPrompt />
       <PwaUpdatePrompt />
       <Routes>
