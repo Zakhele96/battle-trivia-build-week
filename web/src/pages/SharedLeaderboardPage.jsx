@@ -6,6 +6,7 @@ import SponsorSpotlightCard, {
   hasSponsorPlacement,
 } from "../components/sponsor/SponsorSpotlightCard";
 import { useTheme } from "../hooks/useTheme";
+import { useSeo } from "../hooks/useSeo";
 
 const MODE_META = {
   combined: {
@@ -170,6 +171,8 @@ export default function SharedLeaderboardPage() {
   const rows = useMemo(() => data?.rows || [], [data]);
   const topThree = useMemo(() => rows.slice(0, 3), [rows]);
   const meta = MODE_META[mode] || MODE_META.combined;
+  const modeLabel = getModeLabel(mode);
+  const periodLabel = getPeriodLabel(period);
   const isLight = resolvedTheme === "light";
   const lightModeUndoFilter = isLight
     ? {
@@ -177,6 +180,33 @@ export default function SharedLeaderboardPage() {
           "invert(1) hue-rotate(180deg) saturate(1.08) contrast(1.08) brightness(0.97)",
       }
     : undefined;
+
+  useSeo({
+    title: `${modeLabel} ${periodLabel} Leaderboard`,
+    description: `${meta.description} View the ${periodLabel.toLowerCase()} BTS ${modeLabel} leaderboard and create your account to join the weekly race.`,
+    canonicalPath: `/share/leaderboard?mode=${mode}&period=${period}`,
+    keywords: [
+      "BTS leaderboard",
+      `${modeLabel} leaderboard`,
+      `${periodLabel} leaderboard`,
+      "weekly competition",
+      "Battle Trivia leaderboard",
+      "Word Scramble leaderboard",
+    ],
+    robots: "index,follow",
+    jsonLd: {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: `${modeLabel} ${periodLabel} Leaderboard`,
+      description: `${meta.description} View the latest public BTS leaderboard.`,
+      url: `https://www.brotechnodevs.co.za/share/leaderboard?mode=${mode}&period=${period}`,
+      isPartOf: {
+        "@type": "WebSite",
+        name: "BTS",
+        url: "https://www.brotechnodevs.co.za/",
+      },
+    },
+  });
 
   return (
     <div

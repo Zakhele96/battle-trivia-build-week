@@ -17,6 +17,7 @@ import SharedLeaderboardPage from "./pages/SharedLeaderboardPage";
 import SquadsPage from "./pages/SquadsPage";
 import AlertsPage from "./pages/AlertsPage";
 import DirectMessagesPage from "./pages/DirectMessagesPage";
+import AppSeo from "./components/seo/AppSeo";
 
 function PublicOnlyRoute({ children }) {
   const { isAuthenticated, isInitializing } = useAuth();
@@ -38,15 +39,17 @@ function PublicOnlyRoute({ children }) {
 
 export default function App() {
   return (
-    <Routes>
-      <Route
-        path="/login"
-        element={
-          <PublicOnlyRoute>
-            <LoginPage />
-          </PublicOnlyRoute>
-        }
-      />
+    <>
+      <AppSeo />
+      <Routes>
+        <Route
+          path="/login"
+          element={
+            <PublicOnlyRoute>
+              <LoginPage />
+            </PublicOnlyRoute>
+          }
+        />
 
       <Route
         path="/register"
@@ -167,7 +170,8 @@ export default function App() {
         }
       />
 
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   );
 }
