@@ -216,9 +216,9 @@ export default function WinnersPodiumCard({
   const subtitleClassName = isLight
     ? "mt-2 text-[13px] leading-6 text-stone-600 sm:text-[14px]"
     : "mt-2 text-[13px] leading-6 text-neutral-300 sm:text-[14px]";
-  const linkClassName = isLight
-    ? "inline-flex items-center justify-center rounded-full border border-stone-300 bg-white/75 px-4 py-2 text-[11px] font-medium uppercase tracking-[0.16em] text-stone-700 transition hover:border-amber-300 hover:bg-amber-50"
-    : "inline-flex items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-[11px] font-medium uppercase tracking-[0.16em] text-white transition hover:border-white/20 hover:bg-white/[0.06]";
+  const openClassName = isLight
+    ? "inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#0f5fa8] transition group-hover:text-[#0b4f8e]"
+    : "inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-200 transition group-hover:text-white";
   const baseClassName = isLight
     ? "h-3 rounded-b-[22px] border border-[#d9c4a0] border-t-0 bg-[linear-gradient(180deg,#f4e7d2,#ead9c0)]"
     : "h-3 rounded-b-[22px] border border-white/10 border-t-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.015))]";
@@ -227,7 +227,7 @@ export default function WinnersPodiumCard({
     : "absolute inset-x-4 top-1 h-5 rounded-full bg-blue-500/8 blur-xl";
 
   return (
-    <div className={cardClassName}>
+    <Link to={to} className={`group block ${cardClassName}`}>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-[34rem]">
           <div className={eyebrowClassName}>
@@ -242,9 +242,10 @@ export default function WinnersPodiumCard({
           </div>
         </div>
 
-        <Link to={to} className={linkClassName}>
-          Full standings
-        </Link>
+        <div className={`${openClassName} hidden sm:inline-flex`}>
+          Open standings
+          <span aria-hidden="true">&rarr;</span>
+        </div>
       </div>
 
       <div className="mt-5">
@@ -263,6 +264,6 @@ export default function WinnersPodiumCard({
           <div className={baseGlowClassName} />
         </div>
       </div>
-    </div>
+    </Link>
   );
 }

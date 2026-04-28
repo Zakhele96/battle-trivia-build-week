@@ -1465,10 +1465,129 @@ body {
   animation: podiumFloat 3.4s ease-in-out infinite;
 }
 
+@keyframes appFadeRise {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes appSoftPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 rgba(59, 130, 246, 0);
+  }
+
+  50% {
+    box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.06);
+  }
+}
+
+.lobby-page section,
+.rooms-page section,
+.community-page section,
+.activity-page section,
+.leaderboards-page section,
+.profile-page section,
+.room-page section {
+  animation: appFadeRise 420ms ease both;
+}
+
+.lobby-page section:nth-of-type(2),
+.rooms-page section:nth-of-type(2),
+.community-page section:nth-of-type(2),
+.activity-page section:nth-of-type(2),
+.leaderboards-page section:nth-of-type(2),
+.profile-page section:nth-of-type(2),
+.room-page section:nth-of-type(2) {
+  animation-delay: 60ms;
+}
+
+.lobby-page section:nth-of-type(3),
+.rooms-page section:nth-of-type(3),
+.community-page section:nth-of-type(3),
+.activity-page section:nth-of-type(3),
+.leaderboards-page section:nth-of-type(3),
+.profile-page section:nth-of-type(3),
+.room-page section:nth-of-type(3) {
+  animation-delay: 120ms;
+}
+
+.lobby-page section:nth-of-type(4),
+.rooms-page section:nth-of-type(4),
+.community-page section:nth-of-type(4),
+.activity-page section:nth-of-type(4),
+.leaderboards-page section:nth-of-type(4),
+.profile-page section:nth-of-type(4),
+.room-page section:nth-of-type(4) {
+  animation-delay: 180ms;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  a.rounded-\[18px\],
+  a.rounded-\[20px\],
+  a.rounded-\[22px\],
+  a.rounded-\[24px\],
+  button.rounded-\[18px\],
+  button.rounded-\[20px\],
+  button.rounded-\[22px\],
+  button.rounded-\[24px\] {
+    transition:
+      transform 180ms ease,
+      box-shadow 220ms ease,
+      border-color 180ms ease,
+      background-color 180ms ease;
+  }
+
+  a.rounded-\[18px\]:hover,
+  a.rounded-\[20px\]:hover,
+  a.rounded-\[22px\]:hover,
+  a.rounded-\[24px\]:hover,
+  button.rounded-\[18px\]:hover,
+  button.rounded-\[20px\]:hover,
+  button.rounded-\[22px\]:hover,
+  button.rounded-\[24px\]:hover {
+    transform: translateY(-2px);
+  }
+}
+
+.lobby-page .group:hover .rounded-full.border,
+.rooms-page .group:hover .rounded-full.border,
+.leaderboards-page .group:hover .rounded-full.border {
+  animation: appSoftPulse 1.8s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .lobby-page section,
+  .rooms-page section,
+  .community-page section,
+  .activity-page section,
+  .leaderboards-page section,
+  .profile-page section,
+  .room-page section,
   .podium-float-slow,
   .podium-float-medium,
-  .podium-float-fast {
+  .podium-float-fast,
+  .lobby-page .group:hover .rounded-full.border,
+  .rooms-page .group:hover .rounded-full.border,
+  .leaderboards-page .group:hover .rounded-full.border {
     animation: none;
+  }
+
+  a.rounded-\[18px\],
+  a.rounded-\[20px\],
+  a.rounded-\[22px\],
+  a.rounded-\[24px\],
+  button.rounded-\[18px\],
+  button.rounded-\[20px\],
+  button.rounded-\[22px\],
+  button.rounded-\[24px\] {
+    transition: none;
+    transform: none;
   }
 }

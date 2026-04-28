@@ -450,7 +450,7 @@ function WinnerSpotlightCard({ winner, sessionPodium, isLight = false }) {
           </div>
           <div className={bodyClassName}>
             {winner
-              ? `${winner.score} pts on the latest Battle Trivia finish. The full podium is right below so the result reads instantly.`
+              ? `${winner.score} pts on the latest Battle Trivia finish.`
               : "As soon as a session closes, the latest winner will headline the dashboard here."}
           </div>
         </div>
