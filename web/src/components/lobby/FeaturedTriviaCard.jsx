@@ -94,8 +94,8 @@ export default function FeaturedTriviaCard({ room }) {
     room?.sessionStatus?.runMode === "scheduled"
       ? "Scheduled windows"
       : room?.sessionStatus?.runMode === "continuous"
-      ? "Running now"
-      : room?.sessionStatus?.sessionType || "Live competition";
+        ? "Running now"
+        : room?.sessionStatus?.sessionType || "Live competition";
   const cardClassName = isLight
     ? "group block rounded-[20px] border border-[#d8c3a0] bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.12),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(245,158,11,0.12),transparent_28%),linear-gradient(180deg,#fffaf1,#f2e4d1)] p-3.5 shadow-[0_18px_36px_rgba(122,84,37,0.14)] transition hover:-translate-y-[1px] hover:border-[#c69a57] hover:shadow-[0_22px_42px_rgba(122,84,37,0.18)] sm:rounded-[24px] sm:p-4 lg:p-5"
     : "group block rounded-[20px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.12),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-3.5 shadow-[0_16px_34px_rgba(0,0,0,0.14)] transition hover:-translate-y-[1px] hover:border-white/15 hover:bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.14),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.018))] sm:rounded-[24px] sm:p-4 lg:p-5";
@@ -147,11 +147,9 @@ export default function FeaturedTriviaCard({ room }) {
           ) : null}
         </div>
 
-        <div className="flex shrink-0 items-center gap-2.5">
-          <div className={ctaClassName}>
-            Enter room
-            <span aria-hidden="true">→</span>
-          </div>
+        <div className={ctaClassName}>
+          Enter room
+          <span aria-hidden="true">&rarr;</span>
         </div>
       </div>
     </Link>

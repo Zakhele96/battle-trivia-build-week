@@ -235,6 +235,7 @@ const MOBILE_MORE_ITEMS = [
     icon: StandingsIcon,
   },
   { to: "/support", label: "Support", icon: SupportIcon },
+  { to: "/activity", label: "Activity", icon: ActivityIcon },
   { to: "/profile", label: "Profile", icon: ProfileIcon },
 ];
 
@@ -292,7 +293,7 @@ function NavCountBadge({ count, mobile = false, isLight = false, tone = "amber" 
 function NavIconShell({ children, active = false, isLight = false, mobile = false }) {
   const baseClassName = mobile
     ? "flex h-10 w-10 items-center justify-center rounded-[14px] border transition"
-    : "flex h-9 w-9 items-center justify-center rounded-[12px] border transition";
+    : "flex h-8 w-8 items-center justify-center rounded-[11px] border transition";
 
   const toneClassName = active
     ? isLight
@@ -363,8 +364,8 @@ export default function AppSectionNav() {
   }, [isMoreOpen]);
 
   const desktopShellClassName = isLight
-    ? "rounded-[24px] border border-[#ddc8a8] bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(245,234,216,0.96))] p-2.5 shadow-[0_18px_34px_rgba(114,84,41,0.12)]"
-    : "rounded-[24px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.08),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-2.5 shadow-[0_18px_36px_rgba(0,0,0,0.16)]";
+    ? "rounded-[22px] border border-[#ddc8a8] bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(245,234,216,0.96))] p-2 shadow-[0_18px_34px_rgba(114,84,41,0.12)]"
+    : "rounded-[22px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.08),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-2 shadow-[0_18px_36px_rgba(0,0,0,0.16)]";
   const mobileShellClassName = isLight
     ? "pointer-events-auto border-t border-[#d9c7aa] bg-[#f6ebd9] px-2 pt-2 pb-[max(0.55rem,env(safe-area-inset-bottom))] shadow-[0_-12px_28px_rgba(114,84,41,0.16)]"
     : "pointer-events-auto border-t border-white/10 bg-neutral-950/96 px-2 pt-2 pb-[max(0.55rem,env(safe-area-inset-bottom))] shadow-[0_-14px_34px_rgba(0,0,0,0.3)] backdrop-blur-xl supports-[backdrop-filter]:bg-neutral-950/88";
@@ -555,7 +556,12 @@ export default function AppSectionNav() {
     <>
       <div className="mb-5 hidden sm:block sm:mb-6">
         <div className={desktopShellClassName}>
-          <div className="flex gap-2 overflow-x-auto">
+          <div
+            className="grid gap-1 lg:gap-1.5"
+            style={{
+              gridTemplateColumns: `repeat(${DESKTOP_ITEMS.length}, minmax(0, 1fr))`,
+            }}
+          >
             {DESKTOP_ITEMS.map((item) => {
               const Icon = item.icon;
               const active = isItemActive(item, location.pathname);
@@ -572,24 +578,32 @@ export default function AppSectionNav() {
                   key={item.to}
                   to={item.to}
                   end={item.exact}
-                  className={`inline-flex shrink-0 items-center gap-3 rounded-[18px] px-3.5 py-2.5 text-[12px] font-medium transition sm:px-4 sm:text-sm ${itemClassName}`}
+                  className={`relative inline-flex min-w-0 flex-col items-center justify-center gap-1 rounded-[16px] px-1.5 py-2 text-center text-[9px] font-medium transition lg:px-2 lg:text-[10px] ${itemClassName}`}
                 >
                   <NavIconShell active={active} isLight={isLight}>
                     <Icon />
                   </NavIconShell>
-                  <span className="tracking-[0.01em]">{item.label}</span>
+                  <span className="line-clamp-2 max-w-full leading-[1.15] tracking-[0.01em]">
+                    {item.label}
+                  </span>
                   {item.showMentionBadge ? (
-                    <MentionBadge count={totalUnreadMentions} isLight={isLight} />
+                    <span className="absolute right-1.5 top-1.5">
+                      <MentionBadge count={totalUnreadMentions} isLight={isLight} />
+                    </span>
                   ) : null}
                   {item.to === "/alerts" ? (
-                    <NavCountBadge count={unreadCount} isLight={isLight} tone="blue" />
+                    <span className="absolute right-1.5 top-1.5">
+                      <NavCountBadge count={unreadCount} isLight={isLight} tone="blue" />
+                    </span>
                   ) : null}
                   {item.to === "/messages" ? (
-                    <NavCountBadge
-                      count={unreadDirectMessages}
-                      isLight={isLight}
-                      tone="blue"
-                    />
+                    <span className="absolute right-1.5 top-1.5">
+                      <NavCountBadge
+                        count={unreadDirectMessages}
+                        isLight={isLight}
+                        tone="blue"
+                      />
+                    </span>
                   ) : null}
                 </NavLink>
               );
