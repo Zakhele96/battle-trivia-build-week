@@ -10,6 +10,7 @@ import { acceptChallengeInvite } from "../api/challengeInvitesApi";
 import { acceptFriendRequest } from "../api/friendsApi";
 import { useAuth } from "../hooks/useAuth";
 import { fetchAlertsFeed } from "../services/alertsFeed";
+import { scheduleIdleTask } from "../utils/scheduleIdleTask";
 
 const AlertsContext = createContext(null);
 
@@ -94,9 +95,22 @@ export function AlertsProvider({ children }) {
       return;
     }
 
-    refreshAlerts().catch(() => {
-      // ignore provider sync errors
+    const isAlertsPage = window.location.pathname === "/alerts";
+
+    if (isAlertsPage) {
+      refreshAlerts().catch(() => {
+        // ignore provider sync errors
+      });
+      return;
+    }
+
+    const cancelIdleRefresh = scheduleIdleTask(() => {
+      refreshAlerts().catch(() => {
+        // ignore provider sync errors
+      });
     });
+
+    return cancelIdleRefresh;
   }, [isAuthenticated, isInitializing, refreshAlerts, user?.id]);
 
   const markAlertRead = useCallback(

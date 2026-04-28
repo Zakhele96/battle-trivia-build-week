@@ -13,6 +13,7 @@ import {
 } from "../api/directMessagesApi";
 import { createChatConnection } from "../services/chatConnection";
 import { useAuth } from "../hooks/useAuth";
+import { scheduleIdleTask } from "../utils/scheduleIdleTask";
 
 const DirectMessagesContext = createContext(null);
 
@@ -71,7 +72,18 @@ export function DirectMessagesProvider({ children }) {
       return;
     }
 
-    refreshConversations().catch(() => null);
+    const isMessagesPage = window.location.pathname === "/messages";
+
+    if (isMessagesPage) {
+      refreshConversations().catch(() => null);
+      return;
+    }
+
+    const cancelIdleRefresh = scheduleIdleTask(() => {
+      refreshConversations().catch(() => null);
+    });
+
+    return cancelIdleRefresh;
   }, [isAuthenticated, isInitializing, refreshConversations, user?.id]);
 
   useEffect(() => {
@@ -85,60 +97,65 @@ export function DirectMessagesProvider({ children }) {
     }
 
     let isCancelled = false;
-    const connection = createChatConnection(token);
-    connectionRef.current = connection;
-    setConnectionStatus("connecting");
+    let connection;
+    let startPromise;
 
-    connection.on("DirectMessageReceived", (payload) => {
-      if (isCancelled || !payload?.conversationId) return;
+    async function startConnection() {
+      if (isCancelled) return;
 
-      setConversations((previous) => {
-        const existing = previous.find(
-          (item) => item.conversationId === payload.conversationId
-        );
+      connection = createChatConnection(token);
+      connectionRef.current = connection;
+      setConnectionStatus("connecting");
 
-        if (!existing) {
-          refreshConversations().catch(() => null);
-          return previous;
-        }
+      connection.on("DirectMessageReceived", (payload) => {
+        if (isCancelled || !payload?.conversationId) return;
 
-        const next = previous.map((item) =>
-          item.conversationId === payload.conversationId
-            ? {
-                ...item,
-                lastMessageText: payload.messageText,
-                lastMessageAt: payload.sentAt,
-                lastMessageSenderUserId: payload.senderUserId,
-                unreadCount:
-                  payload.senderUserId === user?.id ||
-                  activeConversationIdRef.current === payload.conversationId
-                    ? 0
-                    : (item.unreadCount || 0) + 1,
-              }
-            : item
-        );
+        setConversations((previous) => {
+          const existing = previous.find(
+            (item) => item.conversationId === payload.conversationId
+          );
 
-        return sortConversations(next);
+          if (!existing) {
+            refreshConversations().catch(() => null);
+            return previous;
+          }
+
+          const next = previous.map((item) =>
+            item.conversationId === payload.conversationId
+              ? {
+                  ...item,
+                  lastMessageText: payload.messageText,
+                  lastMessageAt: payload.sentAt,
+                  lastMessageSenderUserId: payload.senderUserId,
+                  unreadCount:
+                    payload.senderUserId === user?.id ||
+                    activeConversationIdRef.current === payload.conversationId
+                      ? 0
+                      : (item.unreadCount || 0) + 1,
+                }
+              : item
+          );
+
+          return sortConversations(next);
+        });
       });
-    });
 
-    connection.on("DirectPresenceUpdated", (payload) => {
-      if (isCancelled || !payload?.userId) return;
+      connection.on("DirectPresenceUpdated", (payload) => {
+        if (isCancelled || !payload?.userId) return;
 
-      setConversations((previous) =>
-        previous.map((item) =>
-          item.otherUserId === payload.userId
-            ? {
-                ...item,
-                isOnline: Boolean(payload.isOnline),
-                lastSeenAt: payload.lastSeenAt || item.lastSeenAt,
-              }
-            : item
-        )
-      );
-    });
+        setConversations((previous) =>
+          previous.map((item) =>
+            item.otherUserId === payload.userId
+              ? {
+                  ...item,
+                  isOnline: Boolean(payload.isOnline),
+                  lastSeenAt: payload.lastSeenAt || item.lastSeenAt,
+                }
+              : item
+          )
+        );
+      });
 
-    const start = (async () => {
       try {
         await connection.start();
         if (isCancelled) return;
@@ -147,17 +164,29 @@ export function DirectMessagesProvider({ children }) {
         if (isCancelled) return;
         setConnectionStatus("error");
       }
-    })();
+    }
+
+    const isMessagesPage = window.location.pathname === "/messages";
+    const cancelIdleStart = isMessagesPage
+      ? null
+      : scheduleIdleTask(() => {
+          startPromise = startConnection();
+        }, 2000);
+
+    if (isMessagesPage) {
+      startPromise = startConnection();
+    }
 
     return () => {
       isCancelled = true;
+      cancelIdleStart?.();
       connectionRef.current = null;
 
-      Promise.resolve(start)
+      Promise.resolve(startPromise)
         .catch(() => null)
         .finally(async () => {
           try {
-            if (connection.state !== "Disconnected") {
+            if (connection && connection.state !== "Disconnected") {
               await connection.stop();
             }
           } catch {}

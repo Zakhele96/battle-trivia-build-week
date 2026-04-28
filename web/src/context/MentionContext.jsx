@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { getRooms } from "../api/roomsApi";
 import { useAuth } from "../hooks/useAuth";
+import { scheduleIdleTask } from "../utils/scheduleIdleTask";
 
 const MentionContext = createContext(null);
 
@@ -78,9 +79,24 @@ export function MentionProvider({ children }) {
       return;
     }
 
-    refreshMentionCounts().catch(() => {
-      // ignore initial mention count sync errors
+    const pathname = window.location.pathname;
+    const needsImmediateRoomData =
+      pathname === "/rooms" || pathname === "/community" || pathname.startsWith("/rooms/");
+
+    if (needsImmediateRoomData) {
+      refreshMentionCounts().catch(() => {
+        // ignore initial mention count sync errors
+      });
+      return;
+    }
+
+    const cancelIdleRefresh = scheduleIdleTask(() => {
+      refreshMentionCounts().catch(() => {
+        // ignore initial mention count sync errors
+      });
     });
+
+    return cancelIdleRefresh;
   }, [isAuthenticated, isInitializing, refreshMentionCounts]);
 
   const totalUnreadMentions = useMemo(() => {
