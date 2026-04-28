@@ -14,6 +14,7 @@ public sealed class WordScrambleHostedService : BackgroundService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IHubContext<ChatHub> _hubContext;
     private readonly ILogger<WordScrambleHostedService> _logger;
+    private static readonly TimeZoneInfo GameTimeZone = GetGameTimeZone();
 
     public WordScrambleHostedService(
         IServiceScopeFactory scopeFactory,
@@ -120,9 +121,9 @@ public sealed class WordScrambleHostedService : BackgroundService
                     .SendAsync("ReceiveMessage", noWinnersMessage, cancellationToken);
             }
 
-            await sessionRepository.EndAsync(session.Id, nowUtc);
+            await sessionRepository.EndAsync(session.Id, effectivePeriodEnd);
 
-            var nextSession = CreateDefaultWeeklySession(room.Id, nowUtc.AddSeconds(1));
+            var nextSession = CreateDefaultWeeklySession(room.Id, effectivePeriodEnd.AddSeconds(1));
             nextSession.RunMode = session.RunMode;
             await sessionRepository.CreateAsync(nextSession);
 
@@ -230,8 +231,7 @@ public sealed class WordScrambleHostedService : BackgroundService
 
     private static WordScrambleSession CreateDefaultWeeklySession(Guid roomId, DateTime nowUtc)
     {
-        var weekStart = StartOfWeekUtc(nowUtc, DayOfWeek.Monday);
-        var weekEnd = weekStart.AddDays(7).AddTicks(-1);
+        var (weekStart, weekEnd) = GetWeeklyPeriodBoundsUtc(nowUtc);
 
         return new WordScrambleSession
         {
@@ -256,15 +256,37 @@ public sealed class WordScrambleHostedService : BackgroundService
             ? ToUtc(session.PeriodStart.Value)
             : nowUtc;
 
-        var weekStart = StartOfWeekUtc(periodStart, DayOfWeek.Monday);
-        return weekStart.AddDays(7).AddTicks(-1);
+        var (_, weekEnd) = GetWeeklyPeriodBoundsUtc(periodStart);
+        return weekEnd;
     }
 
-    private static DateTime StartOfWeekUtc(DateTime value, DayOfWeek startOfWeek)
+    private static (DateTime StartUtc, DateTime EndUtc) GetWeeklyPeriodBoundsUtc(DateTime value)
     {
         var utcValue = ToUtc(value);
-        var diff = (7 + (utcValue.DayOfWeek - startOfWeek)) % 7;
-        var date = utcValue.Date.AddDays(-diff);
-        return DateTime.SpecifyKind(date, DateTimeKind.Utc);
+        var localValue = TimeZoneInfo.ConvertTimeFromUtc(utcValue, GameTimeZone);
+        var diff = (7 + (localValue.DayOfWeek - DayOfWeek.Monday)) % 7;
+        var weekStartLocal = localValue.Date.AddDays(-diff);
+        var nextWeekStartLocal = weekStartLocal.AddDays(7);
+
+        var weekStartUtc = TimeZoneInfo.ConvertTimeToUtc(
+            DateTime.SpecifyKind(weekStartLocal, DateTimeKind.Unspecified),
+            GameTimeZone);
+        var nextWeekStartUtc = TimeZoneInfo.ConvertTimeToUtc(
+            DateTime.SpecifyKind(nextWeekStartLocal, DateTimeKind.Unspecified),
+            GameTimeZone);
+
+        return (weekStartUtc, nextWeekStartUtc.AddTicks(-1));
+    }
+
+    private static TimeZoneInfo GetGameTimeZone()
+    {
+        try
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById("Africa/Johannesburg");
+        }
+        catch
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById("South Africa Standard Time");
+        }
     }
 }

@@ -16,6 +16,7 @@ public sealed class BattleTriviaHostedService : BackgroundService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IHubContext<ChatHub> _hubContext;
     private readonly ILogger<BattleTriviaHostedService> _logger;
+    private static readonly TimeZoneInfo GameTimeZone = GetGameTimeZone();
 
     private DateTime _nextRoundNotBeforeUtc = DateTime.MinValue;
 
@@ -106,7 +107,9 @@ public sealed class BattleTriviaHostedService : BackgroundService
 
         var activeRound = await roundRepository.GetActiveRoundDetailsByRoomIdAsync(room.Id);
 
-        if (session.PeriodEnd.HasValue && nowUtc >= session.PeriodEnd.Value)
+        var effectivePeriodEnd = GetEffectivePeriodEndUtc(session, nowUtc);
+
+        if (nowUtc >= effectivePeriodEnd)
         {
             if (activeRound is not null)
             {
@@ -152,9 +155,9 @@ public sealed class BattleTriviaHostedService : BackgroundService
                     .SendAsync("ReceiveMessage", noWinnersMessage, stoppingToken);
             }
 
-            await sessionRepository.EndAsync(session.Id, nowUtc);
+            await sessionRepository.EndAsync(session.Id, effectivePeriodEnd);
 
-            var nextSession = CreateDefaultWeeklySession(room.Id, nowUtc.AddSeconds(1));
+            var nextSession = CreateDefaultWeeklySession(room.Id, effectivePeriodEnd.AddSeconds(1));
             nextSession.RunMode = session.RunMode;
             await sessionRepository.CreateAsync(nextSession);
 
@@ -287,8 +290,7 @@ public sealed class BattleTriviaHostedService : BackgroundService
 
     private static TriviaGameSession CreateDefaultWeeklySession(Guid roomId, DateTime nowUtc)
     {
-        var weekStart = StartOfWeekUtc(nowUtc, DayOfWeek.Monday);
-        var weekEnd = weekStart.AddDays(7).AddTicks(-1);
+        var (weekStart, weekEnd) = GetWeeklyPeriodBoundsUtc(nowUtc);
 
         return new TriviaGameSession
         {
@@ -305,11 +307,35 @@ public sealed class BattleTriviaHostedService : BackgroundService
         };
     }
 
-    private static DateTime StartOfWeekUtc(DateTime value, DayOfWeek startOfWeek)
+    private static DateTime GetEffectivePeriodEndUtc(TriviaGameSession session, DateTime nowUtc)
     {
-        var diff = (7 + (value.DayOfWeek - startOfWeek)) % 7;
-        var date = value.Date.AddDays(-diff);
-        return DateTime.SpecifyKind(date, DateTimeKind.Utc);
+        if (session.PeriodEnd.HasValue)
+            return ToUtc(session.PeriodEnd.Value);
+
+        var periodStart = session.PeriodStart.HasValue
+            ? ToUtc(session.PeriodStart.Value)
+            : nowUtc;
+
+        var (_, weekEnd) = GetWeeklyPeriodBoundsUtc(periodStart);
+        return weekEnd;
+    }
+
+    private static (DateTime StartUtc, DateTime EndUtc) GetWeeklyPeriodBoundsUtc(DateTime value)
+    {
+        var utcValue = ToUtc(value);
+        var localValue = TimeZoneInfo.ConvertTimeFromUtc(utcValue, GameTimeZone);
+        var diff = (7 + (localValue.DayOfWeek - DayOfWeek.Monday)) % 7;
+        var weekStartLocal = localValue.Date.AddDays(-diff);
+        var nextWeekStartLocal = weekStartLocal.AddDays(7);
+
+        var weekStartUtc = TimeZoneInfo.ConvertTimeToUtc(
+            DateTime.SpecifyKind(weekStartLocal, DateTimeKind.Unspecified),
+            GameTimeZone);
+        var nextWeekStartUtc = TimeZoneInfo.ConvertTimeToUtc(
+            DateTime.SpecifyKind(nextWeekStartLocal, DateTimeKind.Unspecified),
+            GameTimeZone);
+
+        return (weekStartUtc, nextWeekStartUtc.AddTicks(-1));
     }
 
     private static TimeZoneInfo GetGameTimeZone()
@@ -322,6 +348,16 @@ public sealed class BattleTriviaHostedService : BackgroundService
         {
             return TimeZoneInfo.FindSystemTimeZoneById("South Africa Standard Time");
         }
+    }
+
+    private static DateTime ToUtc(DateTime value)
+    {
+        return value.Kind switch
+        {
+            DateTimeKind.Utc => value,
+            DateTimeKind.Local => value.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(value, DateTimeKind.Utc)
+        };
     }
 
     private static async Task<bool> CanRunRoundsNowAsync(
