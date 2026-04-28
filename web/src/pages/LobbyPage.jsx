@@ -1531,7 +1531,7 @@ export default function LobbyPage() {
               <SectionHeader
                 eyebrow="Standings"
                 title="Weekly race"
-                description="The lobby stays lighter now: one live combined snapshot here, then the full leaderboard page when you want the full breakdown."
+                description="A quick Battle Trivia score race for this week, then the full standings page when you want the deeper view."
                 isLight={isLight}
               />
 

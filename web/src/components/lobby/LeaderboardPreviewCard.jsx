@@ -83,7 +83,7 @@ function Row({ row, accent, isLight }) {
 
   return (
     <div
-      className={`flex items-center justify-between gap-3 rounded-[14px] border px-3 py-2.5 ${rowClassName}`}
+      className={`flex items-center justify-between gap-3 rounded-[16px] border px-3 py-3 sm:rounded-[14px] sm:py-2.5 ${rowClassName}`}
     >
       <div className="min-w-0 flex items-center gap-2.5">
         <div
@@ -108,8 +108,13 @@ function Row({ row, accent, isLight }) {
         </div>
       </div>
 
-      <div className={`shrink-0 text-[13px] font-semibold ${accentStyles.score}`}>
-        {row.score}
+      <div className="shrink-0 text-right">
+        <div className={`text-[14px] font-semibold ${accentStyles.score}`}>
+          {row.score}
+        </div>
+        <div className={`text-[9px] uppercase tracking-[0.12em] ${usernameClassName}`}>
+          pts
+        </div>
       </div>
     </div>
   );
@@ -134,6 +139,11 @@ export default function LeaderboardPreviewCard({
   const openClassName = isLight
     ? "shrink-0 text-[10px] font-medium uppercase tracking-[0.14em] text-stone-500 transition group-hover:text-stone-800"
     : "shrink-0 text-[10px] font-medium uppercase tracking-[0.14em] text-neutral-500 transition group-hover:text-neutral-300";
+  const leader = rows[0] || null;
+  const effectiveSubtitle =
+    title === "Battle Trivia race"
+      ? "Current week · Top 3 on the main Battle Trivia board"
+      : subtitle;
 
   return (
     <Link to={to} className={cardClassName}>
@@ -147,7 +157,7 @@ export default function LeaderboardPreviewCard({
             </div>
           </div>
 
-          <div className={subtitleClassName}>{subtitle}</div>
+          <div className={subtitleClassName}>{effectiveSubtitle}</div>
         </div>
 
         <div className={openClassName}>Open →</div>
@@ -167,6 +177,21 @@ export default function LeaderboardPreviewCard({
           ))
         )}
       </div>
+
+      {leader ? (
+        <div
+          className={`mt-3 rounded-[14px] border px-3 py-2 text-[11px] leading-4 ${
+            isLight
+              ? "border-stone-200 bg-white/72 text-stone-600"
+              : "border-white/8 bg-black/20 text-neutral-300"
+          }`}
+        >
+          <span className={isLight ? "text-stone-900" : "text-white"}>
+            {leader.displayName || leader.username}
+          </span>{" "}
+          is leading this Battle Trivia race with {leader.score} points.
+        </div>
+      ) : null}
     </Link>
   );
 }
