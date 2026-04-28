@@ -483,7 +483,11 @@ function RivalryPanel({
               Loading comparison...
             </div>
           ) : headToHead ? (
-            <div className="mt-3 grid gap-2 sm:grid-cols-3">
+            <div
+              className={`mt-3 grid gap-2 ${
+                isCompact ? "grid-cols-1" : "sm:grid-cols-3"
+              }`}
+            >
               <SummaryStat
                 label="All matches"
                 value={`${headToHead.overall.wins} wins`}
