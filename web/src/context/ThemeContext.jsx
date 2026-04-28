@@ -8,9 +8,9 @@ function getStoredThemePreference() {
     const value = localStorage.getItem(THEME_KEY);
     return value === "light" || value === "dark" || value === "system"
       ? value
-      : "system";
+      : "dark";
   } catch {
-    return "system";
+    return "dark";
   }
 }
 

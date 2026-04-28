@@ -203,7 +203,7 @@ const DESKTOP_ITEMS = [
     showMentionBadge: true,
   },
   {
-    to: "/leaderboards?mode=combined&period=current",
+    to: "/leaderboards?mode=battle-trivia&period=current",
     pathMatch: "/leaderboards",
     label: "Standings",
     icon: StandingsIcon,
@@ -229,7 +229,7 @@ const MOBILE_MORE_ITEMS = [
     showMentionBadge: true,
   },
   {
-    to: "/leaderboards?mode=combined&period=current",
+    to: "/leaderboards?mode=battle-trivia&period=current",
     pathMatch: "/leaderboards",
     label: "Standings",
     icon: StandingsIcon,

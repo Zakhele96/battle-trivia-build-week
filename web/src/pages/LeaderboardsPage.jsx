@@ -131,6 +131,37 @@ function ModeOption({ item, active, onClick }) {
   );
 }
 
+function CompactModeSwitcher({ value, onChange }) {
+  return (
+    <div className="rounded-[20px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.038),rgba(255,255,255,0.018))] p-1 sm:hidden">
+      <div className="grid grid-cols-3 gap-1">
+        {MODES.map((item) => {
+          const active = value === item.key;
+
+          return (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => onChange(item.key)}
+              className={`rounded-[14px] px-2 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] transition ${
+                active
+                  ? "bg-blue-500 text-white shadow-[0_12px_24px_rgba(37,99,235,0.18)]"
+                  : "text-neutral-300"
+              }`}
+            >
+              {item.key === "battle-trivia"
+                ? "Trivia"
+                : item.key === "word-scramble"
+                  ? "Scramble"
+                  : "Combined"}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function PeriodSwitcher({ value, onChange }) {
   return (
     <div className="rounded-[18px] border border-white/10 bg-black/20 p-1">
@@ -408,14 +439,142 @@ function MobileLeaderboardCard({
   );
 }
 
+function RivalryPanel({
+  currentStanding,
+  selectedRival,
+  headToHead,
+  isLoadingHeadToHead,
+  onDownload,
+  onClear,
+  isCompact = false,
+}) {
+  if (!currentStanding || !selectedRival) return null;
+
+  return (
+    <div
+      className={`rounded-[18px] border border-violet-300/18 bg-violet-500/10 ${
+        isCompact ? "px-3.5 py-3" : "px-4 py-3"
+      }`}
+    >
+      <div className={`flex flex-wrap gap-3 ${isCompact ? "" : "items-center justify-between"}`}>
+        <div className="min-w-0 flex-1">
+          <div className="text-[10px] uppercase tracking-[0.16em] text-violet-100/75">
+            Rivalry card
+          </div>
+          <div className="mt-1 text-sm text-white">
+            {currentStanding.displayName || currentStanding.username} vs{" "}
+            {selectedRival.displayName || selectedRival.username}
+          </div>
+          <div className="mt-1 text-[12px] leading-5 text-violet-100/80">
+            #{currentStanding.rank} on {currentStanding.score} pts against #
+            {selectedRival.rank} on {selectedRival.score} pts.
+          </div>
+          {isLoadingHeadToHead ? (
+            <div className="mt-2 text-[12px] text-violet-100/75">
+              Loading head-to-head...
+            </div>
+          ) : headToHead ? (
+            <div className="mt-3 grid gap-2 sm:grid-cols-3">
+              <SummaryStat
+                label="Overall"
+                value={`${headToHead.overall.wins}-${headToHead.overall.losses}-${headToHead.overall.ties}`}
+                detail={`${headToHead.overall.matches} shared matches`}
+              />
+              <SummaryStat
+                label="Trivia"
+                value={`${headToHead.battleTrivia.wins}-${headToHead.battleTrivia.losses}-${headToHead.battleTrivia.ties}`}
+                detail={`${headToHead.battleTrivia.matches} sessions`}
+              />
+              <SummaryStat
+                label="Scramble"
+                value={`${headToHead.wordScramble.wins}-${headToHead.wordScramble.losses}-${headToHead.wordScramble.ties}`}
+                detail={`${headToHead.wordScramble.matches} sessions`}
+              />
+            </div>
+          ) : null}
+          {headToHead?.currentBoardEdge ? (
+            <div className="mt-2 text-[12px] leading-5 text-violet-100/80">
+              {headToHead.currentBoardEdge}
+            </div>
+          ) : null}
+          {headToHead?.previousBoardEdge ? (
+            <div className="mt-1 text-[12px] leading-5 text-violet-100/80">
+              {headToHead.previousBoardEdge}
+            </div>
+          ) : null}
+        </div>
+
+        <div className={`flex gap-2 ${isCompact ? "mt-1 grid grid-cols-2" : "flex-wrap"}`}>
+          <button
+            type="button"
+            onClick={onDownload}
+            className={`border border-violet-200/20 bg-white/10 text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-100 transition hover:bg-white/15 ${
+              isCompact
+                ? "rounded-[14px] px-3 py-2.5"
+                : "rounded-full px-3 py-1.5"
+            }`}
+          >
+            Download rivalry card
+          </button>
+          <button
+            type="button"
+            onClick={onClear}
+            className={`border border-white/12 bg-white/[0.04] text-[11px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-white/[0.08] ${
+              isCompact
+                ? "rounded-[14px] px-3 py-2.5"
+                : "rounded-full px-3 py-1.5"
+            }`}
+          >
+            {isCompact ? "Close" : "Clear"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function LeaderboardsPage() {
   const { user } = useAuth();
   const { resolvedTheme } = useTheme();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const mode = searchParams.get("mode") || "combined";
-  const period = searchParams.get("period") || "current";
-  const scope = searchParams.get("scope") || "all";
+  const requestedMode = searchParams.get("mode");
+  const requestedPeriod = searchParams.get("period");
+  const requestedScope = searchParams.get("scope");
+
+  const mode = MODES.some((item) => item.key === requestedMode)
+    ? requestedMode
+    : "battle-trivia";
+  const period = PERIODS.some((item) => item.key === requestedPeriod)
+    ? requestedPeriod
+    : "current";
+  const scope = SCOPES.some((item) => item.key === requestedScope)
+    ? requestedScope
+    : "all";
+
+  useEffect(() => {
+    const needsMode = requestedMode !== mode;
+    const needsPeriod = requestedPeriod !== period;
+    const needsScope = requestedScope !== scope;
+
+    if (!needsMode && !needsPeriod && !needsScope) {
+      return;
+    }
+
+    setSearchParams({
+      mode,
+      period,
+      scope,
+    });
+  }, [
+    mode,
+    period,
+    requestedMode,
+    requestedPeriod,
+    requestedScope,
+    scope,
+    setSearchParams,
+  ]);
 
   const [data, setData] = useState(null);
   const [sponsor, setSponsor] = useState(null);
@@ -425,6 +584,7 @@ export default function LeaderboardsPage() {
   const [selectedRivalUserId, setSelectedRivalUserId] = useState("");
   const [headToHead, setHeadToHead] = useState(null);
   const [isLoadingHeadToHead, setIsLoadingHeadToHead] = useState(false);
+  const [isMobileRivalryOpen, setIsMobileRivalryOpen] = useState(false);
   const [page, setPage] = useState(1);
 
   useEffect(() => {
@@ -470,6 +630,10 @@ export default function LeaderboardsPage() {
   useEffect(() => {
     setPage(1);
   }, [mode, period, scope]);
+
+  useEffect(() => {
+    setIsMobileRivalryOpen(false);
+  }, [mode, period, scope, page]);
 
   const rows = useMemo(() => data?.rows || [], [data]);
   const podiumRows = useMemo(() => rows.slice(0, 3), [rows]);
@@ -575,6 +739,7 @@ export default function LeaderboardsPage() {
   const handleComparePlayer = async (row) => {
     if (!row || row.userId === user?.id) return;
     setSelectedRivalUserId(row.userId);
+    setIsMobileRivalryOpen(true);
     setIsLoadingHeadToHead(true);
 
     try {
@@ -630,6 +795,12 @@ export default function LeaderboardsPage() {
     }
   };
 
+  const clearRivalry = () => {
+    setSelectedRivalUserId("");
+    setHeadToHead(null);
+    setIsMobileRivalryOpen(false);
+  };
+
   const isLight = resolvedTheme === "light";
   const lightModeUndoFilter = isLight
     ? {
@@ -668,7 +839,11 @@ export default function LeaderboardsPage() {
               <div className="mb-2 text-[10px] uppercase tracking-[0.18em] text-neutral-500">
                 Choose a board
               </div>
-              <div className="grid gap-2.5 sm:grid-cols-3">
+              <CompactModeSwitcher
+                value={mode}
+                onChange={(nextMode) => updateQuery(nextMode, period)}
+              />
+              <div className="hidden gap-2.5 sm:grid sm:grid-cols-3">
                 {MODES.map((item) => (
                   <ModeOption
                     key={item.key}
@@ -847,7 +1022,7 @@ export default function LeaderboardsPage() {
           </div>
         ) : (
           <>
-            <section className="mb-5 sm:mb-6">
+            <section className="mb-5 hidden sm:block sm:mb-6">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                 <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500 sm:text-[11px]">
                   Podium
@@ -899,72 +1074,15 @@ export default function LeaderboardsPage() {
               </div>
 
               {currentStanding && selectedRival ? (
-                <div className="mb-3 rounded-[18px] border border-violet-300/18 bg-violet-500/10 px-4 py-3">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <div className="text-[10px] uppercase tracking-[0.16em] text-violet-100/75">
-                        Rivalry card
-                      </div>
-                      <div className="mt-1 text-sm text-white">
-                        {currentStanding.displayName || currentStanding.username} vs{" "}
-                        {selectedRival.displayName || selectedRival.username}
-                      </div>
-                      <div className="mt-1 text-[12px] leading-5 text-violet-100/80">
-                        #{currentStanding.rank} on {currentStanding.score} pts against #
-                        {selectedRival.rank} on {selectedRival.score} pts.
-                      </div>
-                      {isLoadingHeadToHead ? (
-                        <div className="mt-2 text-[12px] text-violet-100/75">
-                          Loading head-to-head...
-                        </div>
-                      ) : headToHead ? (
-                        <div className="mt-3 grid gap-2 sm:grid-cols-3">
-                          <SummaryStat
-                            label="Overall"
-                            value={`${headToHead.overall.wins}-${headToHead.overall.losses}-${headToHead.overall.ties}`}
-                            detail={`${headToHead.overall.matches} shared matches`}
-                          />
-                          <SummaryStat
-                            label="Trivia"
-                            value={`${headToHead.battleTrivia.wins}-${headToHead.battleTrivia.losses}-${headToHead.battleTrivia.ties}`}
-                            detail={`${headToHead.battleTrivia.matches} sessions`}
-                          />
-                          <SummaryStat
-                            label="Scramble"
-                            value={`${headToHead.wordScramble.wins}-${headToHead.wordScramble.losses}-${headToHead.wordScramble.ties}`}
-                            detail={`${headToHead.wordScramble.matches} sessions`}
-                          />
-                        </div>
-                      ) : null}
-                      {headToHead?.currentBoardEdge ? (
-                        <div className="mt-2 text-[12px] leading-5 text-violet-100/80">
-                          {headToHead.currentBoardEdge}
-                        </div>
-                      ) : null}
-                      {headToHead?.previousBoardEdge ? (
-                        <div className="mt-1 text-[12px] leading-5 text-violet-100/80">
-                          {headToHead.previousBoardEdge}
-                        </div>
-                      ) : null}
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={handleDownloadRivalryCard}
-                        className="rounded-full border border-violet-200/20 bg-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-100 transition hover:bg-white/15"
-                      >
-                        Download rivalry card
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedRivalUserId("")}
-                        className="rounded-full border border-white/12 bg-white/[0.04] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-white/[0.08]"
-                      >
-                        Clear
-                      </button>
-                    </div>
-                  </div>
+                <div className="mb-3 hidden sm:block">
+                  <RivalryPanel
+                    currentStanding={currentStanding}
+                    selectedRival={selectedRival}
+                    headToHead={headToHead}
+                    isLoadingHeadToHead={isLoadingHeadToHead}
+                    onDownload={handleDownloadRivalryCard}
+                    onClear={clearRivalry}
+                  />
                 </div>
               ) : null}
 
@@ -983,6 +1101,29 @@ export default function LeaderboardsPage() {
                   />
                 ))}
               </div>
+
+              {currentStanding && selectedRival && isMobileRivalryOpen ? (
+                <div className="fixed inset-0 z-50 flex items-end bg-black/70 p-3 sm:hidden">
+                  <button
+                    type="button"
+                    aria-label="Close rivalry panel"
+                    className="absolute inset-0"
+                    onClick={clearRivalry}
+                  />
+                  <div className="relative max-h-[82vh] w-full overflow-y-auto rounded-[24px] border border-violet-300/20 bg-neutral-950 p-3 shadow-[0_-20px_60px_rgba(0,0,0,0.45)]">
+                    <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-white/12" />
+                    <RivalryPanel
+                      currentStanding={currentStanding}
+                      selectedRival={selectedRival}
+                      headToHead={headToHead}
+                      isLoadingHeadToHead={isLoadingHeadToHead}
+                      onDownload={handleDownloadRivalryCard}
+                      onClear={clearRivalry}
+                      isCompact
+                    />
+                  </div>
+                </div>
+              ) : null}
 
               <div className="hidden overflow-hidden rounded-[20px] border border-white/8 sm:block">
                 <div className="overflow-x-auto">

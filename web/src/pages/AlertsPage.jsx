@@ -112,7 +112,7 @@ export default function AlertsPage() {
     try {
       await acceptInboxChallenge(item.challengeInviteId);
     } finally {
-      navigate(item.ctaTo || "/leaderboards?mode=combined&period=current");
+      navigate(item.ctaTo || "/leaderboards?mode=battle-trivia&period=current");
     }
   };
 

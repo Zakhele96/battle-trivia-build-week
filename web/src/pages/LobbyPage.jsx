@@ -485,7 +485,7 @@ function DashboardHero({
               <span aria-hidden="true">&rarr;</span>
             </Link>
             <Link
-              to="/leaderboards?mode=combined&period=current"
+              to="/leaderboards?mode=battle-trivia&period=current"
               className={`inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[18px] border px-3 py-3 text-[10px] font-medium uppercase tracking-[0.14em] transition sm:min-h-0 sm:rounded-full sm:px-3.5 sm:py-2 sm:text-[11px] ${
                 isLight
                   ? "border-stone-200 bg-white/62 text-stone-700 hover:border-stone-300 hover:bg-white"
@@ -1003,7 +1003,7 @@ function NextUpCard({ isFirstTimeUser, featuredRoom, isLight = false }) {
               step="Step 2"
               title="Check live standings"
               description="See how the weekly competition is moving."
-              to="/leaderboards?mode=combined&period=current"
+              to="/leaderboards?mode=battle-trivia&period=current"
               actionLabel="View"
               accent="violet"
               isLight={isLight}
@@ -1042,7 +1042,7 @@ function NextUpCard({ isFirstTimeUser, featuredRoom, isLight = false }) {
               step="Compare"
               title="Check where you stand"
               description="See your place in the current rankings this week."
-              to="/leaderboards?mode=combined&period=current"
+              to="/leaderboards?mode=battle-trivia&period=current"
               actionLabel="Compare"
               accent="emerald"
               isLight={isLight}
@@ -1261,9 +1261,9 @@ export default function LobbyPage() {
   const latestWinner =
     sessionPodium?.winners?.find((entry) => entry.rank === 1) || null;
 
-  const combinedLeadersPreview = useMemo(
-    () => combinedBoardRows.slice(0, 3),
-    [combinedBoardRows]
+  const battleTriviaLeadersPreview = useMemo(
+    () => currentLeaders.slice(0, 3),
+    [currentLeaders]
   );
 
   const currentStanding = useMemo(() => {
@@ -1459,7 +1459,7 @@ export default function LobbyPage() {
 
                     <div className="hidden">
                     <PulseCard
-                      to="/leaderboards?mode=combined&period=current"
+                      to="/leaderboards?mode=battle-trivia&period=current"
                       eyebrow="Current standing"
                       title={currentStanding ? `#${currentStanding.rank}` : "Unranked"}
                       description={
@@ -1543,10 +1543,10 @@ export default function LobbyPage() {
 
               <div className="grid gap-3 sm:gap-4 lg:grid-cols-[1.2fr_0.8fr]">
                 <LeaderboardPreviewCard
-                  title="Combined race"
+                  title="Battle Trivia race"
                   subtitle="Current week · Top 3 across Battle Trivia and Word Scramble"
-                  rows={combinedLeadersPreview}
-                  to="/leaderboards?mode=combined&period=current"
+                  rows={battleTriviaLeadersPreview}
+                  to="/leaderboards?mode=battle-trivia&period=current"
                   accent="blue"
                 />
 

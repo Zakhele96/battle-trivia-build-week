@@ -53,7 +53,7 @@ export function buildPlayerAlerts({ authUser, profile, currentBoard, previousBoa
         currentRow.rank === 1
           ? "You are leading the current combined board."
           : `${Math.max(0, leaderScore - currentRow.score)} point${Math.max(0, leaderScore - currentRow.score) === 1 ? "" : "s"} behind the current leader.`,
-      ctaTo: "/leaderboards?mode=combined&period=current",
+      ctaTo: "/leaderboards?mode=battle-trivia&period=current",
       ctaLabel: "Open standings",
       priority: 20,
     });
@@ -67,7 +67,7 @@ export function buildPlayerAlerts({ authUser, profile, currentBoard, previousBoa
         currentRow.rank === 1
           ? "Defend the top spot before the week closes."
           : `${Math.max(0, leaderScore - currentRow.score)} point${Math.max(0, leaderScore - currentRow.score) === 1 ? "" : "s"} behind the leader right now.`,
-      ctaTo: "/leaderboards?mode=combined&period=current",
+      ctaTo: "/leaderboards?mode=battle-trivia&period=current",
       ctaLabel: "Push higher",
       priority: 30,
     });

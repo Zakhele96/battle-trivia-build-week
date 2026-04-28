@@ -317,7 +317,7 @@ export default function ActivityPage() {
             description="Your latest notable results and the best next move."
             action={
               <Link
-                to="/leaderboards?mode=combined&period=current"
+                to="/leaderboards?mode=battle-trivia&period=current"
                 className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.035] px-3 py-1.5 text-[11px] font-medium text-white transition hover:border-white/15 hover:bg-white/[0.05] sm:rounded-[18px] sm:px-4 sm:py-2 sm:text-sm"
               >
                 View standings
@@ -357,7 +357,7 @@ export default function ActivityPage() {
                 <NextMoveCard
                   title="Compare your latest results"
                   description="Open the weekly standings and see how your recent sessions stack up."
-                  to="/leaderboards?mode=combined&period=current"
+                  to="/leaderboards?mode=battle-trivia&period=current"
                   actionLabel="Compare"
                   accent="blue"
                 />
