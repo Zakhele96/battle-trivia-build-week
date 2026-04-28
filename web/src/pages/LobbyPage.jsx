@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import FeaturedTriviaCard from "../components/lobby/FeaturedTriviaCard";
 import LeaderboardPreviewCard from "../components/lobby/LeaderboardPreviewCard";
@@ -91,6 +91,59 @@ function SectionHeader({ eyebrow, title, description, isLight = false }) {
           </div>
         ) : null}
       </div>
+    </div>
+  );
+}
+
+function DeferredSection({
+  children,
+  minHeightClassName = "min-h-[180px]",
+  onVisible,
+}) {
+  const [isVisible, setIsVisible] = useState(false);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    if (isVisible) return undefined;
+
+    const node = containerRef.current;
+    if (!node || typeof IntersectionObserver === "undefined") {
+      setIsVisible(true);
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return;
+        setIsVisible(true);
+        observer.disconnect();
+      },
+      {
+        rootMargin: "220px 0px",
+        threshold: 0.01,
+      }
+    );
+
+    observer.observe(node);
+
+    return () => observer.disconnect();
+  }, [isVisible]);
+
+  useEffect(() => {
+    if (!isVisible || typeof onVisible !== "function") return undefined;
+    onVisible();
+    return undefined;
+  }, [isVisible, onVisible]);
+
+  return (
+    <div ref={containerRef}>
+      {isVisible ? (
+        children
+      ) : (
+        <div
+          className={`rounded-[24px] border border-white/8 bg-white/[0.02] ${minHeightClassName}`}
+        />
+      )}
     </div>
   );
 }
@@ -1129,6 +1182,10 @@ export default function LobbyPage() {
   const [battleTriviaSponsor, setBattleTriviaSponsor] = useState(null);
   const [profileOverview, setProfileOverview] = useState(null);
   const [recentResult, setRecentResult] = useState(null);
+  const [shouldLoadStandingsSection, setShouldLoadStandingsSection] =
+    useState(false);
+  const [hasLoadedStandingsSection, setHasLoadedStandingsSection] =
+    useState(false);
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -1162,7 +1219,6 @@ export default function LobbyPage() {
           status,
           podium,
           leaders,
-          scrambleBoard,
           combinedBoard,
           sponsorData,
           profileData,
@@ -1173,9 +1229,6 @@ export default function LobbyPage() {
             : Promise.resolve(null),
           getBattleTriviaSessionPodium().catch(() => null),
           getCurrentBattleTriviaLeaderboard(3).catch(() => []),
-          getLeaderboard("word-scramble", "current", 3).catch(() => ({
-            rows: [],
-          })),
           getLeaderboard("combined", "current", 100).catch(() => ({
             rows: [],
           })),
@@ -1190,9 +1243,6 @@ export default function LobbyPage() {
           setFeaturedRoomStatus(status || null);
           setSessionPodium(podium || null);
           setCurrentLeaders(Array.isArray(leaders) ? leaders : []);
-          setWordScrambleLeaders(
-            Array.isArray(scrambleBoard?.rows) ? scrambleBoard.rows : []
-          );
           setCombinedBoardRows(
             Array.isArray(combinedBoard?.rows) ? combinedBoard.rows : []
           );
@@ -1221,6 +1271,37 @@ export default function LobbyPage() {
       isMounted = false;
     };
   }, [syncRoomsFromPayload]);
+
+  useEffect(() => {
+    if (!shouldLoadStandingsSection || hasLoadedStandingsSection) {
+      return undefined;
+    }
+
+    let isMounted = true;
+
+    async function loadStandingsSection() {
+      const scrambleBoard = await getLeaderboard(
+        "word-scramble",
+        "current",
+        3
+      ).catch(() => ({
+        rows: [],
+      }));
+
+      if (!isMounted) return;
+
+      setWordScrambleLeaders(
+        Array.isArray(scrambleBoard?.rows) ? scrambleBoard.rows : []
+      );
+      setHasLoadedStandingsSection(true);
+    }
+
+    loadStandingsSection();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [hasLoadedStandingsSection, shouldLoadStandingsSection]);
 
   const rooms = useMemo(() => mergeRooms(rawRooms), [rawRooms, mergeRooms]);
 
@@ -1478,7 +1559,8 @@ export default function LobbyPage() {
             ) : null}
 
             {featuredRoom ? (
-              <section className="hidden sm:block sm:mb-8">
+              <DeferredSection minHeightClassName="hidden min-h-[320px] sm:block">
+                <section className="hidden sm:block sm:mb-8">
                 <SectionHeader
                   eyebrow="Battle Trivia"
                   title="Main competition"
@@ -1489,10 +1571,12 @@ export default function LobbyPage() {
                 <div className="grid gap-4">
                   <FeaturedTriviaCard room={featuredRoom} />
                 </div>
-              </section>
+                </section>
+              </DeferredSection>
             ) : null}
 
-            <section className="hidden sm:block sm:mb-9">
+            <DeferredSection minHeightClassName="hidden min-h-[250px] sm:block">
+              <section className="hidden sm:block sm:mb-9">
               <SectionHeader
                 eyebrow="Explore"
                 title="Keep exploring"
@@ -1525,9 +1609,14 @@ export default function LobbyPage() {
                   isLight={isLight}
                 />
               </div>
-            </section>
+              </section>
+            </DeferredSection>
 
-            <section>
+            <DeferredSection
+              minHeightClassName="min-h-[300px]"
+              onVisible={() => setShouldLoadStandingsSection(true)}
+            >
+              <section>
               <SectionHeader
                 eyebrow="Standings"
                 title="Weekly race"
@@ -1572,7 +1661,8 @@ export default function LobbyPage() {
                   />
                 </div>
               </div>
-            </section>
+              </section>
+            </DeferredSection>
           </>
         )}
       </div>
