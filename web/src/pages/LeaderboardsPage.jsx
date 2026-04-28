@@ -450,6 +450,9 @@ function RivalryPanel({
 }) {
   if (!currentStanding || !selectedRival) return null;
 
+  const youName = currentStanding.displayName || currentStanding.username;
+  const rivalName = selectedRival.displayName || selectedRival.username;
+
   return (
     <div
       className={`rounded-[18px] border border-violet-300/18 bg-violet-500/10 ${
@@ -459,36 +462,36 @@ function RivalryPanel({
       <div className={`flex flex-wrap gap-3 ${isCompact ? "" : "items-center justify-between"}`}>
         <div className="min-w-0 flex-1">
           <div className="text-[10px] uppercase tracking-[0.16em] text-violet-100/75">
-            Rivalry card
+            Compare players
           </div>
           <div className="mt-1 text-sm text-white">
-            {currentStanding.displayName || currentStanding.username} vs{" "}
-            {selectedRival.displayName || selectedRival.username}
+            {youName} vs {rivalName}
           </div>
           <div className="mt-1 text-[12px] leading-5 text-violet-100/80">
-            #{currentStanding.rank} on {currentStanding.score} pts against #
-            {selectedRival.rank} on {selectedRival.score} pts.
+            You are #{currentStanding.rank} with {currentStanding.score} points.
+            {` `}
+            {rivalName} is #{selectedRival.rank} with {selectedRival.score} points.
           </div>
           {isLoadingHeadToHead ? (
             <div className="mt-2 text-[12px] text-violet-100/75">
-              Loading head-to-head...
+              Loading comparison...
             </div>
           ) : headToHead ? (
             <div className="mt-3 grid gap-2 sm:grid-cols-3">
               <SummaryStat
-                label="Overall"
-                value={`${headToHead.overall.wins}-${headToHead.overall.losses}-${headToHead.overall.ties}`}
-                detail={`${headToHead.overall.matches} shared matches`}
+                label="All matches"
+                value={`${headToHead.overall.wins} wins`}
+                detail={`${headToHead.overall.losses} losses, ${headToHead.overall.ties} ties`}
               />
               <SummaryStat
-                label="Trivia"
-                value={`${headToHead.battleTrivia.wins}-${headToHead.battleTrivia.losses}-${headToHead.battleTrivia.ties}`}
-                detail={`${headToHead.battleTrivia.matches} sessions`}
+                label="Battle Trivia"
+                value={`${headToHead.battleTrivia.wins} wins`}
+                detail={`${headToHead.battleTrivia.losses} losses, ${headToHead.battleTrivia.ties} ties`}
               />
               <SummaryStat
-                label="Scramble"
-                value={`${headToHead.wordScramble.wins}-${headToHead.wordScramble.losses}-${headToHead.wordScramble.ties}`}
-                detail={`${headToHead.wordScramble.matches} sessions`}
+                label="Word Scramble"
+                value={`${headToHead.wordScramble.wins} wins`}
+                detail={`${headToHead.wordScramble.losses} losses, ${headToHead.wordScramble.ties} ties`}
               />
             </div>
           ) : null}
@@ -504,7 +507,7 @@ function RivalryPanel({
           ) : null}
         </div>
 
-        <div className={`flex gap-2 ${isCompact ? "mt-1 grid grid-cols-2" : "flex-wrap"}`}>
+        <div className={isCompact ? "mt-1 grid grid-cols-2 gap-2" : "flex flex-wrap gap-2"}>
           <button
             type="button"
             onClick={onDownload}
@@ -514,7 +517,7 @@ function RivalryPanel({
                 : "rounded-full px-3 py-1.5"
             }`}
           >
-            Download rivalry card
+            Download card
           </button>
           <button
             type="button"
@@ -1110,7 +1113,7 @@ export default function LeaderboardsPage() {
                     className="absolute inset-0"
                     onClick={clearRivalry}
                   />
-                  <div className="relative max-h-[82vh] w-full overflow-y-auto rounded-[24px] border border-violet-300/20 bg-neutral-950 p-3 shadow-[0_-20px_60px_rgba(0,0,0,0.45)]">
+                  <div className="relative z-10 max-h-[82vh] w-full overflow-y-auto overscroll-contain rounded-[24px] border border-violet-300/20 bg-neutral-950 p-3 shadow-[0_-20px_60px_rgba(0,0,0,0.45)]">
                     <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-white/12" />
                     <RivalryPanel
                       currentStanding={currentStanding}
