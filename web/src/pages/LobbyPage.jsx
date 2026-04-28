@@ -324,19 +324,51 @@ function LeadersPanel({ title, subtitle, entries, isLight = false }) {
   );
 }
 
-function DashboardHero({ user, isFirstTimeUser, isLight = false }) {
+function DashboardHero({
+  user,
+  isFirstTimeUser,
+  currentStanding,
+  bestStreak,
+  totalCorrectAnswers,
+  isLight = false,
+}) {
   const displayName = user?.displayName || user?.username || "Player";
-  const greeting = user?.displayName ? `Welcome, ${user.displayName}` : "Welcome";
+  const greeting = user?.displayName
+    ? `${user.displayName}, your race is live`
+    : "Your race is live";
   const providerLabel =
     user?.authProvider === "google"
       ? "Google sign-in"
       : user?.authProvider === "facebook"
         ? "Facebook sign-in"
         : "BTS sign-in";
+  const summary = isFirstTimeUser
+    ? "Jump into Battle Trivia, lock in your first result, and start giving yourself something worth chasing."
+    : "Keep pressure on the board, jump back into live rooms, and see if your momentum is actually holding.";
+  const momentumLabel = currentStanding
+    ? `Board spot #${currentStanding.rank}`
+    : "Fresh start";
+  const statCards = [
+    {
+      label: "Current rank",
+      value: currentStanding ? `#${currentStanding.rank}` : "Unranked",
+      helper: currentStanding ? `${currentStanding.score} pts` : "Get on the board",
+    },
+    {
+      label: "Best streak",
+      value: bestStreak > 0 ? `x${bestStreak}` : "x0",
+      helper: bestStreak > 0 ? "Personal best" : "Start a run",
+    },
+    {
+      label: "Correct answers",
+      value: String(totalCorrectAnswers ?? 0),
+      helper: (totalCorrectAnswers ?? 0) > 0 ? "Lifetime total" : "No history yet",
+    },
+  ];
 
   return (
     <div
-      className={`mb-5 rounded-[24px] border p-4 sm:mb-7 sm:rounded-[30px] sm:p-5 lg:p-6 ${
+      className={`mb-5 rounded-[24px] border p-3.5 sm:mb-7 sm:rounded-[30px] sm:p-5 lg:p-5 ${
         isLight
           ? "border-[#d8c3a0] bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.14),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(245,158,11,0.1),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.96),rgba(243,231,214,0.98))] shadow-[0_18px_40px_rgba(114,84,41,0.12)]"
           : "border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.14),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015))] shadow-[0_18px_40px_rgba(0,0,0,0.16)]"
@@ -344,7 +376,7 @@ function DashboardHero({ user, isFirstTimeUser, isLight = false }) {
     >
       <div className="flex items-start gap-3 sm:gap-4">
         <div
-          className={`h-14 w-14 shrink-0 overflow-hidden rounded-full border sm:h-16 sm:w-16 ${
+          className={`h-11 w-11 shrink-0 overflow-hidden rounded-full border sm:h-14 sm:w-14 ${
             isLight
               ? "border-[#e2d4c2] bg-white/80"
               : "border-white/10 bg-white/[0.05]"
@@ -358,7 +390,7 @@ function DashboardHero({ user, isFirstTimeUser, isLight = false }) {
             />
           ) : (
             <div
-              className={`flex h-full w-full items-center justify-center text-base font-semibold sm:text-lg ${
+              className={`flex h-full w-full items-center justify-center text-sm font-semibold sm:text-lg ${
                 isLight ? "text-stone-900" : "text-white"
               }`}
             >
@@ -368,24 +400,44 @@ function DashboardHero({ user, isFirstTimeUser, isLight = false }) {
         </div>
 
         <div className="min-w-0 flex-1">
-          <div
-            className={`text-[10px] uppercase tracking-[0.2em] sm:text-[11px] ${
-              isLight ? "text-[#9a6706]" : "text-blue-300/70"
-            }`}
-          >
-            BTS dashboard
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+            <div
+              className={`text-[10px] uppercase tracking-[0.2em] sm:text-[11px] ${
+                isLight ? "text-[#9a6706]" : "text-blue-300/70"
+              }`}
+            >
+              Ready to move?
+            </div>
+            <span
+              className={`inline-flex rounded-full border px-2 py-0.5 text-[8px] font-medium uppercase tracking-[0.14em] sm:hidden ${
+                isLight
+                  ? "border-[#e2d4c2] bg-white/70 text-stone-500"
+                  : "border-white/10 bg-white/[0.04] text-neutral-300"
+              }`}
+            >
+              {providerLabel}
+            </span>
           </div>
 
           <div
-            className={`mt-1 truncate text-sm font-medium sm:text-[15px] ${
+            className={`mt-1.5 flex flex-wrap items-center gap-2 text-[13px] font-medium sm:text-[14px] ${
               isLight ? "text-stone-500" : "text-neutral-400"
             }`}
           >
-            {displayName}
+            <span className="truncate">{displayName}</span>
+            <span
+              className={`inline-flex rounded-full border px-2 py-0.5 text-[8px] font-medium uppercase tracking-[0.14em] ${
+                isLight
+                  ? "border-[#dcc9aa] bg-amber-50/80 text-amber-800"
+                  : "border-emerald-300/15 bg-emerald-400/10 text-emerald-200"
+              }`}
+            >
+              {momentumLabel}
+            </span>
           </div>
 
           <div
-            className={`mt-1 inline-flex rounded-full border px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] sm:text-[10px] ${
+            className={`mt-1 hidden rounded-full border px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] sm:inline-flex sm:text-[10px] ${
               isLight
                 ? "border-[#e2d4c2] bg-white/70 text-stone-500"
                 : "border-white/10 bg-white/[0.04] text-neutral-300"
@@ -395,7 +447,7 @@ function DashboardHero({ user, isFirstTimeUser, isLight = false }) {
           </div>
 
           <h1
-            className={`mt-3 text-[26px] font-semibold tracking-[-0.04em] sm:mt-4 sm:text-[36px] ${
+            className={`mt-2 text-[24px] font-semibold leading-[1.02] tracking-[-0.05em] sm:mt-3 sm:text-[30px] ${
               isLight ? "text-stone-950" : "text-white"
             }`}
           >
@@ -403,7 +455,7 @@ function DashboardHero({ user, isFirstTimeUser, isLight = false }) {
           </h1>
 
           <p
-            className={`mt-2 max-w-[42rem] text-[13px] leading-6 sm:mt-3 sm:text-[15px] sm:leading-7 ${
+            className={`hidden mt-2 max-w-[40rem] text-[13px] leading-5 sm:text-[14px] sm:leading-6 ${
               isLight ? "text-stone-500" : "text-neutral-400"
             }`}
           >
@@ -411,6 +463,73 @@ function DashboardHero({ user, isFirstTimeUser, isLight = false }) {
               ? "You’re all set. Start with the featured competition, explore the rooms, and build your first result."
               : "Start with the featured competition, jump into rooms, check the weekly standings, or head straight to your profile."}
           </p>
+
+          <p
+            className={`mt-2 max-w-[32rem] text-[12px] leading-5 sm:text-[14px] sm:leading-6 ${
+              isLight ? "text-stone-500" : "text-neutral-400"
+            }`}
+          >
+            {summary}
+          </p>
+
+          <div className="mt-3 grid grid-cols-2 gap-2.5 sm:gap-2">
+            <Link
+              to="/rooms"
+              className={`inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[18px] border px-3 py-3 text-[10px] font-medium uppercase tracking-[0.14em] transition sm:min-h-0 sm:rounded-full sm:px-3.5 sm:py-2 sm:text-[11px] ${
+                isLight
+                  ? "border-stone-200 bg-white/78 text-stone-900 hover:border-[#cda768] hover:bg-white"
+                  : "border-white/10 bg-white/[0.04] text-white hover:border-white/15 hover:bg-white/[0.06]"
+              }`}
+            >
+              Jump into rooms
+              <span aria-hidden="true">&rarr;</span>
+            </Link>
+            <Link
+              to="/leaderboards?mode=combined&period=current"
+              className={`inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[18px] border px-3 py-3 text-[10px] font-medium uppercase tracking-[0.14em] transition sm:min-h-0 sm:rounded-full sm:px-3.5 sm:py-2 sm:text-[11px] ${
+                isLight
+                  ? "border-stone-200 bg-white/62 text-stone-700 hover:border-stone-300 hover:bg-white"
+                  : "border-white/8 bg-black/20 text-neutral-200 hover:border-white/12 hover:bg-white/[0.05]"
+              }`}
+            >
+              See standings
+            </Link>
+          </div>
+
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {statCards.map((item, index) => (
+              <div
+                key={item.label}
+                className={`rounded-[18px] border p-2.5 sm:rounded-[16px] sm:p-3 ${
+                  isLight
+                    ? "border-[#e2d4c2] bg-white/74"
+                    : "border-white/8 bg-black/20"
+                } ${index === statCards.length - 1 ? "col-span-2 sm:col-span-1" : ""}`}
+              >
+                <div
+                  className={`text-[9px] uppercase tracking-[0.14em] ${
+                    isLight ? "text-stone-500" : "text-neutral-500"
+                  }`}
+                >
+                  {item.label}
+                </div>
+                <div
+                  className={`mt-1 text-[15px] font-semibold tracking-[-0.04em] sm:mt-1.5 sm:text-[18px] ${
+                    isLight ? "text-stone-950" : "text-white"
+                  }`}
+                >
+                  {item.value}
+                </div>
+                <div
+                  className={`mt-1 text-[10px] leading-4 sm:text-[11px] ${
+                    isLight ? "text-stone-500" : "text-neutral-400"
+                  }`}
+                >
+                  {item.helper}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -1180,6 +1299,9 @@ export default function LobbyPage() {
         <DashboardHero
           user={user}
           isFirstTimeUser={isFirstTimeUser}
+          currentStanding={currentStanding}
+          bestStreak={bestStreak}
+          totalCorrectAnswers={totalCorrectAnswers}
           isLight={isLight}
         />
         {error ? (
@@ -1225,7 +1347,6 @@ export default function LobbyPage() {
                 />
               ) : null}
             </section>
-
             {featuredRoom ? (
               <section className="mb-6 sm:hidden">
                 <SectionHeader
@@ -1249,6 +1370,7 @@ export default function LobbyPage() {
               />
             </div>
 
+            {false ? (
             <section className="mb-7 sm:mb-9">
               <SectionHeader
                 eyebrow="Personal"
@@ -1353,6 +1475,7 @@ export default function LobbyPage() {
                 )}
               </div>
             </section>
+            ) : null}
 
             {featuredRoom ? (
               <section className="hidden sm:block sm:mb-8">
