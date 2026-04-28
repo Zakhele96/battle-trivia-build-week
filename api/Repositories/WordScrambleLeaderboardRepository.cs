@@ -20,6 +20,7 @@ public sealed class WordScrambleLeaderboardRepository : IWordScrambleLeaderboard
                 l.user_id AS UserId,
                 u.username AS Username,
                 u.display_name AS DisplayName,
+                u.avatar_url AS AvatarUrl,
                 SUM(l.points)::int AS Score,
                 ROW_NUMBER() OVER (
                     ORDER BY SUM(l.points) DESC, u.display_name ASC, u.username ASC
@@ -28,7 +29,7 @@ public sealed class WordScrambleLeaderboardRepository : IWordScrambleLeaderboard
             INNER JOIN users u
                 ON u.id = l.user_id
             WHERE l.session_id = @SessionId
-            GROUP BY l.user_id, u.username, u.display_name
+            GROUP BY l.user_id, u.username, u.display_name, u.avatar_url
             ORDER BY Score DESC, u.display_name ASC, u.username ASC
             LIMIT @Take;
             """;
@@ -50,6 +51,7 @@ public sealed class WordScrambleLeaderboardRepository : IWordScrambleLeaderboard
                 l.user_id AS UserId,
                 u.username AS Username,
                 u.display_name AS DisplayName,
+                u.avatar_url AS AvatarUrl,
                 SUM(l.points)::int AS Score,
                 ROW_NUMBER() OVER (
                     ORDER BY SUM(l.points) DESC, u.display_name ASC, u.username ASC
@@ -58,7 +60,7 @@ public sealed class WordScrambleLeaderboardRepository : IWordScrambleLeaderboard
             INNER JOIN users u
                 ON u.id = l.user_id
             WHERE l.room_id = @RoomId
-            GROUP BY l.user_id, u.username, u.display_name
+            GROUP BY l.user_id, u.username, u.display_name, u.avatar_url
             ORDER BY Score DESC, u.display_name ASC, u.username ASC
             LIMIT @Take;
             """;
@@ -80,6 +82,7 @@ public sealed class WordScrambleLeaderboardRepository : IWordScrambleLeaderboard
                 l.user_id AS UserId,
                 u.username AS Username,
                 u.display_name AS DisplayName,
+                u.avatar_url AS AvatarUrl,
                 SUM(l.points)::int AS Score,
                 ROW_NUMBER() OVER (
                     ORDER BY SUM(l.points) DESC, u.display_name ASC, u.username ASC
@@ -87,7 +90,7 @@ public sealed class WordScrambleLeaderboardRepository : IWordScrambleLeaderboard
             FROM word_scramble_score_ledger l
             INNER JOIN users u
                 ON u.id = l.user_id
-            GROUP BY l.user_id, u.username, u.display_name
+            GROUP BY l.user_id, u.username, u.display_name, u.avatar_url
             ORDER BY Score DESC, u.display_name ASC, u.username ASC
             LIMIT @Take;
             """;

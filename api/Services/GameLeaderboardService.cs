@@ -15,6 +15,7 @@ public sealed class GameLeaderboardService
     private readonly IWordScrambleSessionRepository _wordScrambleSessionRepository;
     private readonly IWordScrambleLeaderboardRepository _wordScrambleLeaderboardRepository;
     private readonly IWordScrambleSessionResultRepository _wordScrambleSessionResultRepository;
+    private readonly UserPresenceService _userPresenceService;
 
     public GameLeaderboardService(
         IRoomRepository roomRepository,
@@ -23,7 +24,8 @@ public sealed class GameLeaderboardService
         ITriviaSessionResultRepository triviaSessionResultRepository,
         IWordScrambleSessionRepository wordScrambleSessionRepository,
         IWordScrambleLeaderboardRepository wordScrambleLeaderboardRepository,
-        IWordScrambleSessionResultRepository wordScrambleSessionResultRepository)
+        IWordScrambleSessionResultRepository wordScrambleSessionResultRepository,
+        UserPresenceService userPresenceService)
     {
         _roomRepository = roomRepository;
         _triviaSessionRepository = triviaSessionRepository;
@@ -32,6 +34,7 @@ public sealed class GameLeaderboardService
         _wordScrambleSessionRepository = wordScrambleSessionRepository;
         _wordScrambleLeaderboardRepository = wordScrambleLeaderboardRepository;
         _wordScrambleSessionResultRepository = wordScrambleSessionResultRepository;
+        _userPresenceService = userPresenceService;
     }
 
     public async Task<GameLeaderboardDto> GetAsync(string mode, string period, int take = 100)
@@ -73,6 +76,8 @@ public sealed class GameLeaderboardService
                 UserId = x.UserId,
                 Username = x.Username,
                 DisplayName = x.DisplayName,
+                AvatarUrl = x.AvatarUrl,
+                IsOnline = _userPresenceService.IsOnline(x.UserId),
                 Rank = x.Rank,
                 Score = x.Score,
                 BattleTriviaScore = x.Score,
@@ -104,6 +109,8 @@ public sealed class GameLeaderboardService
                 UserId = x.UserId,
                 Username = x.Username,
                 DisplayName = x.DisplayName,
+                AvatarUrl = x.AvatarUrl,
+                IsOnline = _userPresenceService.IsOnline(x.UserId),
                 Rank = x.Rank,
                 Score = x.Score,
                 BattleTriviaScore = x.Score,
@@ -134,6 +141,8 @@ public sealed class GameLeaderboardService
                 UserId = x.UserId,
                 Username = x.Username,
                 DisplayName = x.DisplayName,
+                AvatarUrl = x.AvatarUrl,
+                IsOnline = _userPresenceService.IsOnline(x.UserId),
                 Rank = x.Rank,
                 Score = x.Score,
                 BattleTriviaScore = 0,
@@ -165,6 +174,8 @@ public sealed class GameLeaderboardService
                 UserId = x.UserId,
                 Username = x.Username,
                 DisplayName = x.DisplayName,
+                AvatarUrl = x.AvatarUrl,
+                IsOnline = _userPresenceService.IsOnline(x.UserId),
                 Rank = x.Rank,
                 Score = x.Score,
                 BattleTriviaScore = 0,
@@ -217,11 +228,15 @@ public sealed class GameLeaderboardService
                 {
                     UserId = row.UserId,
                     Username = row.Username,
-                    DisplayName = row.DisplayName
+                    DisplayName = row.DisplayName,
+                    AvatarUrl = row.AvatarUrl,
+                    IsOnline = row.IsOnline
                 };
                 map[row.UserId] = entry;
             }
 
+            entry.AvatarUrl ??= row.AvatarUrl;
+            entry.IsOnline = entry.IsOnline || row.IsOnline;
             entry.BattleTriviaScore += row.BattleTriviaScore > 0 ? row.BattleTriviaScore : row.Score;
         }
 
@@ -233,11 +248,15 @@ public sealed class GameLeaderboardService
                 {
                     UserId = row.UserId,
                     Username = row.Username,
-                    DisplayName = row.DisplayName
+                    DisplayName = row.DisplayName,
+                    AvatarUrl = row.AvatarUrl,
+                    IsOnline = row.IsOnline
                 };
                 map[row.UserId] = entry;
             }
 
+            entry.AvatarUrl ??= row.AvatarUrl;
+            entry.IsOnline = entry.IsOnline || row.IsOnline;
             entry.WordScrambleScore += row.WordScrambleScore > 0 ? row.WordScrambleScore : row.Score;
         }
 

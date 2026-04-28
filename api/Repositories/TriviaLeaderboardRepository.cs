@@ -21,6 +21,7 @@ public sealed class TriviaLeaderboardRepository : ITriviaLeaderboardRepository
                     tsl.user_id AS UserId,
                     u.username AS Username,
                     u.display_name AS DisplayName,
+                    u.avatar_url AS AvatarUrl,
                     SUM(tsl.points) AS Score
                 FROM trivia_score_ledger tsl
                 INNER JOIN users u
@@ -30,11 +31,14 @@ public sealed class TriviaLeaderboardRepository : ITriviaLeaderboardRepository
                     tsl.user_id,
                     u.username,
                     u.display_name
+                    ,
+                    u.avatar_url
             )
             SELECT
                 UserId,
                 Username,
                 DisplayName,
+                AvatarUrl,
                 Score,
                 DENSE_RANK() OVER (ORDER BY Score DESC) AS Rank
             FROM leaderboard

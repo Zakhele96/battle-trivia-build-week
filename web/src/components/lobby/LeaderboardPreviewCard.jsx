@@ -1,6 +1,15 @@
 import { Link } from "react-router-dom";
 import { useTheme } from "../../hooks/useTheme";
 
+function getInitials(value) {
+  if (!value) return "P";
+
+  const parts = String(value).trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+
+  return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
+}
+
 function getAccentStyles(accent, isLight) {
   if (accent === "violet") {
     return isLight
@@ -86,12 +95,46 @@ function Row({ row, accent, isLight }) {
       className={`flex items-center justify-between gap-3 rounded-[16px] border px-3 py-3 sm:rounded-[14px] sm:py-2.5 ${rowClassName}`}
     >
       <div className="min-w-0 flex items-center gap-2.5">
-        <div
-          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
-            isTop ? accentStyles.iconBg : isLight ? "bg-stone-100 text-stone-700" : "bg-white/[0.05]"
-          }`}
-        >
-          {row.rank}
+        <div className="relative shrink-0">
+          <div
+            className={`flex h-10 w-10 items-center justify-center overflow-hidden rounded-full text-[11px] font-semibold ${
+              row.avatarUrl
+                ? "border border-white/10 bg-white/[0.04]"
+                : isTop
+                ? accentStyles.iconBg
+                : isLight
+                ? "bg-stone-100 text-stone-700"
+                : "bg-white/[0.05]"
+            }`}
+          >
+            {row.avatarUrl ? (
+              <img
+                src={row.avatarUrl}
+                alt={row.displayName || row.username}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              getInitials(row.displayName || row.username)
+            )}
+          </div>
+
+          <div
+            className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 ${
+              isLight ? "border-[#f6ecdd]" : "border-neutral-950"
+            } ${row.isOnline ? "bg-emerald-400" : "bg-neutral-500"}`}
+          />
+
+          <div
+            className={`absolute -left-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-semibold ${
+              isTop
+                ? accentStyles.iconBg
+                : isLight
+                ? "bg-stone-100 text-stone-700"
+                : "bg-white/[0.05] text-neutral-300"
+            }`}
+          >
+            {row.rank}
+          </div>
         </div>
 
         <div className="min-w-0">

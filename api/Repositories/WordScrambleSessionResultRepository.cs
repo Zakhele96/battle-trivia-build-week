@@ -60,6 +60,7 @@ public sealed class WordScrambleSessionResultRepository : IWordScrambleSessionRe
                 r.user_id AS UserId,
                 u.username AS Username,
                 u.display_name AS DisplayName,
+                u.avatar_url AS AvatarUrl,
                 r.score AS Score,
                 r.rank AS Rank
             FROM word_scramble_session_results r
