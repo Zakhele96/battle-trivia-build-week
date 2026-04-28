@@ -105,8 +105,10 @@ function ModeOption({ item, active, onClick }) {
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-[13px] font-semibold text-white">{item.label}</div>
-          <div className="mt-1 text-[11px] leading-5 text-neutral-400">
+          <div className="text-[13px] font-semibold leading-5 text-white sm:text-[14px]">
+            {item.label}
+          </div>
+          <div className="mt-1 text-[11px] leading-4 text-neutral-400 sm:leading-5">
             {item.description}
           </div>
         </div>
@@ -141,7 +143,7 @@ function PeriodSwitcher({ value, onChange }) {
               key={item.key}
               type="button"
               onClick={() => onChange(item.key)}
-              className={`rounded-[14px] px-3 py-2 text-sm font-medium transition ${
+              className={`rounded-[14px] px-3 py-2.5 text-[12px] font-medium transition sm:py-2 sm:text-sm ${
                 active
                   ? "bg-violet-500 text-white shadow-[0_12px_24px_rgba(139,92,246,0.22)]"
                   : "text-neutral-300 hover:bg-white/[0.04]"
@@ -168,7 +170,7 @@ function ScopeSwitcher({ value, onChange }) {
               key={item.key}
               type="button"
               onClick={() => onChange(item.key)}
-              className={`rounded-[14px] px-3 py-2 text-sm font-medium transition ${
+              className={`rounded-[14px] px-3 py-2.5 text-[12px] font-medium transition sm:py-2 sm:text-sm ${
                 active
                   ? "bg-emerald-500 text-white shadow-[0_12px_24px_rgba(16,185,129,0.22)]"
                   : "text-neutral-300 hover:bg-white/[0.04]"
@@ -187,7 +189,7 @@ function SummaryStat({ label, value, detail, compact = false }) {
   return (
     <div
       className={`rounded-[18px] border border-white/8 bg-black/20 ${
-        compact ? "px-3 py-2.5" : "px-4 py-3"
+        compact ? "px-3 py-2.5" : "px-3.5 py-3 sm:px-4"
       }`}
     >
       <div
@@ -289,7 +291,7 @@ function MobileLeaderboardCard({
 
   return (
     <div
-      className={`rounded-[16px] border p-3 shadow-[0_8px_18px_rgba(0,0,0,0.1)] ${
+      className={`rounded-[18px] border p-3.5 shadow-[0_10px_22px_rgba(0,0,0,0.12)] ${
         isCurrentUser
           ? "border-blue-300/25 bg-blue-500/10"
           : `${tone.shell} ${tone.accent}`
@@ -317,11 +319,11 @@ function MobileLeaderboardCard({
             ) : null}
           </div>
 
-          <div className="mt-2 text-[14px] font-semibold text-white">
+          <div className="mt-2 text-[15px] font-semibold leading-5 text-white">
             {row.displayName || row.username}
           </div>
 
-          <div className="mt-1 text-[12px] text-neutral-400">
+          <div className="mt-1 truncate text-[12px] text-neutral-400">
             @{row.username}
           </div>
         </div>
@@ -341,7 +343,7 @@ function MobileLeaderboardCard({
       </div>
 
       {mode === "combined" ? (
-        <div className="mt-2.5 grid grid-cols-2 gap-2">
+        <div className="mt-3 grid grid-cols-2 gap-2">
           <SummaryStat
             compact
             label="Trivia"
@@ -357,36 +359,36 @@ function MobileLeaderboardCard({
         </div>
       ) : null}
 
-      <div className="mt-2.5 rounded-[14px] border border-white/8 bg-black/20 px-3 py-2 text-[11px] leading-4 text-neutral-300">
+      <div className="mt-3 rounded-[14px] border border-white/8 bg-black/20 px-3 py-2.5 text-[11px] leading-4 text-neutral-300">
         {row.rank === 1
           ? "Currently leading this board."
           : `${gap} point${gap === 1 ? "" : "s"} behind the leader.`}
       </div>
 
       {isCurrentUser ? (
-        <div className="mt-2.5 grid gap-2">
+        <div className="mt-3 grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={() => onShare?.(row)}
-            className="rounded-[14px] border border-blue-300/18 bg-blue-400/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-100 transition hover:bg-blue-400/15"
+            className="rounded-[14px] border border-blue-300/18 bg-blue-400/10 px-3 py-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-100 transition hover:bg-blue-400/15"
           >
             Share your rank
           </button>
           <button
             type="button"
             onClick={() => onDownload?.(row)}
-            className="rounded-[14px] border border-white/10 bg-white/[0.04] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-white/[0.07]"
+            className="rounded-[14px] border border-white/10 bg-white/[0.04] px-3 py-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-white/[0.07]"
           >
             Download story card
           </button>
         </div>
       ) : onCompare || onChallenge ? (
-        <div className="mt-2.5 grid gap-2">
+        <div className="mt-3 grid grid-cols-2 gap-2">
           {onCompare ? (
             <button
               type="button"
               onClick={() => onCompare?.(row)}
-              className="rounded-[14px] border border-violet-300/18 bg-violet-400/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-100 transition hover:bg-violet-400/15"
+              className="rounded-[14px] border border-violet-300/18 bg-violet-400/10 px-3 py-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-100 transition hover:bg-violet-400/15"
             >
               Compare
             </button>
@@ -395,7 +397,7 @@ function MobileLeaderboardCard({
             <button
               type="button"
               onClick={() => onChallenge?.(row)}
-              className="rounded-[14px] border border-orange-300/18 bg-orange-400/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-orange-100 transition hover:bg-orange-400/15"
+              className="rounded-[14px] border border-orange-300/18 bg-orange-400/10 px-3 py-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-orange-100 transition hover:bg-orange-400/15"
             >
               Challenge
             </button>
@@ -649,7 +651,7 @@ export default function LeaderboardsPage() {
         <AppTopBar
           eyebrow="Leaderboards"
           title="Weekly standings"
-          description="A clearer ranking view for Battle Trivia, Word Scramble, and combined performance."
+          description="Track the board, spot your gap, and move faster between the rankings that matter."
           actions={[]}
         />
 
@@ -660,7 +662,7 @@ export default function LeaderboardsPage() {
           </div>
         ) : null}
 
-        <div className="mb-5 rounded-[24px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.12),transparent_32%),linear-gradient(180deg,rgba(255,255,255,0.032),rgba(255,255,255,0.014))] p-4 sm:mb-6 sm:p-5">
+        <div className="mb-5 rounded-[24px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.12),transparent_32%),linear-gradient(180deg,rgba(255,255,255,0.032),rgba(255,255,255,0.014))] p-3.5 sm:mb-6 sm:p-5">
           <div className="grid gap-4 lg:grid-cols-[1.18fr_0.82fr]">
             <div>
               <div className="mb-2 text-[10px] uppercase tracking-[0.18em] text-neutral-500">
@@ -695,11 +697,11 @@ export default function LeaderboardsPage() {
                 onChange={(nextPeriod) => updateQuery(mode, nextPeriod)}
               />
 
-              <div className="mt-3 rounded-[18px] border border-white/8 bg-black/20 px-4 py-3">
+              <div className="mt-3 rounded-[18px] border border-white/8 bg-black/20 px-3.5 py-3 sm:px-4">
                 <div className="text-[10px] uppercase tracking-[0.14em] text-neutral-500">
                   Current selection
                 </div>
-                <div className="mt-1 text-sm font-semibold text-white">
+                <div className="mt-1 text-[15px] font-semibold text-white sm:text-sm">
                   {getModeLabel(mode)} · {getPeriodLabel(period)}
                 </div>
                 <div className="mt-1 text-[12px] leading-5 text-neutral-400">
@@ -724,16 +726,18 @@ export default function LeaderboardsPage() {
           </div>
         </div>
 
-        <div className="mb-5 rounded-[24px] border border-white/10 bg-white/[0.03] p-4 sm:mb-6 sm:p-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="mb-5 rounded-[24px] border border-white/10 bg-white/[0.03] p-3.5 sm:mb-6 sm:p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500 sm:text-[11px]">
                 {data?.label || getModeLabel(mode)}
               </div>
-              <div className="mt-1 text-[15px] font-semibold tracking-[-0.03em] text-white sm:text-lg">
+              <div className="mt-1 text-[17px] font-semibold tracking-[-0.03em] text-white sm:text-lg">
                 {getPeriodLabel(period)}
               </div>
-              <div className="mt-1 text-sm text-neutral-400">{subtitle}</div>
+              <div className="mt-1 text-[13px] leading-5 text-neutral-400 sm:text-sm">
+                {subtitle}
+              </div>
             </div>
 
             <div className="rounded-full border border-white/8 bg-white/[0.03] px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.16em] text-neutral-400">
@@ -768,17 +772,17 @@ export default function LeaderboardsPage() {
           </div>
 
           {rows.length > PAGE_SIZE ? (
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[18px] border border-white/8 bg-black/20 px-4 py-3">
+            <div className="mt-4 rounded-[18px] border border-white/8 bg-black/20 px-3.5 py-3 sm:flex sm:flex-wrap sm:items-center sm:justify-between sm:gap-3 sm:px-4">
               <div className="text-[12px] text-neutral-400">
                 Showing {Math.min((page - 1) * PAGE_SIZE + 1, rows.length)}-
                 {Math.min(page * PAGE_SIZE, rows.length)} of {rows.length}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="mt-3 flex items-center justify-between gap-2 sm:mt-0 sm:justify-end">
                 <button
                   type="button"
                   disabled={page <= 1}
                   onClick={() => setPage((previous) => Math.max(1, previous - 1))}
-                  className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-45"
+                  className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-45"
                 >
                   Previous
                 </button>
@@ -791,7 +795,7 @@ export default function LeaderboardsPage() {
                   onClick={() =>
                     setPage((previous) => Math.min(totalPages, previous + 1))
                   }
-                  className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-45"
+                  className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-45"
                 >
                   Next
                 </button>
@@ -800,23 +804,23 @@ export default function LeaderboardsPage() {
           ) : null}
 
           {currentStanding ? (
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[18px] border border-blue-300/18 bg-blue-400/10 px-4 py-3">
-              <div className="text-sm text-blue-100">
+            <div className="mt-4 rounded-[18px] border border-blue-300/18 bg-blue-400/10 px-3.5 py-3 sm:flex sm:flex-wrap sm:items-center sm:justify-between sm:gap-3 sm:px-4">
+              <div className="text-[13px] leading-5 text-blue-100 sm:text-sm">
                 Share your current rank: #{currentStanding.rank} with{" "}
                 {currentStanding.score} pts.
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="mt-3 grid grid-cols-2 gap-2 sm:mt-0 sm:flex sm:flex-wrap sm:items-center">
                 <button
                   type="button"
                   onClick={() => handleDownloadRankCard(currentStanding)}
-                  className="rounded-full border border-white/12 bg-white/[0.04] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-white/[0.08]"
+                  className="rounded-[14px] border border-white/12 bg-white/[0.04] px-3 py-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-white/[0.08] sm:rounded-full sm:py-1.5"
                 >
                   Download story card
                 </button>
                 <button
                   type="button"
                   onClick={() => handleShareRank(currentStanding)}
-                  className="rounded-full border border-blue-200/20 bg-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-100 transition hover:bg-white/15"
+                  className="rounded-[14px] border border-blue-200/20 bg-white/10 px-3 py-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-100 transition hover:bg-white/15 sm:rounded-full sm:py-1.5"
                 >
                   Share rank
                 </button>
@@ -844,16 +848,18 @@ export default function LeaderboardsPage() {
         ) : (
           <>
             <section className="mb-5 sm:mb-6">
-              <div className="mb-3 flex items-center justify-between gap-3">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                 <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500 sm:text-[11px]">
                   Podium
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="text-[11px] text-neutral-500">Top three right now</div>
+                  <div className="hidden text-[11px] text-neutral-500 sm:block">
+                    Top three right now
+                  </div>
                   <button
                     type="button"
                     onClick={handleDownloadTopThreeCard}
-                    className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-white/[0.08]"
+                    className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-white/[0.08]"
                   >
                     Download top 3
                   </button>
@@ -881,7 +887,7 @@ export default function LeaderboardsPage() {
                     Full rankings
                   </div>
                   <div className="mt-1 text-[12px] leading-5 text-neutral-400 sm:text-[13px]">
-                    Mobile cards explain position, score, and leader gap without making you read a dense table.
+                    Mobile cards keep your place, score, and next move easy to scan without a dense table.
                   </div>
                 </div>
 
@@ -962,7 +968,7 @@ export default function LeaderboardsPage() {
                 </div>
               ) : null}
 
-              <div className="space-y-2.5 sm:hidden">
+              <div className="space-y-3 sm:hidden">
                 {pagedRows.map((row) => (
                   <MobileLeaderboardCard
                     key={row.userId}
