@@ -1,6 +1,15 @@
 import { Link } from "react-router-dom";
 import { useTheme } from "../../hooks/useTheme";
 
+function getInitials(value) {
+  if (!value) return "P";
+
+  const parts = String(value).trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+
+  return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
+}
+
 function getPlacementTone(rank, isLight) {
   if (isLight) {
     if (rank === 1) {
@@ -18,7 +27,11 @@ function getPlacementTone(rank, isLight) {
         pedestalOverlay:
           "bg-[linear-gradient(180deg,rgba(255,255,255,0.24),transparent_28%,rgba(120,53,15,0.14))]",
         pedestalShadow: "bg-amber-950/12",
-        medal: "border-amber-200 bg-white/70 text-amber-800",
+        medal: "border-amber-200 bg-white/82 text-amber-800",
+        avatarShell:
+          "border-amber-200 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.92),rgba(255,244,214,0.88))] shadow-[0_12px_22px_rgba(217,119,6,0.14)]",
+        avatarRing: "border-amber-300/80",
+        spark: "bg-amber-300/70",
         lift: "h-28 sm:h-32",
         order: "order-2",
         floatClass: "podium-float-medium",
@@ -40,7 +53,11 @@ function getPlacementTone(rank, isLight) {
         pedestalOverlay:
           "bg-[linear-gradient(180deg,rgba(255,255,255,0.22),transparent_28%,rgba(71,85,105,0.14))]",
         pedestalShadow: "bg-slate-950/10",
-        medal: "border-slate-200 bg-white/70 text-slate-700",
+        medal: "border-slate-200 bg-white/80 text-slate-700",
+        avatarShell:
+          "border-slate-200 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.94),rgba(232,239,247,0.9))] shadow-[0_10px_18px_rgba(100,116,139,0.12)]",
+        avatarRing: "border-slate-300/70",
+        spark: "",
         lift: "h-20 sm:h-24",
         order: "order-1",
         floatClass: "podium-float-slow",
@@ -61,7 +78,11 @@ function getPlacementTone(rank, isLight) {
       pedestalOverlay:
         "bg-[linear-gradient(180deg,rgba(255,255,255,0.2),transparent_28%,rgba(124,45,18,0.12))]",
       pedestalShadow: "bg-orange-950/10",
-      medal: "border-orange-200 bg-white/70 text-orange-800",
+      medal: "border-orange-200 bg-white/78 text-orange-800",
+      avatarShell:
+        "border-orange-200 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.94),rgba(255,235,222,0.9))] shadow-[0_10px_18px_rgba(194,65,12,0.1)]",
+      avatarRing: "border-orange-300/70",
+      spark: "",
       lift: "h-16 sm:h-20",
       order: "order-3",
       floatClass: "podium-float-fast",
@@ -84,6 +105,10 @@ function getPlacementTone(rank, isLight) {
         "bg-[linear-gradient(180deg,rgba(255,255,255,0.08),transparent_28%,rgba(0,0,0,0.16))]",
       pedestalShadow: "bg-black/14",
       medal: "border-white/12 bg-black/16 text-white",
+      avatarShell:
+        "border-amber-300/22 bg-[radial-gradient(circle_at_top,rgba(253,224,71,0.24),rgba(17,24,39,0.92))] shadow-[0_16px_28px_rgba(245,158,11,0.16)]",
+      avatarRing: "border-amber-300/70",
+      spark: "bg-amber-200/70",
       lift: "h-28 sm:h-32",
       order: "order-2",
       floatClass: "podium-float-medium",
@@ -106,6 +131,10 @@ function getPlacementTone(rank, isLight) {
         "bg-[linear-gradient(180deg,rgba(255,255,255,0.08),transparent_28%,rgba(0,0,0,0.16))]",
       pedestalShadow: "bg-black/14",
       medal: "border-white/12 bg-black/16 text-white",
+      avatarShell:
+        "border-slate-300/18 bg-[radial-gradient(circle_at_top,rgba(226,232,240,0.18),rgba(15,23,42,0.92))] shadow-[0_14px_24px_rgba(148,163,184,0.12)]",
+      avatarRing: "border-slate-200/60",
+      spark: "",
       lift: "h-20 sm:h-24",
       order: "order-1",
       floatClass: "podium-float-slow",
@@ -127,10 +156,50 @@ function getPlacementTone(rank, isLight) {
       "bg-[linear-gradient(180deg,rgba(255,255,255,0.08),transparent_28%,rgba(0,0,0,0.16))]",
     pedestalShadow: "bg-black/14",
     medal: "border-white/12 bg-black/16 text-white",
+    avatarShell:
+      "border-orange-300/18 bg-[radial-gradient(circle_at_top,rgba(254,215,170,0.16),rgba(24,24,27,0.92))] shadow-[0_14px_24px_rgba(249,115,22,0.12)]",
+    avatarRing: "border-orange-200/60",
+    spark: "",
     lift: "h-16 sm:h-20",
     order: "order-3",
     floatClass: "podium-float-fast",
   };
+}
+
+function WinnerAvatar({ winner, tone, isLight }) {
+  const displayName = winner.displayName || winner.username;
+  const initials = getInitials(displayName);
+  const fallbackClassName = isLight ? "text-stone-900" : "text-white";
+  const showSpark = winner.rank === 1 && tone.spark;
+
+  return (
+    <div className={`relative mx-auto w-fit ${tone.floatClass}`}>
+      {showSpark ? (
+        <>
+          <div className={`absolute -left-2 top-3 h-2.5 w-2.5 rounded-full blur-[1px] ${tone.spark}`} />
+          <div className={`absolute -right-2 top-6 h-1.5 w-1.5 rounded-full ${tone.spark}`} />
+          <div className={`absolute left-1/2 top-[-0.45rem] h-3 w-3 -translate-x-1/2 rounded-full blur-[1px] ${tone.spark}`} />
+        </>
+      ) : null}
+      <div className={`relative overflow-hidden rounded-full border p-1.5 backdrop-blur-sm ${tone.avatarShell}`}>
+        <div className={`rounded-full border p-0.5 ${tone.avatarRing}`}>
+          <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-black/10 sm:h-[4.5rem] sm:w-[4.5rem]">
+            {winner.avatarUrl ? (
+              <img
+                src={winner.avatarUrl}
+                alt={displayName}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className={`text-lg font-semibold sm:text-xl ${fallbackClassName}`}>
+                {initials}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function PodiumSpot({ winner, isLight }) {
@@ -138,36 +207,37 @@ function PodiumSpot({ winner, isLight }) {
 
   return (
     <div className={`flex min-w-0 flex-col justify-end ${tone.order}`}>
-      <div className={`relative z-10 px-1 ${tone.floatClass}`}>
+      <div className="relative z-10 px-1">
+        <WinnerAvatar winner={winner} tone={tone} isLight={isLight} />
+
         <div
-          className={`rounded-[20px] border px-3 pb-3 pt-3 backdrop-blur-sm sm:px-4 ${tone.shell} ${tone.glow}`}
+          className={`-mt-1 rounded-[20px] border px-2.5 pb-2.5 pt-3.5 backdrop-blur-sm sm:-mt-2 sm:rounded-[22px] sm:px-4 sm:pb-3 sm:pt-4 ${tone.shell} ${tone.glow}`}
         >
-          <div className="flex items-start justify-between gap-2">
+          <div className="flex justify-center">
             <span
-              className={`rounded-full border px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.16em] ${tone.badge}`}
+              className={`rounded-full border px-2 py-0.5 text-[9px] font-medium uppercase tracking-[0.16em] sm:px-2.5 sm:py-1 sm:text-[10px] ${tone.badge}`}
             >
               #{winner.rank}
             </span>
-
-            <div className={`text-sm font-semibold ${tone.score}`}>
-              {winner.score} pts
-            </div>
           </div>
 
-          <div className="mt-3 min-w-0">
+          <div className="mt-2 min-w-0 text-center">
             <div
-              className={`truncate text-[14px] font-semibold tracking-[-0.03em] sm:text-[15px] ${tone.name}`}
+              className={`truncate text-[13px] font-semibold tracking-[-0.03em] sm:text-[15px] ${tone.name}`}
             >
               {winner.displayName || winner.username}
             </div>
-            <div className={`mt-1 truncate text-[11px] ${tone.username}`}>
+            <div className={`mt-0.5 hidden truncate text-[11px] sm:block ${tone.username}`}>
               @{winner.username}
+            </div>
+            <div className={`mt-1 text-[12px] font-semibold sm:text-sm ${tone.score}`}>
+              {winner.score} pts
             </div>
           </div>
         </div>
       </div>
 
-      <div className="relative mt-3">
+      <div className="relative mt-2.5 sm:mt-3">
         <div
           className={`relative overflow-hidden rounded-t-[22px] border border-b-0 ${tone.block} ${tone.lift}`}
         >
@@ -230,15 +300,11 @@ export default function WinnersPodiumCard({
     <Link to={to} className={`group block ${cardClassName}`}>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-[34rem]">
-          <div className={eyebrowClassName}>
-            Winners circle
-          </div>
-          <div className={titleClassName}>
-            {title}
-          </div>
+          <div className={eyebrowClassName}>Winners circle</div>
+          <div className={titleClassName}>{title}</div>
           <div className={subtitleClassName}>
             {subtitle ||
-              `${champion.displayName || champion.username} finished on top, with the full podium raised underneath so the result reads instantly.`}
+              `${champion.displayName || champion.username} finished on top in the latest Battle Trivia result.`}
           </div>
         </div>
 
@@ -248,8 +314,8 @@ export default function WinnersPodiumCard({
         </div>
       </div>
 
-      <div className="mt-5">
-        <div className="grid grid-cols-3 items-end gap-2 sm:gap-3">
+      <div className="mt-6 sm:mt-7">
+        <div className="grid grid-cols-3 items-end gap-2.5 sm:gap-3">
           {spots.map((winner) => (
             <PodiumSpot
               key={winner.userId || `${winner.username}-${winner.rank}`}

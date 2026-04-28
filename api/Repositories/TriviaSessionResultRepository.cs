@@ -60,6 +60,7 @@ public sealed class TriviaSessionResultRepository : ITriviaSessionResultReposito
                 r.user_id AS UserId,
                 u.username AS Username,
                 u.display_name AS DisplayName,
+                u.avatar_url AS AvatarUrl,
                 r.score AS Score,
                 r.rank AS Rank
             FROM trivia_session_results r
@@ -87,6 +88,7 @@ public sealed class TriviaSessionResultRepository : ITriviaSessionResultReposito
                 r.user_id AS UserId,
                 u.username AS Username,
                 u.display_name AS DisplayName,
+                u.avatar_url AS AvatarUrl,
                 r.score AS Score,
                 r.rank AS Rank
             FROM trivia_session_results r
@@ -119,6 +121,7 @@ public sealed class TriviaSessionResultRepository : ITriviaSessionResultReposito
                 r.user_id AS UserId,
                 u.username AS Username,
                 u.display_name AS DisplayName,
+                u.avatar_url AS AvatarUrl,
                 r.score AS Score,
                 r.rank AS Rank
             FROM trivia_session_results r
