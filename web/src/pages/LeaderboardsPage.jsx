@@ -459,7 +459,13 @@ function RivalryPanel({
         isCompact ? "px-3.5 py-3" : "px-4 py-3"
       }`}
     >
-      <div className={`flex flex-wrap gap-3 ${isCompact ? "" : "items-center justify-between"}`}>
+      <div
+        className={
+          isCompact
+            ? "space-y-3"
+            : "flex flex-wrap items-center justify-between gap-3"
+        }
+      >
         <div className="min-w-0 flex-1">
           <div className="text-[10px] uppercase tracking-[0.16em] text-violet-100/75">
             Compare players
@@ -507,13 +513,17 @@ function RivalryPanel({
           ) : null}
         </div>
 
-        <div className={isCompact ? "mt-1 grid grid-cols-2 gap-2" : "flex flex-wrap gap-2"}>
+        <div
+          className={
+            isCompact ? "grid grid-cols-1 gap-2" : "flex flex-wrap gap-2"
+          }
+        >
           <button
             type="button"
             onClick={onDownload}
             className={`border border-violet-200/20 bg-white/10 text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-100 transition hover:bg-white/15 ${
               isCompact
-                ? "rounded-[14px] px-3 py-2.5"
+                ? "w-full rounded-[14px] px-3 py-3"
                 : "rounded-full px-3 py-1.5"
             }`}
           >
@@ -524,7 +534,7 @@ function RivalryPanel({
             onClick={onClear}
             className={`border border-white/12 bg-white/[0.04] text-[11px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-white/[0.08] ${
               isCompact
-                ? "rounded-[14px] px-3 py-2.5"
+                ? "w-full rounded-[14px] px-3 py-3"
                 : "rounded-full px-3 py-1.5"
             }`}
           >
@@ -1105,29 +1115,6 @@ export default function LeaderboardsPage() {
                 ))}
               </div>
 
-              {currentStanding && selectedRival && isMobileRivalryOpen ? (
-                <div className="fixed inset-0 z-50 flex items-end bg-black/70 p-3 sm:hidden">
-                  <button
-                    type="button"
-                    aria-label="Close rivalry panel"
-                    className="absolute inset-0"
-                    onClick={clearRivalry}
-                  />
-                  <div className="relative z-10 max-h-[82vh] w-full overflow-y-auto overscroll-contain rounded-[24px] border border-violet-300/20 bg-neutral-950 p-3 shadow-[0_-20px_60px_rgba(0,0,0,0.45)]">
-                    <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-white/12" />
-                    <RivalryPanel
-                      currentStanding={currentStanding}
-                      selectedRival={selectedRival}
-                      headToHead={headToHead}
-                      isLoadingHeadToHead={isLoadingHeadToHead}
-                      onDownload={handleDownloadRivalryCard}
-                      onClear={clearRivalry}
-                      isCompact
-                    />
-                  </div>
-                </div>
-              ) : null}
-
               <div className="hidden overflow-hidden rounded-[20px] border border-white/8 sm:block">
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-left">
@@ -1244,6 +1231,52 @@ export default function LeaderboardsPage() {
             </div>
           </>
         )}
+
+        {currentStanding && selectedRival && isMobileRivalryOpen ? (
+          <div className="fixed inset-0 z-[70] sm:hidden">
+            <button
+              type="button"
+              aria-label="Close compare popup"
+              className="absolute inset-0 bg-black/72"
+              onClick={clearRivalry}
+            />
+
+            <div className="absolute inset-x-0 bottom-0 z-10 rounded-t-[28px] border border-violet-300/20 bg-neutral-950 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-24px_80px_rgba(0,0,0,0.48)]">
+              <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-white/12" />
+
+              <div className="mb-3 flex items-center justify-between gap-3 px-1">
+                <div>
+                  <div className="text-[10px] uppercase tracking-[0.16em] text-violet-100/75">
+                    Compare
+                  </div>
+                  <div className="mt-1 text-sm font-semibold text-white">
+                    Head-to-head summary
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={clearRivalry}
+                  className="rounded-full border border-white/12 bg-white/[0.04] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white"
+                >
+                  Close
+                </button>
+              </div>
+
+              <div className="max-h-[72vh] overflow-y-auto overscroll-contain pb-1">
+                <RivalryPanel
+                  currentStanding={currentStanding}
+                  selectedRival={selectedRival}
+                  headToHead={headToHead}
+                  isLoadingHeadToHead={isLoadingHeadToHead}
+                  onDownload={handleDownloadRivalryCard}
+                  onClear={clearRivalry}
+                  isCompact
+                />
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );
