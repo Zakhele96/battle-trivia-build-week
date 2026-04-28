@@ -224,6 +224,111 @@ function HistoryItem({ item }) {
   );
 }
 
+function MobileProfileHero({
+  profile,
+  authUser,
+  statusMessage,
+  onAvatarFileChange,
+  onRemoveAvatar,
+}) {
+  const displayName =
+    profile?.displayName ||
+    authUser?.displayName ||
+    profile?.username ||
+    authUser?.username ||
+    "Player";
+  const username = profile?.username || authUser?.username || "username";
+  const avatarUrl = profile?.avatarUrl || authUser?.avatarUrl || null;
+  const providerLabel = getAuthProviderLabel(authUser?.authProvider || "local");
+  const isSupporter = authUser?.isSupporter || profile?.isSupporter;
+
+  return (
+    <div className="mb-5 rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.14),transparent_42%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] p-4 sm:hidden">
+      <div className="flex flex-col items-center text-center">
+        <div className="text-[10px] uppercase tracking-[0.18em] text-blue-300/70">
+          Profile
+        </div>
+
+        <div className="relative mt-4 h-24 w-24">
+          <div className="h-24 w-24 overflow-hidden rounded-full border border-white/10 bg-white/[0.04]">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-xl font-semibold text-white">
+                {getInitials(displayName)}
+              </div>
+            )}
+          </div>
+
+          <label className="absolute -right-1 bottom-3 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-blue-300/18 bg-blue-500 text-sm text-white shadow-[0_8px_22px_rgba(37,99,235,0.28)]">
+            +
+            <input
+              type="file"
+              accept="image/*"
+              onChange={onAvatarFileChange}
+              className="hidden"
+            />
+          </label>
+
+          <button
+            type="button"
+            onClick={onRemoveAvatar}
+            className="absolute -left-1 bottom-3 flex h-8 w-8 items-center justify-center rounded-full border border-red-300/18 bg-red-500/90 text-sm text-white shadow-[0_8px_22px_rgba(239,68,68,0.22)]"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="mt-3 text-[24px] font-semibold tracking-[-0.04em] text-white">
+          {displayName}
+        </div>
+        <div className="mt-1 text-[13px] text-neutral-400">@{username}</div>
+
+        <div className="mt-3 flex flex-wrap justify-center gap-2">
+          <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-neutral-300">
+            {providerLabel}
+          </div>
+          <div
+            className={`rounded-full border px-3 py-1 text-[10px] font-medium uppercase tracking-[0.14em] ${
+              isSupporter
+                ? "border-amber-300/18 bg-amber-400/10 text-amber-100"
+                : "border-white/10 bg-white/[0.04] text-neutral-300"
+            }`}
+          >
+            {isSupporter ? "Supporter active" : "Supporter inactive"}
+          </div>
+        </div>
+
+        <div className="mt-4 w-full rounded-[18px] border border-white/8 bg-black/20 px-4 py-3 text-left">
+          <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
+            DM status
+          </div>
+          <div className="mt-1 text-[13px] leading-5 text-white">
+            {statusMessage || "No status set right now."}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MobileProfileField({ icon, label, helper, children }) {
+  return (
+    <div className="flex gap-3 rounded-[18px] border border-white/8 bg-black/20 px-4 py-3">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/8 bg-white/[0.03] text-base text-neutral-300">
+        <span aria-hidden="true">{icon}</span>
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="text-[11px] uppercase tracking-[0.14em] text-neutral-500">
+          {label}
+        </div>
+        <div className="mt-2">{children}</div>
+        {helper ? <div className="mt-2 text-[11px] leading-4 text-neutral-500">{helper}</div> : null}
+      </div>
+    </div>
+  );
+}
+
 function AvatarCropModal({
   pendingAvatar,
   crop,
@@ -1241,8 +1346,12 @@ export default function ProfilePage() {
           description="See who you are in BTS, update what shows in DMs, and check how your week is going."
           actions={[
             {
+              label: "Logout",
+              onClick: handleLogout,
+            },
+            {
               label: "View standings",
-              to: "/leaderboards?mode=combined&period=current",
+              to: "/leaderboards?mode=battle-trivia&period=current",
             },
             {
               label: "Support BTS",
@@ -1267,7 +1376,18 @@ export default function ProfilePage() {
           </div>
         ) : null}
 
-        <div className="mb-6">
+        <MobileProfileHero
+          profile={profile}
+          authUser={authUser}
+          statusMessage={statusMessage}
+          onAvatarFileChange={handleAvatarFileChange}
+          onRemoveAvatar={() => {
+            setAvatarUrl("");
+            setPendingAvatar(null);
+          }}
+        />
+
+        <div className="mb-6 hidden sm:block">
           <HeroCard
             profile={profile}
             authUser={authUser}
@@ -1276,13 +1396,149 @@ export default function ProfilePage() {
           />
         </div>
 
+        <section className="mb-5 sm:hidden">
+          <SectionTitle
+            eyebrow="Profile"
+            title="Account details"
+            description="Edit the basics people see first."
+          />
+
+          <Panel>
+            {isLoadingProfile ? (
+              <div className="text-sm text-neutral-500">Loading profile...</div>
+            ) : (
+              <form onSubmit={handleSaveProfile} className="space-y-3">
+                <MobileProfileField icon="✎" label="Name">
+                  <input
+                    value={displayName}
+                    onChange={(event) => setDisplayName(event.target.value)}
+                    className="w-full border-0 bg-transparent p-0 text-[18px] font-medium text-white outline-none placeholder:text-neutral-500"
+                    placeholder="Your display name"
+                  />
+                </MobileProfileField>
+
+                <MobileProfileField
+                  icon="i"
+                  label="About"
+                  helper="This is your DM status."
+                >
+                  <textarea
+                    value={statusMessage}
+                    onChange={(event) => setStatusMessage(event.target.value.slice(0, 120))}
+                    rows={2}
+                    placeholder="Available for late-night trivia smoke."
+                    className="w-full resize-none border-0 bg-transparent p-0 text-[15px] leading-6 text-white outline-none placeholder:text-neutral-500"
+                  />
+                </MobileProfileField>
+
+                <MobileProfileField icon="☎" label="Phone">
+                  <input
+                    value={phoneNumber}
+                    onChange={(event) => setPhoneNumber(event.target.value)}
+                    className="w-full border-0 bg-transparent p-0 text-[16px] text-white outline-none placeholder:text-neutral-500"
+                    placeholder="Add your phone number"
+                  />
+                </MobileProfileField>
+
+                <MobileProfileField icon="@" label="Username">
+                  <div className="text-[15px] text-neutral-300">
+                    @{profile?.username || authUser?.username || ""}
+                  </div>
+                </MobileProfileField>
+
+                <MobileProfileField icon="✉" label="Email">
+                  <div className="break-all text-[15px] text-neutral-300">
+                    {profile?.email || authUser?.email || ""}
+                  </div>
+                </MobileProfileField>
+
+                <button
+                  type="submit"
+                  disabled={isSavingProfile}
+                  className="mt-1 w-full rounded-[16px] bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:opacity-60"
+                >
+                  {isSavingProfile ? "Saving..." : "Save profile"}
+                </button>
+              </form>
+            )}
+          </Panel>
+        </section>
+
+        <section className="mb-5 sm:hidden">
+          <SectionTitle
+            eyebrow="Theme"
+            title="Theme"
+            description="Dark is the default, but you can switch it here."
+          />
+          <ThemeCard
+            themePreference={themePreference}
+            setThemePreference={setThemePreference}
+            isLight={isLight}
+          />
+        </section>
+
+        <section className="mb-5 sm:hidden">
+          <SectionTitle
+            eyebrow="Sound"
+            title="Sound controls"
+            description="Control answer feedback and timer warnings for this phone."
+          />
+          <SoundCard
+            soundEffectsEnabled={soundEffectsEnabled}
+            timerWarningsEnabled={timerWarningsEnabled}
+            setSoundEffectsEnabled={setSoundEffectsEnabled}
+            setTimerWarningsEnabled={setTimerWarningsEnabled}
+            isLight={isLight}
+          />
+        </section>
+
         <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="space-y-6">
-            <section>
+            <section className="hidden">
+              <SectionTitle
+                eyebrow="Status"
+                title="Set your DM status"
+                description="This is the short line people see in direct messages."
+              />
+
+              <Panel>
+                {isLoadingProfile ? (
+                  <div className="text-sm text-neutral-500">Loading profile...</div>
+                ) : (
+                  <form onSubmit={handleSaveProfile} className="space-y-4">
+                    <div>
+                      <label className="mb-2 block text-[11px] uppercase tracking-[0.14em] text-neutral-500">
+                        DM status
+                      </label>
+                      <textarea
+                        value={statusMessage}
+                        onChange={(event) => setStatusMessage(event.target.value.slice(0, 120))}
+                        rows={3}
+                        placeholder="Available for late-night trivia smoke."
+                        className="w-full rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white outline-none focus:border-blue-400/20"
+                      />
+                      <div className="mt-1 text-[11px] text-neutral-500">
+                        Keep it short, clear, and easy to spot.
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isSavingProfile}
+                      className="w-full rounded-[16px] bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:opacity-60"
+                    >
+                      {isSavingProfile ? "Saving..." : "Save status"}
+                    </button>
+                  </form>
+                )}
+              </Panel>
+            </section>
+
+            <section className="hidden sm:block">
               <SectionTitle
                 eyebrow="Edit"
                 title="Account details"
-                description="Change the name, photo, and DM status people see."
+                description="Change the core details attached to your account."
               />
 
               <Panel>
@@ -1338,7 +1594,7 @@ export default function ProfilePage() {
                       </div>
                     </div>
 
-                    <div>
+                    <div className="hidden sm:block">
                       <label className="mb-2 block text-[11px] uppercase tracking-[0.14em] text-neutral-500">
                         DM status
                       </label>
@@ -1354,7 +1610,7 @@ export default function ProfilePage() {
                       </div>
                     </div>
 
-                    <div>
+                    <div className="hidden sm:block">
                       <label className="mb-2 block text-[11px] uppercase tracking-[0.14em] text-neutral-500">
                         Profile picture
                       </label>
@@ -1403,21 +1659,13 @@ export default function ProfilePage() {
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap gap-3 pt-1">
+                    <div className="pt-1">
                       <button
                         type="submit"
                         disabled={isSavingProfile}
-                        className="rounded-[16px] bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:opacity-60"
+                        className="w-full rounded-[16px] bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:opacity-60 sm:w-auto"
                       >
                         {isSavingProfile ? "Saving..." : "Save profile"}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={handleLogout}
-                        className="rounded-[16px] border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-200 transition hover:bg-red-500/15"
-                      >
-                        Logout
                       </button>
                     </div>
                   </form>
@@ -1425,11 +1673,41 @@ export default function ProfilePage() {
               </Panel>
             </section>
 
-            <section>
+            <section className="hidden sm:block">
+              <SectionTitle
+                eyebrow="Theme"
+                title="Theme"
+                description="Dark is the default for everyone, but you can still switch it here."
+              />
+
+              <ThemeCard
+                themePreference={themePreference}
+                setThemePreference={setThemePreference}
+                isLight={isLight}
+              />
+            </section>
+
+            <section className="hidden sm:block">
+              <SectionTitle
+                eyebrow="Sound"
+                title="Sound controls"
+                description="Control answer feedback and timer warning sounds on this device."
+              />
+
+              <SoundCard
+                soundEffectsEnabled={soundEffectsEnabled}
+                timerWarningsEnabled={timerWarningsEnabled}
+                setSoundEffectsEnabled={setSoundEffectsEnabled}
+                setTimerWarningsEnabled={setTimerWarningsEnabled}
+                isLight={isLight}
+              />
+            </section>
+
+            <section className="hidden sm:block">
               <SectionTitle
                 eyebrow="Access"
-                title="Sign-in and preferences"
-                description="Manage how you sign in and how the app behaves on your device."
+                title="Sign-in and security"
+                description="Manage how you sign in and update your password when needed."
               />
 
               <div className="space-y-4">
@@ -1471,19 +1749,6 @@ export default function ProfilePage() {
                   <SignInMethodCard authProvider={authProvider} />
                 )}
 
-                <ThemeCard
-                  themePreference={themePreference}
-                  setThemePreference={setThemePreference}
-                  isLight={isLight}
-                />
-
-                <SoundCard
-                  soundEffectsEnabled={soundEffectsEnabled}
-                  timerWarningsEnabled={timerWarningsEnabled}
-                  setSoundEffectsEnabled={setSoundEffectsEnabled}
-                  setTimerWarningsEnabled={setTimerWarningsEnabled}
-                  isLight={isLight}
-                />
               </div>
             </section>
           </div>
@@ -1491,14 +1756,14 @@ export default function ProfilePage() {
           <div className="space-y-6">
             <section>
               <SectionTitle
-                eyebrow="Progress"
-                title="How your account is growing"
-                description="Level progress and achievements in one place."
+                eyebrow="Achievements"
+                title="Achievements"
+                description="Unlocked moments first, with your longer-term progress just underneath."
               />
 
               <div className="grid gap-4">
-                <ProfileProgressCard progression={progression} loading={isLoadingProgression} />
                 <ProfileAchievementsCard progression={progression} loading={isLoadingProgression} />
+                <ProfileProgressCard progression={progression} loading={isLoadingProgression} />
               </div>
             </section>
 
