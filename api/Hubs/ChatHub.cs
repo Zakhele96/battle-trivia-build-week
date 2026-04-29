@@ -72,7 +72,7 @@ public sealed class ChatHub : Hub
     {
         if (Guid.TryParse(Context.UserIdentifier, out var userId))
         {
-            _userPresenceService.MarkOnline(userId);
+            await _userPresenceService.MarkOnlineAsync(userId);
             await Clients.Group($"{PresenceWatchGroupPrefix}{userId}")
                 .SendAsync("DirectPresenceUpdated", new
                 {

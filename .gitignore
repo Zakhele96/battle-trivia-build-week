@@ -10,6 +10,8 @@ api/*.user
 api/*.suo
 api/build-verify
 api/build-verify-dm
+api/build-verify-redis
+
 
 web/node_modules/
 web/dist/

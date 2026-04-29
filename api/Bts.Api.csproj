@@ -14,7 +14,9 @@
     <PackageReference Include="Google.Apis.Auth" Version="1.73.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.25" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.2.9" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.StackExchangeRedis" Version="8.0.25" />
     <PackageReference Include="Npgsql" Version="10.0.2" />
+    <PackageReference Include="StackExchange.Redis" Version="2.8.31" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
     <PackageReference Include="WebPush" Version="1.0.12" />
   </ItemGroup>

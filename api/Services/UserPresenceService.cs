@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using Bts.Api.Repositories;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -7,35 +6,42 @@ namespace Bts.Api.Services;
 public sealed class UserPresenceService
 {
     private readonly IServiceScopeFactory _scopeFactory;
-    private readonly ConcurrentDictionary<Guid, int> _onlineCounts = new();
+    private readonly IOnlinePresenceTracker _onlinePresenceTracker;
 
-    public UserPresenceService(IServiceScopeFactory scopeFactory)
+    public UserPresenceService(
+        IServiceScopeFactory scopeFactory,
+        IOnlinePresenceTracker onlinePresenceTracker)
     {
         _scopeFactory = scopeFactory;
+        _onlinePresenceTracker = onlinePresenceTracker;
     }
 
-    public void MarkOnline(Guid userId)
+    public Task MarkOnlineAsync(Guid userId)
     {
-        _onlineCounts.AddOrUpdate(userId, 1, (_, count) => count + 1);
+        return _onlinePresenceTracker.MarkOnlineAsync(userId);
     }
 
     public async Task<DateTime> MarkOfflineAsync(Guid userId)
     {
-        var next = _onlineCounts.AddOrUpdate(userId, 0, (_, count) => Math.Max(0, count - 1));
+        var next = await _onlinePresenceTracker.MarkOfflineAsync(userId);
         if (next > 0)
         {
             return await GetLastSeenAtAsync(userId) ?? DateTime.UtcNow;
         }
 
-        _onlineCounts.TryRemove(userId, out _);
         var lastSeenAt = DateTime.UtcNow;
         await UpsertLastSeenAsync(userId, lastSeenAt);
         return lastSeenAt;
     }
 
-    public bool IsOnline(Guid userId)
+    public Task<bool> IsOnlineAsync(Guid userId)
     {
-        return _onlineCounts.TryGetValue(userId, out var count) && count > 0;
+        return _onlinePresenceTracker.IsOnlineAsync(userId);
+    }
+
+    public Task<IReadOnlyDictionary<Guid, bool>> GetOnlineStatusesAsync(IEnumerable<Guid> userIds)
+    {
+        return _onlinePresenceTracker.GetOnlineStatusesAsync(userIds);
     }
 
     public async Task<IReadOnlyDictionary<Guid, DateTime?>> GetLastSeenManyAsync(IEnumerable<Guid> userIds)

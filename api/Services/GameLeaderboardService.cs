@@ -65,6 +65,7 @@ public sealed class GameLeaderboardService
             return Empty("battle-trivia", "current", "Battle Trivia · Current week");
 
         var rows = await _triviaLeaderboardRepository.GetSessionLeaderboardAsync(session.Id, take);
+        var onlineStatuses = await _userPresenceService.GetOnlineStatusesAsync(rows.Select(x => x.UserId));
 
         return new GameLeaderboardDto
         {
@@ -77,7 +78,7 @@ public sealed class GameLeaderboardService
                 Username = x.Username,
                 DisplayName = x.DisplayName,
                 AvatarUrl = x.AvatarUrl,
-                IsOnline = _userPresenceService.IsOnline(x.UserId),
+                IsOnline = onlineStatuses.TryGetValue(x.UserId, out var isOnline) && isOnline,
                 Rank = x.Rank,
                 Score = x.Score,
                 BattleTriviaScore = x.Score,
@@ -97,6 +98,7 @@ public sealed class GameLeaderboardService
             return Empty("battle-trivia", "previous", "Battle Trivia · Previous week");
 
         var rows = await _triviaSessionResultRepository.GetBySessionIdAsync(session.Id, take);
+        var onlineStatuses = await _userPresenceService.GetOnlineStatusesAsync(rows.Select(x => x.UserId));
 
         return new GameLeaderboardDto
         {
@@ -110,7 +112,7 @@ public sealed class GameLeaderboardService
                 Username = x.Username,
                 DisplayName = x.DisplayName,
                 AvatarUrl = x.AvatarUrl,
-                IsOnline = _userPresenceService.IsOnline(x.UserId),
+                IsOnline = onlineStatuses.TryGetValue(x.UserId, out var isOnline) && isOnline,
                 Rank = x.Rank,
                 Score = x.Score,
                 BattleTriviaScore = x.Score,
@@ -130,6 +132,7 @@ public sealed class GameLeaderboardService
             return Empty("word-scramble", "current", "Word Scramble · Current week");
 
         var rows = await _wordScrambleLeaderboardRepository.GetSessionLeaderboardAsync(session.Id, take);
+        var onlineStatuses = await _userPresenceService.GetOnlineStatusesAsync(rows.Select(x => x.UserId));
 
         return new GameLeaderboardDto
         {
@@ -142,7 +145,7 @@ public sealed class GameLeaderboardService
                 Username = x.Username,
                 DisplayName = x.DisplayName,
                 AvatarUrl = x.AvatarUrl,
-                IsOnline = _userPresenceService.IsOnline(x.UserId),
+                IsOnline = onlineStatuses.TryGetValue(x.UserId, out var isOnline) && isOnline,
                 Rank = x.Rank,
                 Score = x.Score,
                 BattleTriviaScore = 0,
@@ -162,6 +165,7 @@ public sealed class GameLeaderboardService
             return Empty("word-scramble", "previous", "Word Scramble · Previous week");
 
         var rows = await _wordScrambleSessionResultRepository.GetBySessionIdAsync(session.Id, take);
+        var onlineStatuses = await _userPresenceService.GetOnlineStatusesAsync(rows.Select(x => x.UserId));
 
         return new GameLeaderboardDto
         {
@@ -175,7 +179,7 @@ public sealed class GameLeaderboardService
                 Username = x.Username,
                 DisplayName = x.DisplayName,
                 AvatarUrl = x.AvatarUrl,
-                IsOnline = _userPresenceService.IsOnline(x.UserId),
+                IsOnline = onlineStatuses.TryGetValue(x.UserId, out var isOnline) && isOnline,
                 Rank = x.Rank,
                 Score = x.Score,
                 BattleTriviaScore = 0,

@@ -32,11 +32,12 @@ public sealed class DirectMessageService
     {
         var conversations = (await _directMessageRepository.GetConversationsAsync(userId)).ToList();
         var otherIds = conversations.Select(item => item.OtherUserId).Distinct().ToArray();
+        var onlineStatuses = await _userPresenceService.GetOnlineStatusesAsync(otherIds);
         var lastSeenMap = await _userPresenceService.GetLastSeenManyAsync(otherIds);
 
         foreach (var conversation in conversations)
         {
-            conversation.IsOnline = _userPresenceService.IsOnline(conversation.OtherUserId);
+            conversation.IsOnline = onlineStatuses.TryGetValue(conversation.OtherUserId, out var isOnline) && isOnline;
             conversation.LastSeenAt = lastSeenMap.TryGetValue(conversation.OtherUserId, out var lastSeenAt)
                 ? lastSeenAt
                 : null;

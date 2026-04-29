@@ -73,7 +73,7 @@ public sealed class ProfileService
             IsSupporter = user.IsSupporter,
             SupporterTier = user.SupporterTier,
             SupporterBadgeLabel = GetSupporterBadgeLabel(user.SupporterTier),
-            IsOnline = _userPresenceService.IsOnline(userId),
+            IsOnline = await _userPresenceService.IsOnlineAsync(userId),
             LastSeenAt = lastSeenMap.TryGetValue(userId, out var lastSeenAt) ? lastSeenAt : null,
             Stats = await BuildStatsAsync(userId)
         };

@@ -76,7 +76,7 @@ public sealed class WebPushService
         if (!IsConfigured || message.RecipientUserId == Guid.Empty)
             return;
 
-        if (_userPresenceService.IsOnline(message.RecipientUserId))
+        if (await _userPresenceService.IsOnlineAsync(message.RecipientUserId))
             return;
 
         var subscriptions = await _subscriptionRepository.GetByUserIdAsync(message.RecipientUserId);

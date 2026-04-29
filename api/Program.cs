@@ -6,16 +6,31 @@ using Bts.Api.Services;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Microsoft.AspNetCore.SignalR;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
+var redisSection = builder.Configuration.GetSection(RedisOptions.SectionName);
+var redisOptions = redisSection.Get<RedisOptions>() ?? new RedisOptions();
 
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
 
-builder.Services.AddSignalR();
+builder.Services.Configure<RedisOptions>(redisSection);
+
+var signalRBuilder = builder.Services.AddSignalR();
+if (redisOptions.Enabled &&
+    redisOptions.UseSignalRBackplane &&
+    !string.IsNullOrWhiteSpace(redisOptions.ConnectionString))
+{
+    signalRBuilder.AddStackExchangeRedis(redisOptions.ConnectionString, options =>
+    {
+        options.Configuration.ChannelPrefix = RedisChannel.Literal($"{redisOptions.KeyPrefix}:signalr");
+    });
+}
+
 builder.Services.AddSingleton<IUserIdProvider, SignalRUserIdProvider>();
 
 builder.Services.AddEndpointsApiExplorer();
@@ -61,6 +76,12 @@ builder.Services.Configure<JwtOptions>(
 builder.Services.Configure<WebPushOptions>(
     builder.Configuration.GetSection(WebPushOptions.SectionName));
 
+if (redisOptions.Enabled && !string.IsNullOrWhiteSpace(redisOptions.ConnectionString))
+{
+    builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
+        ConnectionMultiplexer.Connect(redisOptions.ConnectionString));
+}
+
 builder.Services.AddSingleton<DapperContext>();
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -78,7 +99,6 @@ builder.Services.AddScoped<ITriviaSessionResultRepository, TriviaSessionResultRe
 builder.Services.AddScoped<IBattleTriviaProfileStatsRepository, BattleTriviaProfileStatsRepository>();
 builder.Services.AddScoped<IBattleTriviaSessionSummaryRepository, BattleTriviaSessionSummaryRepository>();
 builder.Services.AddScoped<IRoomModerationRepository, RoomModerationRepository>();
-builder.Services.AddSingleton<IChatRateLimitService, InMemoryChatRateLimitService>();
 builder.Services.AddSingleton<IProfanityFilterService, BasicProfanityFilterService>();
 builder.Services.AddScoped<IAchievementRepository, AchievementRepository>();
 builder.Services.AddScoped<IProfileProgressionRepository, ProfileProgressionRepository>();
@@ -110,7 +130,6 @@ builder.Services.AddScoped<WordScrambleSessionFinalizerService>();
 
 builder.Services.AddScoped<ProgressionService>();
 builder.Services.AddScoped<MessageModerationService>();
-builder.Services.AddSingleton<InMemoryChatRateLimitService>();
 builder.Services.AddSingleton<BasicProfanityFilterService>();
 builder.Services.AddScoped<RoomModerationService>();
 builder.Services.AddScoped<ChatModerationService>();
@@ -155,6 +174,28 @@ builder.Services.AddScoped<WebPushSchemaService>();
 builder.Services.AddScoped<WebPushService>();
 builder.Services.AddScoped<SupportSchemaService>();
 builder.Services.AddScoped<SupportService>();
+if (redisOptions.Enabled &&
+    redisOptions.UsePresence &&
+    !string.IsNullOrWhiteSpace(redisOptions.ConnectionString))
+{
+    builder.Services.AddSingleton<IOnlinePresenceTracker, RedisOnlinePresenceTracker>();
+}
+else
+{
+    builder.Services.AddSingleton<IOnlinePresenceTracker, InMemoryOnlinePresenceTracker>();
+}
+
+if (redisOptions.Enabled &&
+    redisOptions.UseChatRateLimiting &&
+    !string.IsNullOrWhiteSpace(redisOptions.ConnectionString))
+{
+    builder.Services.AddSingleton<IChatRateLimitService, RedisChatRateLimitService>();
+}
+else
+{
+    builder.Services.AddSingleton<IChatRateLimitService, InMemoryChatRateLimitService>();
+}
+
 builder.Services.AddSingleton<UserPresenceService>();
 
 builder.Services.AddHostedService<BattleTriviaHostedService>();
