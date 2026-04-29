@@ -136,15 +136,7 @@ function getViewportState() {
   };
 }
 
-function getRoomModeMeta(room, isBattleTrivia, isWordScramble, isArenaRoom) {
-  if (isArenaRoom) {
-    return {
-      eyebrow: "RapNometry Arena",
-      badgeLabel: "RapNometry Arena",
-      badgeClass: "text-orange-200 border-orange-400/20 bg-orange-500/10",
-    };
-  }
-
+function getRoomModeMeta(room, isBattleTrivia, isWordScramble) {
   if (isBattleTrivia) {
     return {
       eyebrow: "Battle Trivia",
@@ -182,15 +174,9 @@ function RoomUtilityBar({
   sessionLabel,
   isBattleTrivia,
   isWordScramble,
-  isArenaRoom,
   compact = false,
 }) {
-  const meta = getRoomModeMeta(
-    room,
-    isBattleTrivia,
-    isWordScramble,
-    isArenaRoom
-  );
+  const meta = getRoomModeMeta(room, isBattleTrivia, isWordScramble);
   const liveLabel = sessionLabel || meta.badgeLabel;
   const compactBadgeLabel =
     compact && isBattleTrivia ? "Live now" : liveLabel;
@@ -292,11 +278,7 @@ function WeeklyWinnersCard({ data }) {
   );
 }
 
-function MobileFloatingRoomNav({
-  compact = false,
-  roomBadgeLabel = "",
-  roomBadgeClassName = "",
-}) {
+function MobileFloatingRoomNav({ compact = false }) {
   return (
     <div className="pointer-events-none fixed inset-x-0 top-0 z-[60] sm:hidden">
       <div
@@ -316,26 +298,14 @@ function MobileFloatingRoomNav({
           Lobby
         </Link>
 
-        <div className="pointer-events-auto flex items-center gap-2">
-          {roomBadgeLabel ? (
-            <span
-              className={`inline-flex rounded-full border font-medium uppercase tracking-[0.14em] shadow-[0_10px_24px_rgba(0,0,0,0.22)] backdrop-blur-xl ${
-                compact ? "px-2.5 py-1 text-[9px]" : "px-3 py-1.5 text-[10px]"
-              } ${roomBadgeClassName}`}
-            >
-              {roomBadgeLabel}
-            </span>
-          ) : null}
-
-          <Link
-            to="/profile"
-            className={`inline-flex items-center rounded-full border border-white/10 bg-neutral-950/78 font-medium text-white shadow-[0_10px_24px_rgba(0,0,0,0.22)] backdrop-blur-xl transition hover:border-white/15 hover:bg-neutral-900/85 ${
-              compact ? "px-2.5 py-1.5 text-[10px]" : "px-3 py-1.5 text-[11px]"
-            }`}
-          >
-            Profile
-          </Link>
-        </div>
+        <Link
+          to="/profile"
+          className={`pointer-events-auto inline-flex items-center rounded-full border border-white/10 bg-neutral-950/78 font-medium text-white shadow-[0_10px_24px_rgba(0,0,0,0.22)] backdrop-blur-xl transition hover:border-white/15 hover:bg-neutral-900/85 ${
+            compact ? "px-2.5 py-1.5 text-[10px]" : "px-3 py-1.5 text-[11px]"
+          }`}
+        >
+          Profile
+        </Link>
       </div>
     </div>
   );
@@ -347,18 +317,12 @@ function MobileRoomMetaBar({
   sessionLabel,
   isBattleTrivia,
   isWordScramble,
-  isArenaRoom,
 }) {
-  const meta = getRoomModeMeta(
-    room,
-    isBattleTrivia,
-    isWordScramble,
-    isArenaRoom
-  );
-
-  if (isArenaRoom) {
+  if (room?.slug === "rapnometry-arena") {
     return null;
   }
+
+  const meta = getRoomModeMeta(room, isBattleTrivia, isWordScramble);
 
   return (
     <div className="mb-2.5 rounded-[16px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.015))] px-3 py-2.5 sm:hidden">
@@ -1737,7 +1701,6 @@ const {
             sessionLabel={effectiveSessionLabel}
             isBattleTrivia={isBattleTrivia}
             isWordScramble={isWordScramble}
-            isArenaRoom={isArenaRoom}
             compact={shouldCompactGameChrome}
           />
         </div>
@@ -1749,7 +1712,6 @@ const {
             sessionLabel={effectiveSessionLabel}
             isBattleTrivia={isBattleTrivia}
             isWordScramble={isWordScramble}
-            isArenaRoom={isArenaRoom}
           />
         ) : null}
 
@@ -1766,7 +1728,7 @@ const {
           </div>
         ) : null}
 
-        {false && isArenaRoom ? (
+        {isArenaRoom ? (
           isArenaChallengeOpen ? (
             <div className="flex items-center">
               <button
@@ -1779,78 +1741,65 @@ const {
               </button>
             </div>
           ) : (
-          <div className="rounded-[24px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.16),transparent_32%),linear-gradient(135deg,rgba(10,10,11,1)_0%,rgba(28,25,23,0.98)_45%,rgba(10,10,11,1)_100%)] p-4 sm:p-5">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full border border-orange-400/20 bg-orange-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-orange-200">
-                RapNometry Arena
-              </span>
-              <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-neutral-300">
-                Open mic battles
-              </span>
-            </div>
+            <div className="rounded-[24px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.16),transparent_32%),linear-gradient(135deg,rgba(10,10,11,1)_0%,rgba(28,25,23,0.98)_45%,rgba(10,10,11,1)_100%)] p-4 sm:p-5">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full border border-orange-400/20 bg-orange-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-orange-200">
+                  RapNometry Arena
+                </span>
+                <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-neutral-300">
+                  Open mic battles
+                </span>
+              </div>
 
-            <div className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-white">
-              Challenge. Submit. Vote. Build your pen name.
-            </div>
+              <div className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-white">
+                Challenge. Submit. Vote. Build your pen name.
+              </div>
 
-            <div className="mt-2 max-w-3xl text-sm leading-6 text-neutral-300">
-              Post rap, poetry, spoken-word, and commentary challenges. The room submits entries, the crowd votes, and the best bars land in the Hall of Bars.
-            </div>
+              <div className="mt-2 max-w-3xl text-sm leading-6 text-neutral-300">
+                Post rap, poetry, spoken-word, and commentary challenges. The room submits entries, the crowd votes, and the best bars land in the Hall of Bars.
+              </div>
 
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              {[
-                ["chat", "Chat"],
-                ["open", "Open"],
-                ["voting", "Voting"],
-                ["winners", "Winners"],
-                ["hall", "Hall of Bars"],
-                ["rankings", "Rankings"],
-              ].map(([key, label]) => (
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                {[
+                  ["chat", "Chat"],
+                  ["open", "Open"],
+                  ["voting", "Voting"],
+                  ["winners", "Winners"],
+                  ["hall", "Hall of Bars"],
+                  ["rankings", "Rankings"],
+                ].map(([key, label]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setArenaTab(key)}
+                    className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
+                      arenaTab === key
+                        ? "bg-white text-neutral-950"
+                        : "border border-white/10 bg-white/[0.04] text-neutral-200 hover:bg-white/[0.08]"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+
                 <button
-                  key={key}
                   type="button"
-                  onClick={() => setArenaTab(key)}
-                  className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
-                    arenaTab === key
-                      ? "bg-white text-neutral-950"
-                      : "border border-white/10 bg-white/[0.04] text-neutral-200 hover:bg-white/[0.08]"
-                  }`}
+                  onClick={() => setIsArenaCreateOpen(true)}
+                  className="hidden rounded-full bg-white px-4 py-2 text-sm font-semibold text-neutral-950 sm:inline-flex"
                 >
-                  {label}
+                  Create Challenge
                 </button>
-              ))}
+              </div>
 
               <button
                 type="button"
                 onClick={() => setIsArenaCreateOpen(true)}
-                className="hidden rounded-full bg-white px-4 py-2 text-sm font-semibold text-neutral-950 sm:inline-flex"
+                className="mt-3 inline-flex w-full items-center justify-center rounded-[16px] bg-white px-4 py-3 text-sm font-semibold text-neutral-950 shadow-[0_18px_34px_rgba(255,255,255,0.08)] sm:hidden"
               >
                 Create Challenge
               </button>
             </div>
-
-            <button
-              type="button"
-              onClick={() => setIsArenaCreateOpen(true)}
-              className="mt-3 inline-flex w-full items-center justify-center rounded-[16px] bg-white px-4 py-3 text-sm font-semibold text-neutral-950 shadow-[0_18px_34px_rgba(255,255,255,0.08)] sm:hidden"
-            >
-              Create Challenge
-            </button>
-          </div>
           )
-        ) : null}
-
-        {isArenaChallengeOpen ? (
-          <div className="mb-2 flex items-center">
-            <button
-              type="button"
-              onClick={handleArenaBackToFeed}
-              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-2 text-sm font-medium text-white transition hover:bg-white/[0.08]"
-            >
-              <span aria-hidden="true">â†</span>
-              Back to battles
-            </button>
-          </div>
         ) : null}
 
         {isBattleTrivia ? (
