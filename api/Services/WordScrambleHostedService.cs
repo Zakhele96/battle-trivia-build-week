@@ -8,21 +8,21 @@ namespace Bts.Api.Services;
 public sealed class WordScrambleHostedService : BackgroundService
 {
     private const string WordScrambleRoomSlug = "word-scramble";
-    private const int RoundDurationSeconds = 30;
-    private const int RevealDurationSeconds = 5;
-
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IHubContext<ChatHub> _hubContext;
+    private readonly IDistributedJobCoordinator _jobCoordinator;
     private readonly ILogger<WordScrambleHostedService> _logger;
     private static readonly TimeZoneInfo GameTimeZone = GetGameTimeZone();
 
     public WordScrambleHostedService(
         IServiceScopeFactory scopeFactory,
         IHubContext<ChatHub> hubContext,
+        IDistributedJobCoordinator jobCoordinator,
         ILogger<WordScrambleHostedService> logger)
     {
         _scopeFactory = scopeFactory;
         _hubContext = hubContext;
+        _jobCoordinator = jobCoordinator;
         _logger = logger;
     }
 
@@ -32,7 +32,10 @@ public sealed class WordScrambleHostedService : BackgroundService
         {
             try
             {
-                await RunTickAsync(stoppingToken);
+                await _jobCoordinator.RunIfLeaderAsync(
+                    "word-scramble-hosted-service",
+                    RunTickAsync,
+                    stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -64,6 +67,13 @@ public sealed class WordScrambleHostedService : BackgroundService
         if (room is null || !room.IsActive)
             return;
 
+        var roundDurationSeconds = room.WordScrambleRoundDurationSeconds is >= 5 and <= 180
+            ? room.WordScrambleRoundDurationSeconds
+            : 30;
+        var revealDurationSeconds = room.WordScrambleRevealDurationSeconds is >= 1 and <= 30
+            ? room.WordScrambleRevealDurationSeconds
+            : 5;
+
         var nowUtc = DateTime.UtcNow;
 
         var session = await sessionRepository.GetActiveByRoomIdAsync(room.Id);
@@ -79,6 +89,8 @@ public sealed class WordScrambleHostedService : BackgroundService
 
             await _hubContext.Clients.Group(room.Id.ToString())
                 .SendAsync("ReceiveMessage", startedMessage, cancellationToken);
+
+            await BroadcastAsync(room.Id, stateService, statusService, cancellationToken);
         }
 
         var latestRound = await roundRepository.GetLatestBySessionIdAsync(session.Id);
@@ -148,7 +160,7 @@ public sealed class WordScrambleHostedService : BackgroundService
             var round = await roundBuilderService.BuildNextRoundAsync(
                 session.Id,
                 nowUtc,
-                RoundDurationSeconds);
+                roundDurationSeconds);
 
             await roundRepository.CreateAsync(round);
 
@@ -176,14 +188,14 @@ public sealed class WordScrambleHostedService : BackgroundService
                 !string.Equals(latestRound.CurrentMask, latestRound.MaskAt10s, StringComparison.Ordinal))
             {
                 await roundRepository.UpdateCurrentMaskAsync(latestRound.Id, latestRound.MaskAt10s);
+                await BroadcastAsync(room.Id, stateService, statusService, cancellationToken);
             }
             else if (secondsLeft <= 20 &&
                      !string.Equals(latestRound.CurrentMask, latestRound.MaskAt20s, StringComparison.Ordinal))
             {
                 await roundRepository.UpdateCurrentMaskAsync(latestRound.Id, latestRound.MaskAt20s);
+                await BroadcastAsync(room.Id, stateService, statusService, cancellationToken);
             }
-
-            await BroadcastAsync(room.Id, stateService, statusService, cancellationToken);
             return;
         }
 
@@ -194,12 +206,11 @@ public sealed class WordScrambleHostedService : BackgroundService
                 : (DateTime?)null;
 
             if (revealedAtUtc.HasValue &&
-                revealedAtUtc.Value.AddSeconds(RevealDurationSeconds) <= nowUtc)
+                revealedAtUtc.Value.AddSeconds(revealDurationSeconds) <= nowUtc)
             {
                 await roundRepository.CloseAsync(latestRound.Id);
+                await BroadcastAsync(room.Id, stateService, statusService, cancellationToken);
             }
-
-            await BroadcastAsync(room.Id, stateService, statusService, cancellationToken);
         }
     }
 

@@ -1,16 +1,22 @@
-﻿using Bts.Api.Data;
+using Bts.Api.Data;
 using Bts.Api.Models.Domain;
 using Dapper;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Bts.Api.Repositories;
 
 public sealed class TriviaQuestionRepository : ITriviaQuestionRepository
 {
-    private readonly DapperContext _context;
+    private const string ActiveQuestionsCacheKey = "trivia-questions:active";
+    private static readonly TimeSpan ActiveQuestionsCacheDuration = TimeSpan.FromMinutes(10);
 
-    public TriviaQuestionRepository(DapperContext context)
+    private readonly DapperContext _context;
+    private readonly IMemoryCache _memoryCache;
+
+    public TriviaQuestionRepository(DapperContext context, IMemoryCache memoryCache)
     {
         _context = context;
+        _memoryCache = memoryCache;
     }
 
     public async Task<TriviaQuestion?> GetByIdAsync(Guid id)
@@ -35,54 +41,26 @@ public sealed class TriviaQuestionRepository : ITriviaQuestionRepository
 
     public async Task<TriviaQuestion?> GetRandomActiveAsync(Guid[]? excludeQuestionIds = null)
     {
-        using var connection = _context.CreateConnection();
-
-        const string baseSql = """
-            SELECT
-                id,
-                question_text AS QuestionText,
-                correct_answer AS CorrectAnswer,
-                accepted_answers::text AS AcceptedAnswersJson,
-                category,
-                difficulty,
-                is_active AS IsActive,
-                created_at AS CreatedAt
-            FROM trivia_questions
-            WHERE is_active = TRUE
-            ORDER BY RANDOM()
-            LIMIT 1;
-            """;
+        var activeQuestions = await GetActiveQuestionsAsync();
+        if (activeQuestions.Count == 0)
+            return null;
 
         if (excludeQuestionIds is null || excludeQuestionIds.Length == 0)
         {
-            return await connection.QuerySingleOrDefaultAsync<TriviaQuestion>(baseSql);
+            return activeQuestions[Random.Shared.Next(activeQuestions.Count)];
         }
 
-        const string exclusionSql = """
-            SELECT
-                id,
-                question_text AS QuestionText,
-                correct_answer AS CorrectAnswer,
-                accepted_answers::text AS AcceptedAnswersJson,
-                category,
-                difficulty,
-                is_active AS IsActive,
-                created_at AS CreatedAt
-            FROM trivia_questions
-            WHERE is_active = TRUE
-              AND NOT (id = ANY(@ExcludeQuestionIds))
-            ORDER BY RANDOM()
-            LIMIT 1;
-            """;
+        var excludedIds = excludeQuestionIds.ToHashSet();
+        var filtered = activeQuestions
+            .Where(question => !excludedIds.Contains(question.Id))
+            .ToList();
 
-        var question = await connection.QuerySingleOrDefaultAsync<TriviaQuestion>(
-            exclusionSql,
-            new { ExcludeQuestionIds = excludeQuestionIds });
+        if (filtered.Count == 0)
+        {
+            return activeQuestions[Random.Shared.Next(activeQuestions.Count)];
+        }
 
-        if (question is not null)
-            return question;
-
-        return await connection.QuerySingleOrDefaultAsync<TriviaQuestion>(baseSql);
+        return filtered[Random.Shared.Next(filtered.Count)];
     }
 
     public async Task<IEnumerable<TriviaQuestion>> GetAllAsync(
@@ -143,6 +121,7 @@ public sealed class TriviaQuestionRepository : ITriviaQuestionRepository
 
         using var connection = _context.CreateConnection();
         await connection.ExecuteAsync(sql, question);
+        InvalidateActiveQuestionCache();
     }
 
     public async Task UpdateAsync(TriviaQuestion question)
@@ -160,6 +139,7 @@ public sealed class TriviaQuestionRepository : ITriviaQuestionRepository
 
         using var connection = _context.CreateConnection();
         await connection.ExecuteAsync(sql, question);
+        InvalidateActiveQuestionCache();
     }
 
     public async Task SetActiveAsync(Guid id, bool isActive)
@@ -172,5 +152,42 @@ public sealed class TriviaQuestionRepository : ITriviaQuestionRepository
 
         using var connection = _context.CreateConnection();
         await connection.ExecuteAsync(sql, new { Id = id, IsActive = isActive });
+        InvalidateActiveQuestionCache();
+    }
+
+    private async Task<IReadOnlyList<TriviaQuestion>> GetActiveQuestionsAsync()
+    {
+        var rows = await _memoryCache.GetOrCreateAsync(
+            ActiveQuestionsCacheKey,
+            async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = ActiveQuestionsCacheDuration;
+
+                const string sql = """
+                    SELECT
+                        id,
+                        question_text AS QuestionText,
+                        correct_answer AS CorrectAnswer,
+                        accepted_answers::text AS AcceptedAnswersJson,
+                        category,
+                        difficulty,
+                        is_active AS IsActive,
+                        created_at AS CreatedAt
+                    FROM trivia_questions
+                    WHERE is_active = TRUE
+                    ORDER BY created_at DESC;
+                    """;
+
+                using var connection = _context.CreateConnection();
+                var queryRows = await connection.QueryAsync<TriviaQuestion>(sql);
+                return queryRows.ToList();
+            });
+
+        return rows ?? new List<TriviaQuestion>();
+    }
+
+    private void InvalidateActiveQuestionCache()
+    {
+        _memoryCache.Remove(ActiveQuestionsCacheKey);
     }
 }

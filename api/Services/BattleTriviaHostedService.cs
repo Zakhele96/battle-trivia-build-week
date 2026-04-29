@@ -9,12 +9,11 @@ namespace Bts.Api.Services;
 public sealed class BattleTriviaHostedService : BackgroundService
 {
     private const string BattleTriviaSlug = "battle-trivia";
-    private static readonly TimeSpan QuestionDuration = TimeSpan.FromSeconds(20);
-    private static readonly TimeSpan RevealDelay = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(1);
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IHubContext<ChatHub> _hubContext;
+    private readonly IDistributedJobCoordinator _jobCoordinator;
     private readonly ILogger<BattleTriviaHostedService> _logger;
     private static readonly TimeZoneInfo GameTimeZone = GetGameTimeZone();
 
@@ -23,10 +22,12 @@ public sealed class BattleTriviaHostedService : BackgroundService
     public BattleTriviaHostedService(
         IServiceScopeFactory scopeFactory,
         IHubContext<ChatHub> hubContext,
+        IDistributedJobCoordinator jobCoordinator,
         ILogger<BattleTriviaHostedService> logger)
     {
         _scopeFactory = scopeFactory;
         _hubContext = hubContext;
+        _jobCoordinator = jobCoordinator;
         _logger = logger;
     }
 
@@ -45,7 +46,10 @@ public sealed class BattleTriviaHostedService : BackgroundService
         {
             try
             {
-                await TickAsync(stoppingToken);
+                await _jobCoordinator.RunIfLeaderAsync(
+                    "battle-trivia-hosted-service",
+                    TickAsync,
+                    stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -84,6 +88,15 @@ public sealed class BattleTriviaHostedService : BackgroundService
         var room = await roomRepository.GetBySlugAsync(BattleTriviaSlug);
         if (room is null || !room.IsActive)
             return;
+
+        var questionDuration = TimeSpan.FromSeconds(
+            room.BattleTriviaQuestionDurationSeconds is >= 5 and <= 120
+                ? room.BattleTriviaQuestionDurationSeconds
+                : 20);
+        var revealDelay = TimeSpan.FromSeconds(
+            room.BattleTriviaRevealDelaySeconds is >= 1 and <= 30
+                ? room.BattleTriviaRevealDelaySeconds
+                : 5);
 
         var nowUtc = DateTime.UtcNow;
 
@@ -161,7 +174,7 @@ public sealed class BattleTriviaHostedService : BackgroundService
             nextSession.RunMode = session.RunMode;
             await sessionRepository.CreateAsync(nextSession);
 
-            _nextRoundNotBeforeUtc = DateTime.UtcNow.Add(RevealDelay);
+            _nextRoundNotBeforeUtc = DateTime.UtcNow.Add(revealDelay);
 
             var newSessionMessage = await chatService.CreateSystemMessageAsync(
                 room.Id,
@@ -221,7 +234,7 @@ public sealed class BattleTriviaHostedService : BackgroundService
                 await _hubContext.Clients.Group(room.Id.ToString())
                     .SendAsync("LeaderboardUpdated", leaderboard, stoppingToken);
 
-                _nextRoundNotBeforeUtc = DateTime.UtcNow.Add(RevealDelay);
+                _nextRoundNotBeforeUtc = DateTime.UtcNow.Add(revealDelay);
 
                 _logger.LogInformation(
                     "Ended Battle Trivia round {RoundId} for session {SessionId}",
@@ -248,7 +261,7 @@ public sealed class BattleTriviaHostedService : BackgroundService
 
         var nextRoundNumber = await roundRepository.GetLatestRoundNumberAsync(session.Id) + 1;
         var startedAtUtc = DateTime.UtcNow;
-        var endsAtUtc = startedAtUtc.Add(QuestionDuration);
+        var endsAtUtc = startedAtUtc.Add(questionDuration);
 
         var round = new TriviaRound
         {

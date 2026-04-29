@@ -25,6 +25,7 @@ public sealed class AdminBattleTriviaSettingsService
 
     public async Task<BattleTriviaSettingsResponse> GetAsync()
     {
+        var room = await GetBattleTriviaRoomAsync();
         var session = await GetOrCreateActiveSessionAsync();
         var windows = await _triviaSessionWindowRepository.GetActiveBySessionIdAsync(session.Id);
 
@@ -33,6 +34,8 @@ public sealed class AdminBattleTriviaSettingsService
             SessionId = session.Id,
             SessionType = session.SessionType,
             RunMode = session.RunMode,
+            QuestionDurationSeconds = NormalizeBattleTriviaQuestionDurationSeconds(room.BattleTriviaQuestionDurationSeconds),
+            RevealDelaySeconds = NormalizeBattleTriviaRevealDelaySeconds(room.BattleTriviaRevealDelaySeconds),
             PeriodStart = session.PeriodStart,
             PeriodEnd = session.PeriodEnd,
             Windows = BuildFullWeekWindows(windows)
@@ -47,9 +50,20 @@ public sealed class AdminBattleTriviaSettingsService
             throw new InvalidOperationException("Invalid run mode.");
         }
 
+        if (request.QuestionDurationSeconds is < 5 or > 120)
+            throw new InvalidOperationException("Battle Trivia question duration must be between 5 and 120 seconds.");
+
+        if (request.RevealDelaySeconds is < 1 or > 30)
+            throw new InvalidOperationException("Battle Trivia reveal delay must be between 1 and 30 seconds.");
+
         var session = await GetOrCreateActiveSessionAsync();
+        var room = await GetBattleTriviaRoomAsync();
 
         await _triviaSessionRepository.UpdateRunModeAsync(session.Id, normalizedRunMode);
+        await _roomRepository.UpdateGameTimingAsync(
+            room.Id,
+            battleTriviaQuestionDurationSeconds: request.QuestionDurationSeconds,
+            battleTriviaRevealDelaySeconds: request.RevealDelaySeconds);
 
         var windows = new List<TriviaSessionWindow>();
 
@@ -87,11 +101,18 @@ public sealed class AdminBattleTriviaSettingsService
         return await GetAsync();
     }
 
-    private async Task<TriviaGameSession> GetOrCreateActiveSessionAsync()
+    private async Task<Room> GetBattleTriviaRoomAsync()
     {
         var room = await _roomRepository.GetBySlugAsync(BattleTriviaSlug);
         if (room is null)
             throw new InvalidOperationException("Battle Trivia room not found.");
+
+        return room;
+    }
+
+    private async Task<TriviaGameSession> GetOrCreateActiveSessionAsync()
+    {
+        var room = await GetBattleTriviaRoomAsync();
 
         var session = await _triviaSessionRepository.GetActiveByRoomIdAsync(room.Id);
         if (session is not null)
@@ -130,6 +151,12 @@ public sealed class AdminBattleTriviaSettingsService
         var date = value.Date.AddDays(-diff);
         return DateTime.SpecifyKind(date, DateTimeKind.Utc);
     }
+
+    private static int NormalizeBattleTriviaQuestionDurationSeconds(int value) =>
+        value is >= 5 and <= 120 ? value : 20;
+
+    private static int NormalizeBattleTriviaRevealDelaySeconds(int value) =>
+        value is >= 1 and <= 30 ? value : 5;
 
     private static List<BattleTriviaWindowResponse> BuildFullWeekWindows(
         IReadOnlyList<TriviaSessionWindow> activeWindows)

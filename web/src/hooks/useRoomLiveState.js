@@ -90,6 +90,46 @@ export default function useRoomLiveState({
     room?.slug === "battle-trivia" || room?.roomType === "trivia";
   const isWordScrambleRoom = room?.slug === "word-scramble";
 
+  useEffect(() => {
+    if (!wordScrambleState?.endsAt || wordScrambleState?.phase !== "active") {
+      setWordScrambleState((prev) => {
+        if (!prev || prev.timeLeft === 0) return prev;
+        return {
+          ...prev,
+          timeLeft: 0,
+        };
+      });
+      return undefined;
+    }
+
+    const endsAt = parseServerDate(wordScrambleState.endsAt);
+    if (!(endsAt instanceof Date) || Number.isNaN(endsAt.getTime())) {
+      return undefined;
+    }
+
+    const updateTimeLeft = () => {
+      const seconds = Math.max(
+        0,
+        Math.ceil((endsAt.getTime() - Date.now()) / 1000)
+      );
+
+      setWordScrambleState((prev) => {
+        if (!prev || prev.phase !== "active") return prev;
+        if (prev.timeLeft === seconds) return prev;
+
+        return {
+          ...prev,
+          timeLeft: seconds,
+        };
+      });
+    };
+
+    const intervalId = window.setInterval(updateTimeLeft, 250);
+    updateTimeLeft();
+
+    return () => window.clearInterval(intervalId);
+  }, [wordScrambleState?.endsAt, wordScrambleState?.phase]);
+
   const applyWordScrambleGuessPayload = useCallback(
     (payload, forceRejected = false) => {
       if (!payload) return;

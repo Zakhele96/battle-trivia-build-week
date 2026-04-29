@@ -5,6 +5,8 @@ public sealed class BattleTriviaSettingsResponse
     public Guid SessionId { get; set; }
     public string SessionType { get; set; } = "weekly";
     public string RunMode { get; set; } = "continuous";
+    public int QuestionDurationSeconds { get; set; } = 20;
+    public int RevealDelaySeconds { get; set; } = 5;
     public DateTime? PeriodStart { get; set; }
     public DateTime? PeriodEnd { get; set; }
     public List<BattleTriviaWindowResponse> Windows { get; set; } = new();

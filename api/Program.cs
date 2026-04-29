@@ -17,6 +17,7 @@ var redisOptions = redisSection.Get<RedisOptions>() ?? new RedisOptions();
 
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
+builder.Services.AddMemoryCache();
 
 builder.Services.Configure<RedisOptions>(redisSection);
 
@@ -147,9 +148,11 @@ builder.Services.AddScoped<AdminTriviaQuestionService>();
 builder.Services.AddScoped<AdminWordScrambleWordService>();
 builder.Services.AddScoped<AdminUserService>();
 builder.Services.AddScoped<AdminBattleTriviaSettingsService>();
+builder.Services.AddScoped<AdminWordScrambleSettingsService>();
 builder.Services.AddScoped<AdminLeaderboardSponsorService>();
 builder.Services.AddScoped<RoomModerationStateService>();
 builder.Services.AddScoped<ProfileService>();
+builder.Services.AddScoped<RoomSchemaService>();
 builder.Services.AddScoped<UserSchemaService>();
 builder.Services.AddScoped<EmailDeliveryService>();
 builder.Services.AddScoped<ProgressionRealtimeService>();
@@ -174,6 +177,7 @@ builder.Services.AddScoped<WebPushSchemaService>();
 builder.Services.AddScoped<WebPushService>();
 builder.Services.AddScoped<SupportSchemaService>();
 builder.Services.AddScoped<SupportService>();
+builder.Services.AddSingleton<DirectMessageNotificationQueue>();
 if (redisOptions.Enabled &&
     redisOptions.UsePresence &&
     !string.IsNullOrWhiteSpace(redisOptions.ConnectionString))
@@ -196,10 +200,22 @@ else
     builder.Services.AddSingleton<IChatRateLimitService, InMemoryChatRateLimitService>();
 }
 
+if (redisOptions.Enabled &&
+    redisOptions.UseHostedServiceCoordination &&
+    !string.IsNullOrWhiteSpace(redisOptions.ConnectionString))
+{
+    builder.Services.AddSingleton<IDistributedJobCoordinator, RedisJobCoordinator>();
+}
+else
+{
+    builder.Services.AddSingleton<IDistributedJobCoordinator, LocalJobCoordinator>();
+}
+
 builder.Services.AddSingleton<UserPresenceService>();
 
 builder.Services.AddHostedService<BattleTriviaHostedService>();
 builder.Services.AddHostedService<WordScrambleHostedService>();
+builder.Services.AddHostedService<DirectMessageNotificationWorker>();
 
 builder.Services.AddCors(options =>
 {
@@ -280,6 +296,8 @@ using (var scope = app.Services.CreateScope())
 {
     var userSchemaService = scope.ServiceProvider.GetRequiredService<UserSchemaService>();
     await userSchemaService.EnsureAsync();
+    var roomSchemaService = scope.ServiceProvider.GetRequiredService<RoomSchemaService>();
+    await roomSchemaService.EnsureAsync();
     var schemaService = scope.ServiceProvider.GetRequiredService<LeaderboardSponsorSchemaService>();
     await schemaService.EnsureAsync();
     var growthSchemaService = scope.ServiceProvider.GetRequiredService<GrowthSchemaService>();

@@ -11,7 +11,8 @@ api/*.suo
 api/build-verify
 api/build-verify-dm
 api/build-verify-redis
-
+api/build-verify-timers
+api/build-verify-scale
 
 web/node_modules/
 web/dist/

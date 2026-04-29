@@ -20,6 +20,10 @@ public sealed class RoomRepository : IRoomRepository
                    room_type AS RoomType,
                    is_active AS IsActive,
                    slow_mode_seconds AS SlowModeSeconds,
+                   battle_trivia_question_duration_seconds AS BattleTriviaQuestionDurationSeconds,
+                   battle_trivia_reveal_delay_seconds AS BattleTriviaRevealDelaySeconds,
+                   word_scramble_round_duration_seconds AS WordScrambleRoundDurationSeconds,
+                   word_scramble_reveal_duration_seconds AS WordScrambleRevealDurationSeconds,
                    created_at AS CreatedAt
             FROM rooms
             WHERE is_active = TRUE
@@ -37,6 +41,10 @@ public sealed class RoomRepository : IRoomRepository
                    room_type AS RoomType,
                    is_active AS IsActive,
                    slow_mode_seconds AS SlowModeSeconds,
+                   battle_trivia_question_duration_seconds AS BattleTriviaQuestionDurationSeconds,
+                   battle_trivia_reveal_delay_seconds AS BattleTriviaRevealDelaySeconds,
+                   word_scramble_round_duration_seconds AS WordScrambleRoundDurationSeconds,
+                   word_scramble_reveal_duration_seconds AS WordScrambleRevealDurationSeconds,
                    created_at AS CreatedAt
             FROM rooms
             WHERE id = @Id AND is_active = TRUE;
@@ -53,6 +61,10 @@ public sealed class RoomRepository : IRoomRepository
                    room_type AS RoomType,
                    is_active AS IsActive,
                    slow_mode_seconds AS SlowModeSeconds,
+                   battle_trivia_question_duration_seconds AS BattleTriviaQuestionDurationSeconds,
+                   battle_trivia_reveal_delay_seconds AS BattleTriviaRevealDelaySeconds,
+                   word_scramble_round_duration_seconds AS WordScrambleRoundDurationSeconds,
+                   word_scramble_reveal_duration_seconds AS WordScrambleRevealDurationSeconds,
                    created_at AS CreatedAt
             FROM rooms
             WHERE slug = @Slug AND is_active = TRUE
@@ -76,6 +88,33 @@ public sealed class RoomRepository : IRoomRepository
         {
             RoomId = roomId,
             SlowModeSeconds = slowModeSeconds
+        });
+    }
+
+    public async Task UpdateGameTimingAsync(
+        Guid roomId,
+        int? battleTriviaQuestionDurationSeconds = null,
+        int? battleTriviaRevealDelaySeconds = null,
+        int? wordScrambleRoundDurationSeconds = null,
+        int? wordScrambleRevealDurationSeconds = null)
+    {
+        const string sql = """
+            UPDATE rooms
+            SET battle_trivia_question_duration_seconds = COALESCE(@BattleTriviaQuestionDurationSeconds, battle_trivia_question_duration_seconds),
+                battle_trivia_reveal_delay_seconds = COALESCE(@BattleTriviaRevealDelaySeconds, battle_trivia_reveal_delay_seconds),
+                word_scramble_round_duration_seconds = COALESCE(@WordScrambleRoundDurationSeconds, word_scramble_round_duration_seconds),
+                word_scramble_reveal_duration_seconds = COALESCE(@WordScrambleRevealDurationSeconds, word_scramble_reveal_duration_seconds)
+            WHERE id = @RoomId;
+            """;
+
+        using var connection = _context.CreateConnection();
+        await connection.ExecuteAsync(sql, new
+        {
+            RoomId = roomId,
+            BattleTriviaQuestionDurationSeconds = battleTriviaQuestionDurationSeconds,
+            BattleTriviaRevealDelaySeconds = battleTriviaRevealDelaySeconds,
+            WordScrambleRoundDurationSeconds = wordScrambleRoundDurationSeconds,
+            WordScrambleRevealDurationSeconds = wordScrambleRevealDurationSeconds
         });
     }
 }

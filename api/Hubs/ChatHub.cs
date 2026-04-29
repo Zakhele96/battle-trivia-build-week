@@ -19,9 +19,10 @@ public sealed class ChatHub : Hub
     private readonly WordScrambleStateService _wordScrambleStateService;
     private readonly WordScrambleSessionStatusService _wordScrambleSessionStatusService;
     private readonly IUserRepository _userRepository;
+    private readonly IRoomRepository _roomRepository;
     private readonly UserPresenceService _userPresenceService;
     private readonly DirectMessageService _directMessageService;
-    private readonly WebPushService _webPushService;
+    private readonly DirectMessageNotificationQueue _directMessageNotificationQueue;
 
     public ChatHub(
         ChatService chatService,
@@ -33,9 +34,10 @@ public sealed class ChatHub : Hub
         WordScrambleStateService wordScrambleStateService,
         WordScrambleSessionStatusService wordScrambleSessionStatusService,
         IUserRepository userRepository,
+        IRoomRepository roomRepository,
         UserPresenceService userPresenceService,
         DirectMessageService directMessageService,
-        WebPushService webPushService)
+        DirectMessageNotificationQueue directMessageNotificationQueue)
     {
         _chatService = chatService;
         _triviaAnswerService = triviaAnswerService;
@@ -46,9 +48,10 @@ public sealed class ChatHub : Hub
         _wordScrambleStateService = wordScrambleStateService;
         _wordScrambleSessionStatusService = wordScrambleSessionStatusService;
         _userRepository = userRepository;
+        _roomRepository = roomRepository;
         _userPresenceService = userPresenceService;
         _directMessageService = directMessageService;
-        _webPushService = webPushService;
+        _directMessageNotificationQueue = directMessageNotificationQueue;
     }
 
     private Guid GetCurrentUserId()
@@ -153,7 +156,7 @@ public sealed class ChatHub : Hub
             var message = await _directMessageService.SendMessageAsync(userId, recipientUserId, messageText, replyToMessageId);
             await Clients.Users(userId.ToString(), recipientUserId.ToString())
                 .SendAsync("DirectMessageReceived", message);
-            await _webPushService.SendDirectMessageNotificationAsync(message);
+            await _directMessageNotificationQueue.QueueAsync(message);
             return new { success = true, message };
         }
         catch (InvalidOperationException ex)
@@ -193,6 +196,7 @@ public sealed class ChatHub : Hub
     public async Task JoinRoom(Guid roomId)
     {
         await Groups.AddToGroupAsync(Context.ConnectionId, roomId.ToString());
+        var room = await _roomRepository.GetByIdAsync(roomId);
 
         var displayName = Context.User?.FindFirstValue("displayName") ?? "Someone";
 
@@ -203,46 +207,64 @@ public sealed class ChatHub : Hub
         await Clients.Group(roomId.ToString())
             .SendAsync("ReceiveMessage", systemMessage);
 
-        var activeRound = await _triviaRoundRepository.GetActiveRoundDetailsByRoomIdAsync(roomId);
-        if (activeRound is not null &&
-            string.Equals(activeRound.Status, "active", StringComparison.OrdinalIgnoreCase))
+        if (room is null)
+            return;
+
+        var isBattleTriviaRoom =
+            string.Equals(room.Slug, "battle-trivia", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(room.RoomType, "trivia", StringComparison.OrdinalIgnoreCase);
+        var isWordScrambleRoom =
+            string.Equals(room.Slug, "word-scramble", StringComparison.OrdinalIgnoreCase);
+
+        if (isBattleTriviaRoom)
         {
-            await Clients.Caller.SendAsync("QuestionStarted", new
+            var activeRoundTask = _triviaRoundRepository.GetActiveRoundDetailsByRoomIdAsync(roomId);
+            var leaderboardTask = _triviaLeaderboardService.GetActiveRoomLeaderboardAsync(roomId, 5);
+            var sessionStatusTask = _battleTriviaSessionStatusService.GetRoomStatusAsync(roomId);
+            var playerRankTask = Guid.TryParse(Context.UserIdentifier, out var currentUserId)
+                ? _triviaLeaderboardService.GetActiveRoomPlayerRankAsync(roomId, currentUserId)
+                : Task.FromResult<Bts.Api.Models.Dtos.TriviaPlayerRankDto?>(null);
+
+            await Task.WhenAll(activeRoundTask, leaderboardTask, sessionStatusTask, playerRankTask);
+
+            var activeRound = activeRoundTask.Result;
+            if (activeRound is not null &&
+                string.Equals(activeRound.Status, "active", StringComparison.OrdinalIgnoreCase))
             {
-                roundId = activeRound.RoundId,
-                questionText = activeRound.QuestionText,
-                category = activeRound.Category,
-                difficulty = activeRound.Difficulty,
-                roundNumber = activeRound.RoundNumber,
-                endsAt = activeRound.EndsAt.ToUniversalTime().ToString("O")
-            });
+                await Clients.Caller.SendAsync("QuestionStarted", new
+                {
+                    roundId = activeRound.RoundId,
+                    questionText = activeRound.QuestionText,
+                    category = activeRound.Category,
+                    difficulty = activeRound.Difficulty,
+                    roundNumber = activeRound.RoundNumber,
+                    endsAt = activeRound.EndsAt.ToUniversalTime().ToString("O")
+                });
+            }
+
+            await Clients.Caller.SendAsync("LeaderboardUpdated", leaderboardTask.Result);
+            await Clients.Caller.SendAsync("PlayerRankUpdated", playerRankTask.Result);
+            await Clients.Caller.SendAsync("SessionStatusUpdated", sessionStatusTask.Result);
         }
 
-        var leaderboard = await _triviaLeaderboardService.GetActiveRoomLeaderboardAsync(roomId, 5);
-        await Clients.Caller.SendAsync("LeaderboardUpdated", leaderboard);
-
-        if (Guid.TryParse(Context.UserIdentifier, out var currentUserId))
+        if (isWordScrambleRoom)
         {
-            var playerRank = await _triviaLeaderboardService.GetActiveRoomPlayerRankAsync(roomId, currentUserId);
-            await Clients.Caller.SendAsync("PlayerRankUpdated", playerRank);
+            Guid? currentWordScrambleUserId = null;
+            if (Guid.TryParse(Context.UserIdentifier, out var parsedWordScrambleUserId))
+            {
+                currentWordScrambleUserId = parsedWordScrambleUserId;
+            }
+
+            var wordScrambleStateTask = _wordScrambleStateService.GetRoomStateAsync(
+                roomId,
+                currentWordScrambleUserId);
+            var wordScrambleStatusTask = _wordScrambleSessionStatusService.GetRoomStatusAsync(roomId);
+
+            await Task.WhenAll(wordScrambleStateTask, wordScrambleStatusTask);
+
+            await Clients.Caller.SendAsync("WordScrambleStateChanged", wordScrambleStateTask.Result);
+            await Clients.Caller.SendAsync("WordScrambleSessionStatusChanged", wordScrambleStatusTask.Result);
         }
-
-        var sessionStatus = await _battleTriviaSessionStatusService.GetRoomStatusAsync(roomId);
-        await Clients.Caller.SendAsync("SessionStatusUpdated", sessionStatus);
-
-        Guid? currentWordScrambleUserId = null;
-        if (Guid.TryParse(Context.UserIdentifier, out var parsedWordScrambleUserId))
-        {
-            currentWordScrambleUserId = parsedWordScrambleUserId;
-        }
-
-        var wordScrambleState = await _wordScrambleStateService.GetRoomStateAsync(
-            roomId,
-            currentWordScrambleUserId);
-        await Clients.Caller.SendAsync("WordScrambleStateChanged", wordScrambleState);
-
-        var wordScrambleStatus = await _wordScrambleSessionStatusService.GetRoomStatusAsync(roomId);
-        await Clients.Caller.SendAsync("WordScrambleSessionStatusChanged", wordScrambleStatus);
     }
 
     public async Task LeaveRoom(Guid roomId)

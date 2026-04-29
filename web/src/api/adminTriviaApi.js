@@ -102,3 +102,13 @@ export async function updateBattleTriviaSettings(payload) {
   const { data } = await api.put("/admin/battle-trivia/settings", payload);
   return data;
 }
+
+export async function getWordScrambleSettings() {
+  const { data } = await api.get("/admin/word-scramble/settings");
+  return data;
+}
+
+export async function updateWordScrambleSettings(payload) {
+  const { data } = await api.put("/admin/word-scramble/settings", payload);
+  return data;
+}

@@ -10,6 +10,7 @@ import {
   getAdminWordScrambleWords,
   getAdminTriviaQuestions,
   getBattleTriviaSettings,
+  getWordScrambleSettings,
   setAdminLeaderboardSponsorActive,
   setAdminUserAccess,
   setAdminWordScrambleWordActive,
@@ -18,6 +19,7 @@ import {
   updateAdminWordScrambleWord,
   updateAdminTriviaQuestion,
   updateBattleTriviaSettings,
+  updateWordScrambleSettings,
 } from "../api/adminTriviaApi";
 import { getLeaderboard } from "../api/leaderboardsApi";
 import {
@@ -329,6 +331,14 @@ export default function AdminTriviaManagementPage() {
   const [runMode, setRunMode] = useState("continuous");
   const [windows, setWindows] = useState(createDefaultWindows());
   const [sessionInfo, setSessionInfo] = useState(null);
+  const [battleTriviaQuestionDurationSeconds, setBattleTriviaQuestionDurationSeconds] =
+    useState(20);
+  const [battleTriviaRevealDelaySeconds, setBattleTriviaRevealDelaySeconds] =
+    useState(5);
+  const [wordScrambleRoundDurationSeconds, setWordScrambleRoundDurationSeconds] =
+    useState(30);
+  const [wordScrambleRevealDurationSeconds, setWordScrambleRevealDurationSeconds] =
+    useState(5);
 
   const [rooms, setRooms] = useState([]);
   const [roomStatuses, setRoomStatuses] = useState({});
@@ -516,8 +526,21 @@ export default function AdminTriviaManagementPage() {
 
     try {
       const data = await getBattleTriviaSettings();
+      const scrambleData = await getWordScrambleSettings();
       setRunMode(data.runMode || "continuous");
       setWindows(mergeWindows(data.windows || []));
+      setBattleTriviaQuestionDurationSeconds(
+        Number(data.questionDurationSeconds) || 20
+      );
+      setBattleTriviaRevealDelaySeconds(
+        Number(data.revealDelaySeconds) || 5
+      );
+      setWordScrambleRoundDurationSeconds(
+        Number(scrambleData.roundDurationSeconds) || 30
+      );
+      setWordScrambleRevealDurationSeconds(
+        Number(scrambleData.revealDurationSeconds) || 5
+      );
       setSessionInfo({
         sessionId: data.sessionId,
         sessionType: data.sessionType,
@@ -934,9 +957,32 @@ export default function AdminTriviaManagementPage() {
     setSettingsError("");
 
     try {
-      const data = await updateBattleTriviaSettings({ runMode, windows });
+      const [data, scrambleData] = await Promise.all([
+        updateBattleTriviaSettings({
+          runMode,
+          windows,
+          questionDurationSeconds: Number(battleTriviaQuestionDurationSeconds),
+          revealDelaySeconds: Number(battleTriviaRevealDelaySeconds),
+        }),
+        updateWordScrambleSettings({
+          roundDurationSeconds: Number(wordScrambleRoundDurationSeconds),
+          revealDurationSeconds: Number(wordScrambleRevealDurationSeconds),
+        }),
+      ]);
       setRunMode(data.runMode || "continuous");
       setWindows(mergeWindows(data.windows || []));
+      setBattleTriviaQuestionDurationSeconds(
+        Number(data.questionDurationSeconds) || 20
+      );
+      setBattleTriviaRevealDelaySeconds(
+        Number(data.revealDelaySeconds) || 5
+      );
+      setWordScrambleRoundDurationSeconds(
+        Number(scrambleData.roundDurationSeconds) || 30
+      );
+      setWordScrambleRevealDurationSeconds(
+        Number(scrambleData.revealDurationSeconds) || 5
+      );
       setSessionInfo({
         sessionId: data.sessionId,
         sessionType: data.sessionType,
@@ -1109,7 +1155,7 @@ export default function AdminTriviaManagementPage() {
                         Word Scramble
                       </div>
                       <div className="mt-2 text-sm text-violet-200">
-                        Monday reset, continuous rounds
+                        {wordScrambleRoundDurationSeconds}s round, {wordScrambleRevealDurationSeconds}s reveal
                       </div>
                     </div>
                     <label>
@@ -1169,6 +1215,84 @@ export default function AdminTriviaManagementPage() {
                         />
                       </div>
                     ))}
+                  </div>
+
+                  <div className="grid gap-3 lg:grid-cols-2">
+                    <div className="rounded-xl border border-white/8 bg-black/20 p-3">
+                      <div className="mb-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-500">
+                        Battle Trivia timers
+                      </div>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <label>
+                          <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-500">
+                            Question seconds
+                          </span>
+                          <input
+                            type="number"
+                            min="5"
+                            max="120"
+                            value={battleTriviaQuestionDurationSeconds}
+                            onChange={(e) =>
+                              setBattleTriviaQuestionDurationSeconds(e.target.value)
+                            }
+                            className={inputClass}
+                          />
+                        </label>
+                        <label>
+                          <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-500">
+                            Reveal seconds
+                          </span>
+                          <input
+                            type="number"
+                            min="1"
+                            max="30"
+                            value={battleTriviaRevealDelaySeconds}
+                            onChange={(e) =>
+                              setBattleTriviaRevealDelaySeconds(e.target.value)
+                            }
+                            className={inputClass}
+                          />
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-white/8 bg-black/20 p-3">
+                      <div className="mb-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-500">
+                        Word Scramble timers
+                      </div>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <label>
+                          <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-500">
+                            Round seconds
+                          </span>
+                          <input
+                            type="number"
+                            min="5"
+                            max="180"
+                            value={wordScrambleRoundDurationSeconds}
+                            onChange={(e) =>
+                              setWordScrambleRoundDurationSeconds(e.target.value)
+                            }
+                            className={inputClass}
+                          />
+                        </label>
+                        <label>
+                          <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-500">
+                            Reveal seconds
+                          </span>
+                          <input
+                            type="number"
+                            min="1"
+                            max="30"
+                            value={wordScrambleRevealDurationSeconds}
+                            onChange={(e) =>
+                              setWordScrambleRevealDurationSeconds(e.target.value)
+                            }
+                            className={inputClass}
+                          />
+                        </label>
+                      </div>
+                    </div>
                   </div>
 
                   {settingsError ? (
