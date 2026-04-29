@@ -481,9 +481,10 @@ export default function ChatMessage({
     if (!message.id || !onToggleReaction || busyAction) return;
 
     try {
+      setPickerOpen(false);
+      setMenuOpen(false);
       setBusyAction(`react-${emoji}`);
       await onToggleReaction(message.id, emoji);
-      setPickerOpen(false);
     } finally {
       setBusyAction("");
     }
