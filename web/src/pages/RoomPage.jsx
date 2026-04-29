@@ -4,6 +4,8 @@ import ChatInput from "../components/ChatInput";
 import ChatStream from "../components/chat/ChatStream";
 import MentionToastStack from "../components/chat/MentionToastStack";
 import AchievementToastStack from "../components/profile/AchievementToastStack";
+import ArenaCreateChallengeModal from "../components/arena/ArenaCreateChallengeModal";
+import ArenaRoomPanel from "../components/arena/ArenaRoomPanel";
 import RoomFooterBar from "../components/room/RoomFooterBar";
 import RoomModerationControlCard from "../components/room/RoomModerationControlCard";
 import RoomShell from "../components/room/RoomShell";
@@ -17,6 +19,16 @@ import WordScrambleHeroCard from "../components/wordScramble/WordScrambleHeroCar
 import WordScrambleProfileCard from "../components/wordScramble/WordScrambleProfileCard";
 import WordScrambleSessionCard from "../components/wordScramble/WordScrambleSessionCard";
 import WordScrambleWhisperStatus from "../components/wordScramble/WordScrambleWhisperStatus";
+import {
+  createArenaComment,
+  createArenaChallenge,
+  getArenaChallengeDetail,
+  getArenaChallenges,
+  getArenaHallOfBars,
+  getArenaLeaderboard,
+  submitArenaEntry,
+  voteArenaEntry,
+} from "../api/arenaApi";
 import {
   getMyBattleTriviaProfileStats,
   getMyBattleTriviaSessionSummary,
@@ -391,6 +403,18 @@ export default function RoomPage() {
   const [slowModeNow, setSlowModeNow] = useState(() => Date.now());
   const [battleTriviaSponsor, setBattleTriviaSponsor] = useState(null);
   const [mentionToasts, setMentionToasts] = useState([]);
+  const [arenaTab, setArenaTab] = useState("chat");
+  const [arenaChallenges, setArenaChallenges] = useState([]);
+  const [arenaSelectedChallengeId, setArenaSelectedChallengeId] = useState("");
+  const [arenaSelectedChallengeDetail, setArenaSelectedChallengeDetail] =
+    useState(null);
+  const [arenaHallOfBars, setArenaHallOfBars] = useState([]);
+  const [arenaLeaderboardRows, setArenaLeaderboardRows] = useState([]);
+  const [arenaLoading, setArenaLoading] = useState(false);
+  const [arenaError, setArenaError] = useState("");
+  const [arenaActionBusy, setArenaActionBusy] = useState(false);
+  const [arenaActionError, setArenaActionError] = useState("");
+  const [isArenaCreateOpen, setIsArenaCreateOpen] = useState(false);
 
   const messagesContainerRef = useRef(null);
   const shouldAutoScrollRef = useRef(true);
@@ -424,6 +448,17 @@ const {
     if (!room) return false;
     return room.slug === "word-scramble";
   }, [room]);
+
+  const isArenaRoom = useMemo(() => {
+    if (!room) return false;
+    return room.slug === "rapnometry-arena";
+  }, [room]);
+  const isArenaChallengeOpen =
+    isArenaRoom &&
+    arenaTab !== "chat" &&
+    arenaTab !== "hall" &&
+    arenaTab !== "rankings" &&
+    !!arenaSelectedChallengeId;
 
   const showGameSidebar = isBattleTrivia || isWordScramble;
   const isChatRoom = room?.roomType === "chat";
@@ -651,6 +686,8 @@ const {
     wordScrambleState,
     wordScrambleStatus,
     wordScrambleGuessFeedback,
+    arenaActivityVersion,
+    arenaNotice,
     sendRoomPayload,
     editRoomMessage,
     toggleRoomMessageReaction,
@@ -782,6 +819,83 @@ const {
       setIsModerationActionsLoading(false);
     }
   }, [room, roomId, canModerateChat]);
+
+  const loadArenaChallenges = useCallback(async () => {
+    if (!roomId || !isArenaRoom) return;
+
+    const bucket =
+      arenaTab === "open" || arenaTab === "voting" || arenaTab === "winners"
+        ? arenaTab
+        : "open";
+
+    setArenaLoading(true);
+    setArenaError("");
+
+    try {
+      const data = await getArenaChallenges(roomId, bucket, 50);
+      const rows = Array.isArray(data) ? data : [];
+      setArenaChallenges(rows);
+
+      setArenaSelectedChallengeId((current) => {
+        if (rows.some((item) => item.id === current)) return current;
+        return "";
+      });
+    } catch {
+      setArenaError("Failed to load arena challenges.");
+      setArenaChallenges([]);
+      setArenaSelectedChallengeId("");
+    } finally {
+      setArenaLoading(false);
+    }
+  }, [roomId, isArenaRoom, arenaTab]);
+
+  const loadArenaHallOfBars = useCallback(async () => {
+    if (!roomId || !isArenaRoom) return;
+
+    setArenaLoading(true);
+    setArenaError("");
+
+    try {
+      const data = await getArenaHallOfBars(roomId, 20);
+      setArenaHallOfBars(Array.isArray(data) ? data : []);
+    } catch {
+      setArenaError("Failed to load Hall of Bars.");
+      setArenaHallOfBars([]);
+    } finally {
+      setArenaLoading(false);
+    }
+  }, [roomId, isArenaRoom]);
+
+  const loadArenaLeaderboard = useCallback(async () => {
+    if (!roomId || !isArenaRoom) return;
+
+    setArenaLoading(true);
+    setArenaError("");
+
+    try {
+      const data = await getArenaLeaderboard(roomId, 20);
+      setArenaLeaderboardRows(Array.isArray(data) ? data : []);
+    } catch {
+      setArenaError("Failed to load arena leaderboard.");
+      setArenaLeaderboardRows([]);
+    } finally {
+      setArenaLoading(false);
+    }
+  }, [roomId, isArenaRoom]);
+
+  const loadArenaChallengeDetail = useCallback(async () => {
+    if (!roomId || !isArenaRoom || !arenaSelectedChallengeId) {
+      setArenaSelectedChallengeDetail(null);
+      return;
+    }
+
+    try {
+      const data = await getArenaChallengeDetail(roomId, arenaSelectedChallengeId);
+      setArenaSelectedChallengeDetail(data || null);
+    } catch {
+      setArenaSelectedChallengeDetail(null);
+    }
+  }, [roomId, isArenaRoom, arenaSelectedChallengeId]);
 
   useEffect(() => {
     let frameId = 0;
@@ -1054,6 +1168,40 @@ const {
   }, [loadModerationActions]);
 
   useEffect(() => {
+    if (!isArenaRoom) return;
+
+    if (arenaTab === "hall") {
+      loadArenaHallOfBars();
+      return;
+    }
+
+    if (arenaTab === "rankings") {
+      loadArenaLeaderboard();
+      return;
+    }
+
+    if (arenaTab !== "chat") {
+      loadArenaChallenges();
+    }
+  }, [
+    isArenaRoom,
+    arenaTab,
+    arenaActivityVersion,
+    loadArenaChallenges,
+    loadArenaHallOfBars,
+    loadArenaLeaderboard,
+  ]);
+
+  useEffect(() => {
+    if (!isArenaRoom || arenaTab === "chat" || arenaTab === "hall" || arenaTab === "rankings") {
+      setArenaSelectedChallengeDetail(null);
+      return;
+    }
+
+    loadArenaChallengeDetail();
+  }, [isArenaRoom, arenaTab, arenaSelectedChallengeId, arenaActivityVersion, loadArenaChallengeDetail]);
+
+  useEffect(() => {
     setMentionToasts([]);
   }, [roomId]);
 
@@ -1145,6 +1293,18 @@ const {
   useEffect(() => {
     setLocalError("");
     setSlowModeBlockedUntil(0);
+  }, [roomId]);
+
+  useEffect(() => {
+    setArenaTab("chat");
+    setArenaChallenges([]);
+    setArenaSelectedChallengeId("");
+    setArenaSelectedChallengeDetail(null);
+    setArenaHallOfBars([]);
+    setArenaLeaderboardRows([]);
+    setArenaError("");
+    setArenaActionError("");
+    setIsArenaCreateOpen(false);
   }, [roomId]);
 
   useEffect(() => {
@@ -1355,7 +1515,94 @@ const {
     }
   };
 
-  const sidebar = (
+  const handleArenaCreateChallenge = async (payload) => {
+    setArenaActionBusy(true);
+    setArenaActionError("");
+
+    try {
+      const detail = await createArenaChallenge(roomId, payload);
+      setIsArenaCreateOpen(false);
+      setArenaTab("open");
+      setArenaSelectedChallengeId(detail?.challenge?.id || "");
+      setArenaSelectedChallengeDetail(detail || null);
+      await loadArenaChallenges();
+    } catch (error) {
+      setArenaActionError(getApiErrorMessage(error, "Failed to create challenge."));
+    } finally {
+      setArenaActionBusy(false);
+    }
+  };
+
+  const handleArenaSelectChallenge = useCallback((challenge) => {
+    setArenaSelectedChallengeId(challenge?.id || "");
+    setArenaActionError("");
+  }, []);
+
+  const handleArenaBackToFeed = useCallback(() => {
+    setArenaSelectedChallengeId("");
+    setArenaSelectedChallengeDetail(null);
+    setArenaActionError("");
+  }, []);
+
+  const handleArenaSubmitEntry = async (content) => {
+    if (!arenaSelectedChallengeId) return;
+
+    setArenaActionBusy(true);
+    setArenaActionError("");
+
+    try {
+      const detail = await submitArenaEntry(roomId, arenaSelectedChallengeId, {
+        content,
+      });
+      setArenaSelectedChallengeDetail(detail || null);
+      await loadArenaChallenges();
+    } catch (error) {
+      setArenaActionError(getApiErrorMessage(error, "Failed to submit entry."));
+    } finally {
+      setArenaActionBusy(false);
+    }
+  };
+
+  const handleArenaVote = async (entryId) => {
+    if (!arenaSelectedChallengeId) return;
+
+    setArenaActionBusy(true);
+    setArenaActionError("");
+
+    try {
+      const detail = await voteArenaEntry(roomId, arenaSelectedChallengeId, {
+        entryId,
+      });
+      setArenaSelectedChallengeDetail(detail || null);
+      await loadArenaChallenges();
+    } catch (error) {
+      setArenaActionError(getApiErrorMessage(error, "Failed to submit vote."));
+    } finally {
+      setArenaActionBusy(false);
+    }
+  };
+
+  const handleArenaComment = async (content) => {
+    if (!arenaSelectedChallengeId) return;
+
+    setArenaActionBusy(true);
+    setArenaActionError("");
+
+    try {
+      const detail = await createArenaComment(roomId, arenaSelectedChallengeId, {
+        content,
+      });
+      setArenaSelectedChallengeDetail(detail || null);
+    } catch (error) {
+      setArenaActionError(
+        getApiErrorMessage(error, "Failed to post battle comment.")
+      );
+    } finally {
+      setArenaActionBusy(false);
+    }
+  };
+
+  const sidebar = isArenaRoom ? null : (
     <aside className="hidden xl:flex xl:w-[17.25rem] xl:shrink-0 xl:flex-col xl:border-r xl:border-white/5 xl:bg-neutral-900/95">
       <div className="room-panel-scroll min-h-0 flex-1 overflow-y-auto px-2.5 py-2.5">
         <div className="space-y-2.5">
@@ -1477,6 +1724,72 @@ const {
           </div>
         ) : null}
 
+        {isArenaRoom ? (
+          isArenaChallengeOpen ? (
+            <div className="flex items-center">
+              <button
+                type="button"
+                onClick={handleArenaBackToFeed}
+                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-2 text-sm font-medium text-white transition hover:bg-white/[0.08]"
+              >
+                <span aria-hidden="true">←</span>
+                Back to battles
+              </button>
+            </div>
+          ) : (
+          <div className="rounded-[24px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.16),transparent_32%),linear-gradient(135deg,rgba(10,10,11,1)_0%,rgba(28,25,23,0.98)_45%,rgba(10,10,11,1)_100%)] p-4 sm:p-5">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full border border-orange-400/20 bg-orange-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-orange-200">
+                RapNometry Arena
+              </span>
+              <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-neutral-300">
+                Open mic battles
+              </span>
+            </div>
+
+            <div className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-white">
+              Challenge. Submit. Vote. Build your pen name.
+            </div>
+
+            <div className="mt-2 max-w-3xl text-sm leading-6 text-neutral-300">
+              Post rap, poetry, spoken-word, and commentary challenges. The room submits entries, the crowd votes, and the best bars land in the Hall of Bars.
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              {[
+                ["chat", "Chat"],
+                ["open", "Open"],
+                ["voting", "Voting"],
+                ["winners", "Winners"],
+                ["hall", "Hall of Bars"],
+                ["rankings", "Rankings"],
+              ].map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setArenaTab(key)}
+                  className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
+                    arenaTab === key
+                      ? "bg-white text-neutral-950"
+                      : "border border-white/10 bg-white/[0.04] text-neutral-200 hover:bg-white/[0.08]"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+
+              <button
+                type="button"
+                onClick={() => setIsArenaCreateOpen(true)}
+                className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-neutral-950"
+              >
+                Create Challenge
+              </button>
+            </div>
+          </div>
+          )
+        ) : null}
+
         {isBattleTrivia ? (
           <TriviaHeroCard
             currentRoundNumber={currentRoundNumber}
@@ -1508,8 +1821,8 @@ const {
     </div>
   );
 
-  const stream = (
-   <ChatStream
+  const chatStream = (
+    <ChatStream
       messages={messages}
       pinnedMessage={pinnedMessage}
       variant={isChatRoom ? "general-chat" : "default"}
@@ -1540,7 +1853,33 @@ const {
     />
   );
 
-  const footer = (
+  const stream =
+    isArenaRoom && arenaTab !== "chat" ? (
+      <ArenaRoomPanel
+        activeTab={arenaTab}
+        onTabChange={setArenaTab}
+        challenges={arenaChallenges}
+        selectedChallenge={arenaSelectedChallengeDetail}
+        onSelectChallenge={handleArenaSelectChallenge}
+        hallOfBars={arenaHallOfBars}
+        leaderboard={arenaLeaderboardRows}
+        arenaNotice={arenaNotice}
+        actionBusy={arenaActionBusy}
+        actionError={arenaActionError || arenaError}
+        currentUserId={user?.id}
+        onBackFromChallenge={handleArenaBackToFeed}
+        onSubmitEntry={handleArenaSubmitEntry}
+        onVote={handleArenaVote}
+        onComment={handleArenaComment}
+        onCreateChallenge={() => setIsArenaCreateOpen(true)}
+        loading={arenaLoading}
+        showToolbar={false}
+      />
+    ) : (
+      chatStream
+    );
+
+  const chatFooter = (
     <RoomFooterBar
       whisper={
         isBattleTrivia ? (
@@ -1633,6 +1972,11 @@ const {
     />
   );
 
+  const footer =
+    isArenaRoom && arenaTab !== "chat"
+      ? null
+      : chatFooter;
+
   return (
     <div
       className={`room-page fixed inset-x-0 overflow-hidden overscroll-none bg-neutral-950 text-white ${
@@ -1664,6 +2008,17 @@ const {
       />
 
       <AchievementToastStack achievements={achievementUnlocks} />
+
+      <ArenaCreateChallengeModal
+        open={isArenaCreateOpen}
+        onClose={() => {
+          setIsArenaCreateOpen(false);
+          setArenaActionError("");
+        }}
+        onSubmit={handleArenaCreateChallenge}
+        busy={arenaActionBusy}
+        error={arenaActionError}
+      />
     </div>
   );
 }

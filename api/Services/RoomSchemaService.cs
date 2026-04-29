@@ -26,6 +26,27 @@ public sealed class RoomSchemaService
 
             ALTER TABLE rooms
                 ADD COLUMN IF NOT EXISTS word_scramble_reveal_duration_seconds INT NOT NULL DEFAULT 5;
+
+            INSERT INTO rooms (
+                id,
+                name,
+                slug,
+                description,
+                room_type,
+                is_active
+            )
+            SELECT
+                gen_random_uuid(),
+                'RapNometry Arena',
+                'rapnometry-arena',
+                'Creative open mic battles for rap, poetry, spoken word, and community challenges.',
+                'chat',
+                TRUE
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM rooms
+                WHERE slug = 'rapnometry-arena'
+            );
             """;
 
         using var connection = _context.CreateConnection();

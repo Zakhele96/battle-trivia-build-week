@@ -1,6 +1,14 @@
 import { Link } from "react-router-dom";
 
 function getRoomMeta(room) {
+  if (room?.slug === "rapnometry-arena") {
+    return {
+      badge: "Battle arena",
+      accent: "text-rose-300 border-rose-400/18 bg-rose-500/10",
+      cta: "Enter arena",
+    };
+  }
+
   if (room?.slug === "battle-trivia" || room?.roomType === "trivia") {
     return {
       badge: "Featured game",
@@ -35,6 +43,10 @@ function getRoomMeta(room) {
 function getRoomDescription(room) {
   if (room?.description?.trim()) return room.description.trim();
 
+  if (room?.slug === "rapnometry-arena") {
+    return "Create open mic challenges, submit verses, and vote for the strongest bars in the room.";
+  }
+
   if (room?.slug === "battle-trivia") {
     return "Fast-paced live trivia with weekly standings and featured competition energy.";
   }
@@ -53,7 +65,9 @@ function getRoomDescription(room) {
 function getMetaPills(room, isLive) {
   const items = [];
 
-  if (room?.roomType === "trivia") {
+  if (room?.slug === "rapnometry-arena") {
+    items.push("Arena");
+  } else if (room?.roomType === "trivia") {
     items.push("Trivia");
   } else if (room?.roomType === "game") {
     items.push("Game");

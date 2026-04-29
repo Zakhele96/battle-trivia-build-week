@@ -13,7 +13,8 @@ api/build-verify-dm
 api/build-verify-redis
 api/build-verify-timers
 api/build-verify-scale
-
+api/build-verify-arena
+api/build-verify-arena-flow
 web/node_modules/
 web/dist/
 web/.vite/

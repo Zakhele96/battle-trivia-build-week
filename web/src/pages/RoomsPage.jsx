@@ -119,6 +119,20 @@ export default function RoomsPage() {
     });
   }, [rooms, featuredRoom]);
 
+  const creativeBattleRooms = useMemo(() => {
+    return rooms
+      .filter((room) => room.slug === "rapnometry-arena")
+      .sort((a, b) => {
+        const mentionDelta =
+          (Number(b?.unreadMentionCount) || 0) -
+          (Number(a?.unreadMentionCount) || 0);
+
+        if (mentionDelta !== 0) return mentionDelta;
+
+        return String(a?.name || "").localeCompare(String(b?.name || ""));
+      });
+  }, [rooms]);
+
   const sortedGameRooms = useMemo(() => {
     return [...gameRooms].sort((a, b) => {
       const mentionDelta =
@@ -165,8 +179,8 @@ export default function RoomsPage() {
 
         <AppTopBar
           eyebrow="Rooms"
-          title="Game rooms"
-          description="Competitive spaces and structured sessions live here."
+          title="Competition rooms"
+          description="Game rooms and battle spaces live here."
           actions={[]}
         />
 
@@ -236,8 +250,8 @@ export default function RoomsPage() {
             <section>
               <SectionHeader
                 eyebrow="Browse"
-                title="All game rooms"
-                description="Every competitive room in one place."
+                title="Game rooms"
+                description="Trivia and game-based competition rooms."
               />
 
               {sortedGameRooms.length === 0 ? (
@@ -252,6 +266,22 @@ export default function RoomsPage() {
                 </div>
               )}
             </section>
+
+            {creativeBattleRooms.length > 0 ? (
+              <section className="mt-6 sm:mt-8">
+                <SectionHeader
+                  eyebrow="Creative"
+                  title="Battle arenas"
+                  description="Open mic, rap, and poetry challenge rooms."
+                />
+
+                <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
+                  {creativeBattleRooms.map((room) => (
+                    <RoomCard key={room.id} room={room} />
+                  ))}
+                </div>
+              </section>
+            ) : null}
           </>
         )}
       </div>

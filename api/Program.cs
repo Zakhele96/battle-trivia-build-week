@@ -87,6 +87,7 @@ builder.Services.AddSingleton<DapperContext>();
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRoomRepository, RoomRepository>();
+builder.Services.AddScoped<IArenaRepository, ArenaRepository>();
 builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddScoped<IMentionNotificationRepository, MentionNotificationRepository>();
 builder.Services.AddScoped<ITriviaQuestionRepository, TriviaQuestionRepository>();
@@ -151,6 +152,8 @@ builder.Services.AddScoped<AdminBattleTriviaSettingsService>();
 builder.Services.AddScoped<AdminWordScrambleSettingsService>();
 builder.Services.AddScoped<AdminLeaderboardSponsorService>();
 builder.Services.AddScoped<RoomModerationStateService>();
+builder.Services.AddScoped<ArenaSchemaService>();
+builder.Services.AddScoped<ArenaService>();
 builder.Services.AddScoped<ProfileService>();
 builder.Services.AddScoped<RoomSchemaService>();
 builder.Services.AddScoped<UserSchemaService>();
@@ -215,6 +218,7 @@ builder.Services.AddSingleton<UserPresenceService>();
 
 builder.Services.AddHostedService<BattleTriviaHostedService>();
 builder.Services.AddHostedService<WordScrambleHostedService>();
+builder.Services.AddHostedService<ArenaHostedService>();
 builder.Services.AddHostedService<DirectMessageNotificationWorker>();
 
 builder.Services.AddCors(options =>
@@ -298,6 +302,8 @@ using (var scope = app.Services.CreateScope())
     await userSchemaService.EnsureAsync();
     var roomSchemaService = scope.ServiceProvider.GetRequiredService<RoomSchemaService>();
     await roomSchemaService.EnsureAsync();
+    var arenaSchemaService = scope.ServiceProvider.GetRequiredService<ArenaSchemaService>();
+    await arenaSchemaService.EnsureAsync();
     var schemaService = scope.ServiceProvider.GetRequiredService<LeaderboardSponsorSchemaService>();
     await schemaService.EnsureAsync();
     var growthSchemaService = scope.ServiceProvider.GetRequiredService<GrowthSchemaService>();

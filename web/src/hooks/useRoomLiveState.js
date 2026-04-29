@@ -70,6 +70,8 @@ export default function useRoomLiveState({
   const [wordScrambleStatus, setWordScrambleStatus] = useState(null);
   const [wordScrambleGuessFeedback, setWordScrambleGuessFeedback] =
     useState(null);
+  const [arenaActivityVersion, setArenaActivityVersion] = useState(0);
+  const [arenaNotice, setArenaNotice] = useState(null);
 
   const connectionRef = useRef(null);
   const onReceiveMessageRef = useRef(onReceiveMessage);
@@ -346,6 +348,7 @@ export default function useRoomLiveState({
     setWordScrambleState(null);
     setWordScrambleStatus(null);
     setWordScrambleGuessFeedback(null);
+    setArenaNotice(null);
     setAchievementUnlocks([]);
     setLiveStreak({
       current: 0,
@@ -626,6 +629,31 @@ export default function useRoomLiveState({
       applyWordScrambleGuessPayload(payload, true);
     });
 
+    const bumpArenaActivity = (payload) => {
+      if (isCancelled) return;
+      setArenaActivityVersion((prev) => prev + 1);
+
+      const nextNotice =
+        payload && typeof payload.message === "string" && payload.message.trim()
+          ? {
+              id: `${Date.now()}-${Math.random()}`,
+              tone: payload.tone || "info",
+              message: payload.message.trim(),
+            }
+          : null;
+
+      if (nextNotice) {
+        setArenaNotice(nextNotice);
+      }
+    };
+
+    connection.on("ArenaChallengeCreated", bumpArenaActivity);
+    connection.on("ArenaChallengeUpdated", bumpArenaActivity);
+    connection.on("ArenaEntrySubmitted", bumpArenaActivity);
+    connection.on("ArenaVoteSubmitted", bumpArenaActivity);
+    connection.on("ArenaCommentCreated", bumpArenaActivity);
+    connection.on("ArenaWinnerDeclared", bumpArenaActivity);
+
     connection.onreconnecting(() => {
       if (!isCancelled) {
         setStatus("reconnecting");
@@ -702,6 +730,18 @@ export default function useRoomLiveState({
         .catch(() => {});
     };
   }, [roomId, token, applyWordScrambleGuessPayload]);
+
+  useEffect(() => {
+    if (!arenaNotice?.id) return undefined;
+
+    const timeoutId = window.setTimeout(() => {
+      setArenaNotice((current) =>
+        current?.id === arenaNotice.id ? null : current
+      );
+    }, 5000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [arenaNotice]);
 
   useEffect(() => {
     if (!roomId || !room || status !== "connected") return;
@@ -860,5 +900,7 @@ export default function useRoomLiveState({
     wordScrambleState,
     wordScrambleStatus,
     wordScrambleGuessFeedback,
+    arenaActivityVersion,
+    arenaNotice,
   };
 }
