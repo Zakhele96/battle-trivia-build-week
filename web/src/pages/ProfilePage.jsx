@@ -227,9 +227,11 @@ function HistoryItem({ item }) {
 function MobileProfileHero({
   profile,
   authUser,
+  avatarUrl,
   statusMessage,
   onAvatarFileChange,
   onRemoveAvatar,
+  isRemovingAvatar = false,
 }) {
   const displayName =
     profile?.displayName ||
@@ -238,7 +240,6 @@ function MobileProfileHero({
     authUser?.username ||
     "Player";
   const username = profile?.username || authUser?.username || "username";
-  const avatarUrl = profile?.avatarUrl || authUser?.avatarUrl || null;
   const providerLabel = getAuthProviderLabel(authUser?.authProvider || "local");
   const isSupporter = authUser?.isSupporter || profile?.isSupporter;
 
@@ -260,8 +261,20 @@ function MobileProfileHero({
             )}
           </div>
 
-          <label className="absolute -right-1 bottom-3 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-blue-300/18 bg-blue-500 text-sm text-white shadow-[0_8px_22px_rgba(37,99,235,0.28)]">
-            +
+          <label
+            className="absolute -right-1 bottom-3 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-blue-300/18 bg-blue-500 text-sm text-white shadow-[0_8px_22px_rgba(37,99,235,0.28)] transition hover:bg-blue-400"
+            aria-label="Upload profile photo"
+            title="Upload profile photo"
+          >
+            <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true">
+              <path
+                d="M10 13.5V6.5M6.75 9.75L10 6.5L13.25 9.75M5.5 14.75H14.5"
+                className="stroke-current"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
             <input
               type="file"
               accept="image/*"
@@ -273,9 +286,20 @@ function MobileProfileHero({
           <button
             type="button"
             onClick={onRemoveAvatar}
-            className="absolute -left-1 bottom-3 flex h-8 w-8 items-center justify-center rounded-full border border-red-300/18 bg-red-500/90 text-sm text-white shadow-[0_8px_22px_rgba(239,68,68,0.22)]"
+            disabled={!avatarUrl || isRemovingAvatar}
+            className="absolute -left-1 bottom-3 flex h-8 w-8 items-center justify-center rounded-full border border-red-300/18 bg-red-500/90 text-sm text-white shadow-[0_8px_22px_rgba(239,68,68,0.22)] transition hover:bg-red-400 disabled:cursor-not-allowed disabled:opacity-45"
+            aria-label="Remove profile photo"
+            title="Remove profile photo"
           >
-            ×
+            <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true">
+              <path
+                d="M7.75 5.75H12.25M5.75 7.25L6.4 14.08C6.5 15.1 7.36 15.88 8.39 15.88H11.61C12.64 15.88 13.5 15.1 13.6 14.08L14.25 7.25M8.5 8.75V12.5M11.5 8.75V12.5M7.25 5.75L7.7 4.87C7.95 4.37 8.46 4.05 9.02 4.05H10.98C11.54 4.05 12.05 4.37 12.3 4.87L12.75 5.75"
+                className="stroke-current"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </button>
         </div>
 
@@ -802,6 +826,7 @@ export default function ProfilePage() {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
   const [isApplyingAvatarCrop, setIsApplyingAvatarCrop] = useState(false);
+  const [isRemovingAvatar, setIsRemovingAvatar] = useState(false);
 
   const [playerMomentum, setPlayerMomentum] = useState(null);
   const [currentCombinedStanding, setCurrentCombinedStanding] = useState(null);
@@ -1133,6 +1158,50 @@ export default function ProfilePage() {
     setAvatarCrop({ zoom: 1, x: 0, y: 0 });
   }
 
+  async function handleRemoveAvatar() {
+    if (!avatarUrl) return;
+
+    setError("");
+    setMessage("");
+    setPendingAvatar(null);
+    setAvatarCrop({ zoom: 1, x: 0, y: 0 });
+
+    const previousAvatarUrl = avatarUrl;
+
+    try {
+      setIsRemovingAvatar(true);
+      setAvatarUrl("");
+
+      const updated = await updateMyProfile({
+        displayName,
+        phoneNumber,
+        avatarUrl: "",
+        statusMessage,
+      });
+
+      setProfile(updated);
+      setAvatarUrl(updated?.avatarUrl || "");
+      setStatusMessage(updated?.statusMessage || "");
+      setUser((previous) =>
+        previous
+          ? {
+              ...previous,
+              displayName: updated?.displayName || previous.displayName,
+              phoneNumber: updated?.phoneNumber ?? previous.phoneNumber,
+              avatarUrl: updated?.avatarUrl ?? null,
+              statusMessage: updated?.statusMessage ?? "",
+            }
+          : previous
+      );
+      setMessage("Profile photo removed.");
+    } catch (err) {
+      setAvatarUrl(previousAvatarUrl);
+      setError(err?.response?.data?.message || "Failed to remove profile photo.");
+    } finally {
+      setIsRemovingAvatar(false);
+    }
+  }
+
   const handleCopyInvite = async () => {
     if (!authUser?.id) return;
 
@@ -1379,12 +1448,11 @@ export default function ProfilePage() {
         <MobileProfileHero
           profile={profile}
           authUser={authUser}
+          avatarUrl={avatarUrl || null}
           statusMessage={statusMessage}
           onAvatarFileChange={handleAvatarFileChange}
-          onRemoveAvatar={() => {
-            setAvatarUrl("");
-            setPendingAvatar(null);
-          }}
+          onRemoveAvatar={handleRemoveAvatar}
+          isRemovingAvatar={isRemovingAvatar}
         />
 
         <div className="mb-6 hidden sm:block">
@@ -1631,8 +1699,21 @@ export default function ProfilePage() {
                         </div>
 
                         <div className="flex flex-wrap gap-2">
-                          <label className="inline-flex cursor-pointer rounded-[16px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08]">
-                            Upload and frame photo
+                          <label
+                            className="inline-flex cursor-pointer items-center gap-2 rounded-[16px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
+                            aria-label="Upload and frame profile photo"
+                            title="Upload and frame profile photo"
+                          >
+                            <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true">
+                              <path
+                                d="M10 13.5V6.5M6.75 9.75L10 6.5L13.25 9.75M5.5 14.75H14.5"
+                                className="stroke-current"
+                                strokeWidth="1.8"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                            <span>Upload and frame photo</span>
                             <input
                               type="file"
                               accept="image/*"
@@ -1643,13 +1724,22 @@ export default function ProfilePage() {
 
                           <button
                             type="button"
-                            onClick={() => {
-                              setAvatarUrl("");
-                              setPendingAvatar(null);
-                            }}
-                            className="rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
+                            onClick={handleRemoveAvatar}
+                            disabled={!avatarUrl || isRemovingAvatar}
+                            className="inline-flex items-center gap-2 rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-45"
+                            aria-label="Remove profile photo"
+                            title="Remove profile photo"
                           >
-                            Remove photo
+                            <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true">
+                              <path
+                                d="M7.75 5.75H12.25M5.75 7.25L6.4 14.08C6.5 15.1 7.36 15.88 8.39 15.88H11.61C12.64 15.88 13.5 15.1 13.6 14.08L14.25 7.25M8.5 8.75V12.5M11.5 8.75V12.5M7.25 5.75L7.7 4.87C7.95 4.37 8.46 4.05 9.02 4.05H10.98C11.54 4.05 12.05 4.37 12.3 4.87L12.75 5.75"
+                                className="stroke-current"
+                                strokeWidth="1.6"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                            <span>{isRemovingAvatar ? "Removing..." : "Remove photo"}</span>
                           </button>
                         </div>
                       </div>
