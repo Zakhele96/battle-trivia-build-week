@@ -136,7 +136,15 @@ function getViewportState() {
   };
 }
 
-function getRoomModeMeta(room, isBattleTrivia, isWordScramble) {
+function getRoomModeMeta(room, isBattleTrivia, isWordScramble, isArenaRoom) {
+  if (isArenaRoom) {
+    return {
+      eyebrow: "RapNometry Arena",
+      badgeLabel: "RapNometry Arena",
+      badgeClass: "text-orange-200 border-orange-400/20 bg-orange-500/10",
+    };
+  }
+
   if (isBattleTrivia) {
     return {
       eyebrow: "Battle Trivia",
@@ -174,9 +182,15 @@ function RoomUtilityBar({
   sessionLabel,
   isBattleTrivia,
   isWordScramble,
+  isArenaRoom,
   compact = false,
 }) {
-  const meta = getRoomModeMeta(room, isBattleTrivia, isWordScramble);
+  const meta = getRoomModeMeta(
+    room,
+    isBattleTrivia,
+    isWordScramble,
+    isArenaRoom
+  );
   const liveLabel = sessionLabel || meta.badgeLabel;
   const compactBadgeLabel =
     compact && isBattleTrivia ? "Live now" : liveLabel;
@@ -278,7 +292,11 @@ function WeeklyWinnersCard({ data }) {
   );
 }
 
-function MobileFloatingRoomNav({ compact = false }) {
+function MobileFloatingRoomNav({
+  compact = false,
+  roomBadgeLabel = "",
+  roomBadgeClassName = "",
+}) {
   return (
     <div className="pointer-events-none fixed inset-x-0 top-0 z-[60] sm:hidden">
       <div
@@ -298,14 +316,26 @@ function MobileFloatingRoomNav({ compact = false }) {
           Lobby
         </Link>
 
-        <Link
-          to="/profile"
-          className={`pointer-events-auto inline-flex items-center rounded-full border border-white/10 bg-neutral-950/78 font-medium text-white shadow-[0_10px_24px_rgba(0,0,0,0.22)] backdrop-blur-xl transition hover:border-white/15 hover:bg-neutral-900/85 ${
-            compact ? "px-2.5 py-1.5 text-[10px]" : "px-3 py-1.5 text-[11px]"
-          }`}
-        >
-          Profile
-        </Link>
+        <div className="pointer-events-auto flex items-center gap-2">
+          {roomBadgeLabel ? (
+            <span
+              className={`inline-flex rounded-full border font-medium uppercase tracking-[0.14em] shadow-[0_10px_24px_rgba(0,0,0,0.22)] backdrop-blur-xl ${
+                compact ? "px-2.5 py-1 text-[9px]" : "px-3 py-1.5 text-[10px]"
+              } ${roomBadgeClassName}`}
+            >
+              {roomBadgeLabel}
+            </span>
+          ) : null}
+
+          <Link
+            to="/profile"
+            className={`inline-flex items-center rounded-full border border-white/10 bg-neutral-950/78 font-medium text-white shadow-[0_10px_24px_rgba(0,0,0,0.22)] backdrop-blur-xl transition hover:border-white/15 hover:bg-neutral-900/85 ${
+              compact ? "px-2.5 py-1.5 text-[10px]" : "px-3 py-1.5 text-[11px]"
+            }`}
+          >
+            Profile
+          </Link>
+        </div>
       </div>
     </div>
   );
@@ -317,8 +347,18 @@ function MobileRoomMetaBar({
   sessionLabel,
   isBattleTrivia,
   isWordScramble,
+  isArenaRoom,
 }) {
-  const meta = getRoomModeMeta(room, isBattleTrivia, isWordScramble);
+  const meta = getRoomModeMeta(
+    room,
+    isBattleTrivia,
+    isWordScramble,
+    isArenaRoom
+  );
+
+  if (isArenaRoom) {
+    return null;
+  }
 
   return (
     <div className="mb-2.5 rounded-[16px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.015))] px-3 py-2.5 sm:hidden">
@@ -1697,6 +1737,7 @@ const {
             sessionLabel={effectiveSessionLabel}
             isBattleTrivia={isBattleTrivia}
             isWordScramble={isWordScramble}
+            isArenaRoom={isArenaRoom}
             compact={shouldCompactGameChrome}
           />
         </div>
@@ -1708,6 +1749,7 @@ const {
             sessionLabel={effectiveSessionLabel}
             isBattleTrivia={isBattleTrivia}
             isWordScramble={isWordScramble}
+            isArenaRoom={isArenaRoom}
           />
         ) : null}
 
@@ -1724,7 +1766,7 @@ const {
           </div>
         ) : null}
 
-        {isArenaRoom ? (
+        {false && isArenaRoom ? (
           isArenaChallengeOpen ? (
             <div className="flex items-center">
               <button
@@ -1781,13 +1823,34 @@ const {
               <button
                 type="button"
                 onClick={() => setIsArenaCreateOpen(true)}
-                className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-neutral-950"
+                className="hidden rounded-full bg-white px-4 py-2 text-sm font-semibold text-neutral-950 sm:inline-flex"
               >
                 Create Challenge
               </button>
             </div>
+
+            <button
+              type="button"
+              onClick={() => setIsArenaCreateOpen(true)}
+              className="mt-3 inline-flex w-full items-center justify-center rounded-[16px] bg-white px-4 py-3 text-sm font-semibold text-neutral-950 shadow-[0_18px_34px_rgba(255,255,255,0.08)] sm:hidden"
+            >
+              Create Challenge
+            </button>
           </div>
           )
+        ) : null}
+
+        {isArenaChallengeOpen ? (
+          <div className="mb-2 flex items-center">
+            <button
+              type="button"
+              onClick={handleArenaBackToFeed}
+              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-2 text-sm font-medium text-white transition hover:bg-white/[0.08]"
+            >
+              <span aria-hidden="true">â†</span>
+              Back to battles
+            </button>
+          </div>
         ) : null}
 
         {isBattleTrivia ? (
@@ -1991,7 +2054,15 @@ const {
       }}
     >
       {!isKeyboardOpen ? (
-        <MobileFloatingRoomNav compact={shouldCompactMobileChrome} />
+        <MobileFloatingRoomNav
+          compact={shouldCompactMobileChrome}
+          roomBadgeLabel={isArenaRoom ? "RapNometry Arena" : ""}
+          roomBadgeClassName={
+            isArenaRoom
+              ? "border-orange-400/20 bg-orange-500/10 text-orange-200"
+              : ""
+          }
+        />
       ) : null}
 
       <RoomShell
