@@ -191,6 +191,18 @@ export default function ArenaRoomPanel({
           <div className="space-y-4">
             <ArenaHeaderNotice arenaNotice={arenaNotice} />
 
+            {!showToolbar && isBrowseTab && !isViewingChallenge ? (
+              <div className="flex items-center justify-end">
+                <button
+                  type="button"
+                  onClick={onCreateChallenge}
+                  className="rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-neutral-950 shadow-[0_14px_28px_rgba(255,255,255,0.08)]"
+                >
+                  Create Challenge
+                </button>
+              </div>
+            ) : null}
+
             {activeTab === "hall" ? (
               <HallOfBarsPanel hallOfBars={hallOfBars} />
             ) : activeTab === "rankings" ? (
