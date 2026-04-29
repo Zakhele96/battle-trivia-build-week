@@ -344,7 +344,7 @@ public sealed class DirectMessageRepository : IDirectMessageRepository
         await connection.ExecuteAsync(sql, message);
     }
 
-    public async Task MarkConversationReadAsync(Guid conversationId, Guid userId, DateTime readAtUtc)
+    public async Task<int> MarkConversationReadAsync(Guid conversationId, Guid userId, DateTime readAtUtc)
     {
         const string sql = """
             UPDATE direct_messages
@@ -355,7 +355,7 @@ public sealed class DirectMessageRepository : IDirectMessageRepository
             """;
 
         using var connection = _context.CreateConnection();
-        await connection.ExecuteAsync(sql, new { ConversationId = conversationId, UserId = userId, ReadAtUtc = readAtUtc });
+        return await connection.ExecuteAsync(sql, new { ConversationId = conversationId, UserId = userId, ReadAtUtc = readAtUtc });
     }
 
     public async Task ToggleReactionAsync(Guid messageId, Guid userId, string emoji)

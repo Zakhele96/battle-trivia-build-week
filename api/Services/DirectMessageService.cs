@@ -51,9 +51,7 @@ public sealed class DirectMessageService
         if (!isParticipant)
             throw new UnauthorizedAccessException("You are not part of this conversation.");
 
-        var messages = await _directMessageRepository.GetMessagesAsync(conversationId, userId, take);
-        await _directMessageRepository.MarkConversationReadAsync(conversationId, userId, DateTime.UtcNow);
-        return messages;
+        return await _directMessageRepository.GetMessagesAsync(conversationId, userId, take);
     }
 
     public async Task<DirectConversationResponse> GetOrCreateConversationAsync(Guid userId, Guid otherUserId)
@@ -121,13 +119,24 @@ public sealed class DirectMessageService
             };
     }
 
-    public async Task MarkReadAsync(Guid userId, Guid conversationId)
+    public async Task<DirectMessageReadReceiptResponse?> MarkReadAsync(Guid userId, Guid conversationId)
     {
         var isParticipant = await _directMessageRepository.IsParticipantAsync(conversationId, userId);
         if (!isParticipant)
             throw new UnauthorizedAccessException("You are not part of this conversation.");
 
-        await _directMessageRepository.MarkConversationReadAsync(conversationId, userId, DateTime.UtcNow);
+        var readAt = DateTime.UtcNow;
+        var updatedCount = await _directMessageRepository.MarkConversationReadAsync(conversationId, userId, readAt);
+
+        if (updatedCount <= 0)
+            return null;
+
+        return new DirectMessageReadReceiptResponse
+        {
+            ConversationId = conversationId,
+            ReaderUserId = userId,
+            ReadAt = readAt
+        };
     }
 
     public async Task<ChatMessageReactionUpdateResponse> ToggleReactionAsync(Guid userId, Guid messageId, string emoji)

@@ -21,6 +21,7 @@ public sealed class ChatHub : Hub
     private readonly IUserRepository _userRepository;
     private readonly UserPresenceService _userPresenceService;
     private readonly DirectMessageService _directMessageService;
+    private readonly WebPushService _webPushService;
 
     public ChatHub(
         ChatService chatService,
@@ -33,7 +34,8 @@ public sealed class ChatHub : Hub
         WordScrambleSessionStatusService wordScrambleSessionStatusService,
         IUserRepository userRepository,
         UserPresenceService userPresenceService,
-        DirectMessageService directMessageService)
+        DirectMessageService directMessageService,
+        WebPushService webPushService)
     {
         _chatService = chatService;
         _triviaAnswerService = triviaAnswerService;
@@ -46,6 +48,7 @@ public sealed class ChatHub : Hub
         _userRepository = userRepository;
         _userPresenceService = userPresenceService;
         _directMessageService = directMessageService;
+        _webPushService = webPushService;
     }
 
     private Guid GetCurrentUserId()
@@ -121,8 +124,14 @@ public sealed class ChatHub : Hub
 
         try
         {
-            await _directMessageService.MarkReadAsync(userId, conversationId);
+            var readReceipt = await _directMessageService.MarkReadAsync(userId, conversationId);
             await Groups.AddToGroupAsync(Context.ConnectionId, $"dm:{conversationId}");
+
+            if (readReceipt is not null)
+            {
+                await Clients.Group($"dm:{conversationId}")
+                    .SendAsync("DirectMessageRead", readReceipt);
+            }
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -144,6 +153,7 @@ public sealed class ChatHub : Hub
             var message = await _directMessageService.SendMessageAsync(userId, recipientUserId, messageText, replyToMessageId);
             await Clients.Users(userId.ToString(), recipientUserId.ToString())
                 .SendAsync("DirectMessageReceived", message);
+            await _webPushService.SendDirectMessageNotificationAsync(message);
             return new { success = true, message };
         }
         catch (InvalidOperationException ex)

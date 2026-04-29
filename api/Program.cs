@@ -58,6 +58,8 @@ builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 builder.Services.Configure<JwtOptions>(
     builder.Configuration.GetSection(JwtOptions.SectionName));
+builder.Services.Configure<WebPushOptions>(
+    builder.Configuration.GetSection(WebPushOptions.SectionName));
 
 builder.Services.AddSingleton<DapperContext>();
 
@@ -88,6 +90,7 @@ builder.Services.AddScoped<IFriendRepository, FriendRepository>();
 builder.Services.AddScoped<IDirectMessageRepository, DirectMessageRepository>();
 builder.Services.AddScoped<IUserPresenceRepository, UserPresenceRepository>();
 builder.Services.AddScoped<ISupportRepository, SupportRepository>();
+builder.Services.AddScoped<IUserPushSubscriptionRepository, UserPushSubscriptionRepository>();
 
 builder.Services.AddScoped<IWordScrambleSessionRepository, WordScrambleSessionRepository>();
 builder.Services.AddScoped<IWordScrambleRoundRepository, WordScrambleRoundRepository>();
@@ -148,6 +151,8 @@ builder.Services.AddScoped<FriendService>();
 builder.Services.AddScoped<ProfileMissionService>();
 builder.Services.AddScoped<DirectMessageSchemaService>();
 builder.Services.AddScoped<DirectMessageService>();
+builder.Services.AddScoped<WebPushSchemaService>();
+builder.Services.AddScoped<WebPushService>();
 builder.Services.AddScoped<SupportSchemaService>();
 builder.Services.AddScoped<SupportService>();
 builder.Services.AddSingleton<UserPresenceService>();
@@ -248,6 +253,8 @@ using (var scope = app.Services.CreateScope())
     await friendSchemaService.EnsureAsync();
     var directMessageSchemaService = scope.ServiceProvider.GetRequiredService<DirectMessageSchemaService>();
     await directMessageSchemaService.EnsureAsync();
+    var webPushSchemaService = scope.ServiceProvider.GetRequiredService<WebPushSchemaService>();
+    await webPushSchemaService.EnsureAsync();
     var supportSchemaService = scope.ServiceProvider.GetRequiredService<SupportSchemaService>();
     await supportSchemaService.EnsureAsync();
 }

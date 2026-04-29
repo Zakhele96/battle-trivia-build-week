@@ -1,7 +1,9 @@
 using System.Security.Claims;
+using Bts.Api.Hubs;
 using Bts.Api.Models.Requests;
 using Bts.Api.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Bts.Api.Controllers;
@@ -12,10 +14,17 @@ namespace Bts.Api.Controllers;
 public sealed class DirectMessagesController : ControllerBase
 {
     private readonly DirectMessageService _directMessageService;
+    private readonly IHubContext<ChatHub> _chatHubContext;
+    private readonly WebPushService _webPushService;
 
-    public DirectMessagesController(DirectMessageService directMessageService)
+    public DirectMessagesController(
+        DirectMessageService directMessageService,
+        IHubContext<ChatHub> chatHubContext,
+        WebPushService webPushService)
     {
         _directMessageService = directMessageService;
+        _chatHubContext = chatHubContext;
+        _webPushService = webPushService;
     }
 
     [HttpGet("conversations")]
@@ -74,8 +83,20 @@ public sealed class DirectMessagesController : ControllerBase
 
         try
         {
-            await _directMessageService.MarkReadAsync(userId.Value, conversationId);
-            return Ok(new { message = "Conversation read." });
+            var receipt = await _directMessageService.MarkReadAsync(userId.Value, conversationId);
+
+            if (receipt is not null)
+            {
+                await _chatHubContext.Clients.Group($"dm:{conversationId}")
+                    .SendAsync("DirectMessageRead", receipt);
+            }
+
+            if (receipt is not null)
+            {
+                return Ok(receipt);
+            }
+
+            return Ok(new { message = "Conversation already read." });
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -93,6 +114,9 @@ public sealed class DirectMessagesController : ControllerBase
         try
         {
             var message = await _directMessageService.SendMessageAsync(userId.Value, request.RecipientUserId, request.MessageText, request.ReplyToMessageId);
+            await _chatHubContext.Clients.Users(userId.Value.ToString(), request.RecipientUserId.ToString())
+                .SendAsync("DirectMessageReceived", message);
+            await _webPushService.SendDirectMessageNotificationAsync(message);
             return Ok(message);
         }
         catch (KeyNotFoundException ex)

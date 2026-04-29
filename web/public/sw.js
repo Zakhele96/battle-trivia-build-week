@@ -38,6 +38,60 @@ self.addEventListener("message", (event) => {
   }
 });
 
+self.addEventListener("push", (event) => {
+  const payload = (() => {
+    try {
+      return event.data?.json?.() || null;
+    } catch {
+      return null;
+    }
+  })();
+
+  if (!payload) {
+    return;
+  }
+
+  const title = payload.title || "New message";
+  const options = {
+    body: payload.body || "You have a new direct message.",
+    icon: payload.icon || "/icons/icon-192.svg",
+    badge: payload.badge || "/icons/icon-192.svg",
+    tag: payload.conversationId ? `dm:${payload.conversationId}` : "direct-message",
+    renotify: true,
+    data: {
+      url: payload.url || "/messages",
+      conversationId: payload.conversationId || "",
+      senderUserId: payload.senderUserId || "",
+    },
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  const targetUrl = new URL(event.notification.data?.url || "/messages", self.location.origin)
+    .toString();
+
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) {
+        if ("focus" in client) {
+          client.navigate?.(targetUrl);
+          return client.focus();
+        }
+      }
+
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(targetUrl);
+      }
+
+      return undefined;
+    })
+  );
+});
+
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);

@@ -14,6 +14,7 @@ import {
 import { createChatConnection } from "../services/chatConnection";
 import { useAuth } from "../hooks/useAuth";
 import { scheduleIdleTask } from "../utils/scheduleIdleTask";
+import { syncPushSubscriptionIfEnabled } from "../pwa/pushNotifications";
 
 const DirectMessagesContext = createContext(null);
 
@@ -85,6 +86,18 @@ export function DirectMessagesProvider({ children }) {
 
     return cancelIdleRefresh;
   }, [isAuthenticated, isInitializing, refreshConversations, user?.id]);
+
+  useEffect(() => {
+    if (isInitializing || !isAuthenticated || !user?.id) {
+      return;
+    }
+
+    const cancelIdleSync = scheduleIdleTask(() => {
+      syncPushSubscriptionIfEnabled().catch(() => null);
+    }, 2500);
+
+    return cancelIdleSync;
+  }, [isAuthenticated, isInitializing, user?.id]);
 
   useEffect(() => {
     activeConversationIdRef.current = activeConversationId;

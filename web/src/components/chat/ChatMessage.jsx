@@ -500,6 +500,7 @@ export default function ChatMessage({
 
   const editedLabel =
     message.isEdited || message.editedAt ? " · edited" : "";
+  const deliveryStatusLabel = message.deliveryStatusLabel || "";
 
   return (
     <div
@@ -730,6 +731,7 @@ export default function ChatMessage({
             >
               {formatTime(message.sentAt)}
               {editedLabel}
+              {deliveryStatusLabel ? ` · ${deliveryStatusLabel}` : ""}
             </div>
           ) : null}
           </div>

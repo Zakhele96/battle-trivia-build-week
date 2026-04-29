@@ -13,7 +13,7 @@ public interface IDirectMessageRepository
     Task<DirectMessageResponse?> GetMessageByIdAsync(Guid messageId, Guid currentUserId);
     Task<bool> IsParticipantAsync(Guid conversationId, Guid userId);
     Task CreateMessageAsync(DirectMessage message);
-    Task MarkConversationReadAsync(Guid conversationId, Guid userId, DateTime readAtUtc);
+    Task<int> MarkConversationReadAsync(Guid conversationId, Guid userId, DateTime readAtUtc);
     Task ToggleReactionAsync(Guid messageId, Guid userId, string emoji);
     Task<List<ChatMessageReactionResponse>> GetReactionsAsync(Guid messageId, Guid currentUserId);
 }

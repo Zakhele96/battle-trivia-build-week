@@ -9,6 +9,7 @@ api/.vscode/
 api/*.user
 api/*.suo
 api/build-verify
+api/build-verify-dm
 
 web/node_modules/
 web/dist/
