@@ -762,11 +762,11 @@ export default function DirectMessagesPage() {
         isSupporter: message.senderIsSupporter,
         supporterBadgeLabel: message.senderSupporterBadgeLabel,
         messageType: "user",
-        deliveryStatusLabel:
+        deliveryStatus:
           message.id === latestOwnMessageId
             ? message.readAt
-              ? `Seen ${formatReadReceiptTime(message.readAt)}`
-              : "Sent"
+              ? "read"
+              : "sent"
             : "",
       }));
     },

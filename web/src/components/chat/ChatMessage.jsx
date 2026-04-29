@@ -13,6 +13,28 @@ function formatTime(value) {
   }).format(new Date(value));
 }
 
+function MessageStatusTick({ isRead = false }) {
+  const toneClassName = isRead ? "text-emerald-300" : "text-neutral-400";
+
+  return (
+    <span
+      className={`inline-flex items-center ${toneClassName}`}
+      aria-label={isRead ? "Read" : "Sent"}
+      title={isRead ? "Read" : "Sent"}
+    >
+      <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5" aria-hidden="true">
+        <path
+          d="M3.2 8.4L6.1 11.2L12.8 4.8"
+          className="stroke-current"
+          strokeWidth="1.9"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </span>
+  );
+}
+
 function isSameSender(a, b) {
   if (!a || !b) return false;
   if (a.messageType !== "user" || b.messageType !== "user") return false;
@@ -352,7 +374,7 @@ export default function ChatMessage({
   const canUnpinMessage = isAdmin && typeof onUnpinMessage === "function";
 
   const bubbleBase =
-    "flex min-w-[5.5rem] w-fit max-w-[78%] sm:max-w-[72%] lg:max-w-[40rem] flex-col px-2.5 pb-2 pt-2.5 shadow-[0_8px_20px_rgba(0,0,0,0.14)] transition-all duration-200";
+    "flex min-w-[6.25rem] w-fit max-w-[82%] sm:max-w-[76%] lg:max-w-[43rem] flex-col px-2.5 pb-2 pt-2.5 shadow-[0_8px_20px_rgba(0,0,0,0.14)] transition-all duration-200";
 
   const mineStyles = isMessageFromModerator
     ? "bg-[linear-gradient(180deg,rgba(88,101,242,1)_0%,rgba(64,78,237,1)_100%)] text-white ring-1 ring-violet-300/25"
@@ -500,7 +522,7 @@ export default function ChatMessage({
 
   const editedLabel =
     message.isEdited || message.editedAt ? " · edited" : "";
-  const deliveryStatusLabel = message.deliveryStatusLabel || "";
+  const deliveryStatus = message.deliveryStatus || "";
 
   return (
     <div
@@ -727,11 +749,14 @@ export default function ChatMessage({
 
           {!groupedWithNext ? (
             <div
-              className={`mt-1 text-[10px] font-medium ${timestampTextClass}`}
+              className={`mt-1 flex items-center gap-1.5 text-[10px] font-medium ${timestampTextClass}`}
             >
-              {formatTime(message.sentAt)}
-              {editedLabel}
-              {deliveryStatusLabel ? ` · ${deliveryStatusLabel}` : ""}
+              <span>
+                {formatTime(message.sentAt)}
+                {editedLabel}
+              </span>
+              {deliveryStatus === "sent" ? <MessageStatusTick /> : null}
+              {deliveryStatus === "read" ? <MessageStatusTick isRead /> : null}
             </div>
           ) : null}
           </div>
