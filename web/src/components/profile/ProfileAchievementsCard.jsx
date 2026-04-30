@@ -39,7 +39,7 @@ export default function ProfileAchievementsCard({
 }) {
   if (loading) {
     return (
-      <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5">
+      <div className="rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(245,158,11,0.11),transparent_35%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] p-5">
         <div className="text-sm text-neutral-500">Loading achievements...</div>
       </div>
     );
@@ -48,9 +48,20 @@ export default function ProfileAchievementsCard({
   const achievements = progression?.recentAchievements || [];
 
   return (
-    <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5">
-      <div className="mb-4 text-sm font-semibold text-white">
-        Recent achievements
+    <div className="rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(245,158,11,0.11),transparent_35%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] p-5">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <div className="text-[10px] uppercase tracking-[0.16em] text-amber-200/75">
+            Recent wins
+          </div>
+          <div className="mt-1 text-[22px] font-semibold tracking-[-0.04em] text-white">
+            Achievements
+          </div>
+        </div>
+
+        <div className="rounded-full border border-amber-300/18 bg-amber-400/10 px-3 py-1 text-[11px] font-semibold text-amber-100">
+          {achievements.length}
+        </div>
       </div>
 
       {achievements.length === 0 ? (
@@ -62,10 +73,12 @@ export default function ProfileAchievementsCard({
           {achievements.map((achievement) => (
             <div
               key={`${achievement.code}-${achievement.earnedAt}`}
-              className="rounded-[18px] border border-white/6 bg-white/[0.03] px-4 py-3"
+              className="rounded-[20px] border border-white/8 bg-black/20 px-4 py-3.5"
             >
               <div className="flex items-start gap-3">
-                <div className="text-xl">{iconFor(achievement.iconKey)}</div>
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] border border-white/8 bg-white/[0.04] text-xl">
+                  {iconFor(achievement.iconKey)}
+                </div>
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-3">

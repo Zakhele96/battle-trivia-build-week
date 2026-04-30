@@ -4,6 +4,43 @@ import AppTopBar from "../components/layout/AppTopBar";
 import { useAlerts } from "../context/AlertsContext";
 import { useTheme } from "../hooks/useTheme";
 
+function SummaryCard({ label, value, detail, accent = "blue" }) {
+  const accentClassName =
+    accent === "amber"
+      ? "border-amber-300/18 bg-amber-400/10 text-amber-200"
+      : accent === "emerald"
+        ? "border-emerald-300/18 bg-emerald-400/10 text-emerald-200"
+        : "border-blue-300/18 bg-blue-400/10 text-blue-200";
+
+  return (
+    <div className="rounded-[18px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-3.5 transition hover:border-white/15 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.018))] sm:rounded-[20px] sm:p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
+          {label}
+        </div>
+        <div className={`rounded-full border px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] ${accentClassName}`}>
+          Live
+        </div>
+      </div>
+      <div className="mt-1.5 text-[16px] font-semibold tracking-[-0.03em] text-white sm:text-[17px]">
+        {label}
+      </div>
+      <div className="mt-2 text-[22px] font-semibold tracking-[-0.05em] text-white sm:text-[24px]">
+        {value}
+      </div>
+      <div className="mt-1 text-[12px] leading-5 text-neutral-400 sm:text-[13px]">{detail}</div>
+    </div>
+  );
+}
+
+function SectionShell({ children }) {
+  return (
+    <section className="rounded-[20px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.028),rgba(255,255,255,0.012))] p-3.5 sm:rounded-[24px] sm:p-4">
+      {children}
+    </section>
+  );
+}
+
 function AlertCard({ item, isRead = false, onMarkRead, onPrimaryAction }) {
   const toneClass =
     item.tone === "amber"
@@ -117,6 +154,9 @@ export default function AlertsPage() {
   };
 
   const isLight = resolvedTheme === "light";
+  const unreadAlerts = alerts.filter((item) => !readAlertIds.includes(item.id));
+  const actionAlerts = unreadAlerts.filter((item) => item.ctaTo).length;
+  const latestAlertLabel = alerts[0]?.kind || "Quiet";
   const lightModeUndoFilter = isLight
     ? {
         filter:
@@ -154,6 +194,27 @@ export default function AlertsPage() {
           ].filter(Boolean)}
         />
 
+        <div className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <SummaryCard
+            label="Unread"
+            value={unreadCount}
+            detail="Fresh alerts that still need a read or an action."
+            accent="blue"
+          />
+          <SummaryCard
+            label="Actionable"
+            value={actionAlerts}
+            detail="Alerts that can take you somewhere immediately."
+            accent="emerald"
+          />
+          <SummaryCard
+            label="Latest tone"
+            value={latestAlertLabel}
+            detail="The most recent kind of alert currently at the top of the inbox."
+            accent="amber"
+          />
+        </div>
+
         {error ? (
           <div className="mb-4 rounded-[18px] border border-red-900/35 bg-red-950/25 px-4 py-3 text-sm text-red-300/90">
             {error}
@@ -161,25 +222,45 @@ export default function AlertsPage() {
         ) : null}
 
         {loading ? (
-          <div className="rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-10 text-center text-sm text-neutral-500">
-            Loading alerts...
-          </div>
+          <SectionShell>
+            <div className="rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-10 text-center text-sm text-neutral-500">
+              Loading alerts...
+            </div>
+          </SectionShell>
         ) : alerts.length === 0 ? (
-          <div className="rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-10 text-center text-sm text-neutral-500">
-            No alerts right now. Play a few rounds, climb a board, or build a squad and this page will light up.
-          </div>
+          <SectionShell>
+            <div className="rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-10 text-center text-sm text-neutral-500">
+              No alerts right now. Play a few rounds, climb a board, or build a squad and this page will light up.
+            </div>
+          </SectionShell>
         ) : (
-          <div className="space-y-3">
-            {alerts.map((item) => (
-              <AlertCard
-                key={item.id}
-                item={item}
-                isRead={readAlertIds.includes(item.id)}
-                onMarkRead={markAlertRead}
-                onPrimaryAction={handlePrimaryAction}
-              />
-            ))}
-          </div>
+          <SectionShell>
+            <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500">
+                  Inbox flow
+                </div>
+                <div className="mt-1 text-[17px] font-semibold tracking-[-0.03em] text-white">
+                  Alerts ordered for quick triage
+                </div>
+                <div className="mt-1 text-[12px] leading-5 text-neutral-400">
+                  Unread items stay visually louder so you can scan, act, and clear pressure quickly.
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {alerts.map((item) => (
+                <AlertCard
+                  key={item.id}
+                  item={item}
+                  isRead={readAlertIds.includes(item.id)}
+                  onMarkRead={markAlertRead}
+                  onPrimaryAction={handlePrimaryAction}
+                />
+              ))}
+            </div>
+          </SectionShell>
         )}
       </div>
     </div>

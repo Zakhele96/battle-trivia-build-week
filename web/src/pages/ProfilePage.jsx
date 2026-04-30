@@ -180,6 +180,34 @@ function SectionTitle({ eyebrow, title, description, action }) {
   );
 }
 
+function MobileSectionShell({ eyebrow, title, description, children, accent = "blue" }) {
+  const accentClass =
+    accent === "amber"
+      ? "border-amber-300/16 bg-[radial-gradient(circle_at_top_right,rgba(251,191,36,0.12),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.012))]"
+      : accent === "violet"
+        ? "border-violet-300/16 bg-[radial-gradient(circle_at_top_right,rgba(167,139,250,0.12),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.012))]"
+        : "border-blue-300/16 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.012))]";
+
+  return (
+    <section className={`mb-5 rounded-[28px] border p-4 sm:hidden ${accentClass}`}>
+      <div className="mb-4">
+        <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500">
+          {eyebrow}
+        </div>
+        <div className="mt-1 text-[22px] font-semibold tracking-[-0.04em] text-white">
+          {title}
+        </div>
+        {description ? (
+          <div className="mt-1 text-[13px] leading-6 text-neutral-400">
+            {description}
+          </div>
+        ) : null}
+      </div>
+      {children}
+    </section>
+  );
+}
+
 function Panel({ children, className = "" }) {
   return (
     <div
@@ -206,18 +234,18 @@ function StatCard({ label, value, detail }) {
 
 function HistoryItem({ item }) {
   return (
-    <div className="rounded-[18px] border border-white/8 bg-black/20 px-4 py-3">
+    <div className="rounded-[20px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] px-4 py-3.5">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <div className="truncate text-sm font-medium text-white">
+          <div className="truncate text-[15px] font-semibold text-white">
             {item.title || "Battle Trivia session"}
           </div>
           <div className="mt-1 text-[11px] text-neutral-500">{formatDate(item.endedAt)}</div>
         </div>
 
         <div className="shrink-0 text-right">
-          <div className="text-sm font-semibold text-blue-300">{item.score} pts</div>
-          <div className="mt-1 text-[11px] text-neutral-500">#{item.rank}</div>
+          <div className="text-[15px] font-semibold text-blue-300">{item.score} pts</div>
+          <div className="mt-1 text-[11px] text-neutral-500">Rank #{item.rank}</div>
         </div>
       </div>
     </div>
@@ -229,6 +257,10 @@ function MobileProfileHero({
   authUser,
   avatarUrl,
   statusMessage,
+  progression,
+  stats,
+  playerMomentum,
+  currentStanding,
   onAvatarFileChange,
   onRemoveAvatar,
   isRemovingAvatar = false,
@@ -242,15 +274,38 @@ function MobileProfileHero({
   const username = profile?.username || authUser?.username || "username";
   const providerLabel = getAuthProviderLabel(authUser?.authProvider || "local");
   const isSupporter = authUser?.isSupporter || profile?.isSupporter;
+  const progressPercent =
+    progression && progression.nextLevelXp > progression.currentLevelStartXp
+      ? Math.min(
+          100,
+          Math.round(
+            ((progression.xpTotal - progression.currentLevelStartXp) /
+              (progression.nextLevelXp - progression.currentLevelStartXp)) *
+              100
+          )
+        )
+      : 0;
 
   return (
-    <div className="mb-5 rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.14),transparent_42%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] p-4 sm:hidden">
-      <div className="flex flex-col items-center text-center">
-        <div className="text-[10px] uppercase tracking-[0.18em] text-blue-300/70">
-          Profile
+    <div className="mb-5 rounded-[30px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.18),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.015))] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.22)] sm:hidden">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-[10px] uppercase tracking-[0.18em] text-blue-300/75">
+            Your account
+          </div>
+          <div className="mt-1 text-[28px] font-semibold tracking-[-0.05em] text-white">
+            {displayName}
+          </div>
+          <div className="mt-1 text-[13px] text-neutral-400">@{username}</div>
         </div>
 
-        <div className="relative mt-4 h-24 w-24">
+        <div className="shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-neutral-300">
+          {providerLabel}
+        </div>
+      </div>
+
+      <div className="mt-4 flex items-start gap-4">
+        <div className="relative h-24 w-24 shrink-0">
           <div className="h-24 w-24 overflow-hidden rounded-full border border-white/10 bg-white/[0.04]">
             {avatarUrl ? (
               <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
@@ -303,27 +358,75 @@ function MobileProfileHero({
           </button>
         </div>
 
-        <div className="mt-3 text-[24px] font-semibold tracking-[-0.04em] text-white">
-          {displayName}
-        </div>
-        <div className="mt-1 text-[13px] text-neutral-400">@{username}</div>
-
-        <div className="mt-3 flex flex-wrap justify-center gap-2">
-          <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-neutral-300">
-            {providerLabel}
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap gap-2">
+            {progression ? (
+              <div className="rounded-full border border-blue-300/18 bg-blue-500/10 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-blue-100">
+                Level {progression.level}
+              </div>
+            ) : null}
+            {currentStanding?.rank ? (
+              <div className="rounded-full border border-emerald-300/18 bg-emerald-500/10 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-emerald-100">
+                Rank #{currentStanding.rank}
+              </div>
+            ) : null}
+            <div
+              className={`rounded-full border px-3 py-1 text-[10px] font-medium uppercase tracking-[0.14em] ${
+                isSupporter
+                  ? "border-amber-300/18 bg-amber-400/10 text-amber-100"
+                  : "border-white/10 bg-white/[0.04] text-neutral-300"
+              }`}
+            >
+              {isSupporter ? "Supporter active" : "Supporter inactive"}
+            </div>
           </div>
-          <div
-            className={`rounded-full border px-3 py-1 text-[10px] font-medium uppercase tracking-[0.14em] ${
-              isSupporter
-                ? "border-amber-300/18 bg-amber-400/10 text-amber-100"
-                : "border-white/10 bg-white/[0.04] text-neutral-300"
-            }`}
-          >
-            {isSupporter ? "Supporter active" : "Supporter inactive"}
+
+          {progression ? (
+            <div className="mt-4">
+              <div className="mb-1.5 flex items-center justify-between text-[11px] text-neutral-400">
+                <span>{progression.xpTotal.toLocaleString()} XP</span>
+                <span>{progressPercent}% to next level</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
+                <div
+                  className="h-full rounded-full bg-[linear-gradient(90deg,rgba(59,130,246,1)_0%,rgba(96,165,250,1)_45%,rgba(139,92,246,1)_100%)]"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+            </div>
+          ) : null}
+
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            <div className="rounded-[18px] border border-white/8 bg-black/20 px-3 py-2.5">
+              <div className="text-[10px] uppercase tracking-[0.14em] text-neutral-500">
+                Correct
+              </div>
+              <div className="mt-1 text-[16px] font-semibold tracking-[-0.03em] text-white">
+                {stats?.totalCorrectAnswers ?? 0}
+              </div>
+            </div>
+            <div className="rounded-[18px] border border-white/8 bg-black/20 px-3 py-2.5">
+              <div className="text-[10px] uppercase tracking-[0.14em] text-neutral-500">
+                Weekly wins
+              </div>
+              <div className="mt-1 text-[16px] font-semibold tracking-[-0.03em] text-white">
+                {stats?.weeklyWins ?? 0}
+              </div>
+            </div>
+            <div className="rounded-[18px] border border-white/8 bg-black/20 px-3 py-2.5">
+              <div className="text-[10px] uppercase tracking-[0.14em] text-neutral-500">
+                Fastest
+              </div>
+              <div className="mt-1 text-[16px] font-semibold tracking-[-0.03em] text-white">
+                {formatFastest(stats?.fastestCorrectAnswerMs)}
+              </div>
+            </div>
           </div>
         </div>
+      </div>
 
-        <div className="mt-4 w-full rounded-[18px] border border-white/8 bg-black/20 px-4 py-3 text-left">
+      <div className="mt-4 grid gap-3">
+        <div className="rounded-[20px] border border-white/8 bg-black/20 px-4 py-3 text-left">
           <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
             DM status
           </div>
@@ -331,6 +434,18 @@ function MobileProfileHero({
             {statusMessage || "No status set right now."}
           </div>
         </div>
+
+        {playerMomentum ? (
+          <div className="rounded-[20px] border border-violet-400/18 bg-violet-500/10 px-4 py-3">
+            <div className="text-[10px] uppercase tracking-[0.16em] text-violet-100/75">
+              This week
+            </div>
+            <div className="mt-1 text-sm font-medium text-white">{playerMomentum.title}</div>
+            <div className="mt-1 text-[12px] leading-5 text-violet-100/80">
+              {playerMomentum.detail}
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -1450,6 +1565,10 @@ export default function ProfilePage() {
           authUser={authUser}
           avatarUrl={avatarUrl || null}
           statusMessage={statusMessage}
+          progression={progression}
+          stats={stats}
+          playerMomentum={playerMomentum}
+          currentStanding={currentCombinedStanding}
           onAvatarFileChange={handleAvatarFileChange}
           onRemoveAvatar={handleRemoveAvatar}
           isRemovingAvatar={isRemovingAvatar}
@@ -1464,13 +1583,11 @@ export default function ProfilePage() {
           />
         </div>
 
-        <section className="mb-5 sm:hidden">
-          <SectionTitle
-            eyebrow="Profile"
-            title="Account details"
-            description="Edit the basics people see first."
-          />
-
+        <MobileSectionShell
+          eyebrow="Profile"
+          title="Account details"
+          description="Edit the basics people see first."
+        >
           <Panel>
             {isLoadingProfile ? (
               <div className="text-sm text-neutral-500">Loading profile...</div>
@@ -1530,27 +1647,27 @@ export default function ProfilePage() {
               </form>
             )}
           </Panel>
-        </section>
+        </MobileSectionShell>
 
-        <section className="mb-5 sm:hidden">
-          <SectionTitle
-            eyebrow="Theme"
-            title="Theme"
-            description="Dark is the default, but you can switch it here."
-          />
+        <MobileSectionShell
+          eyebrow="Theme"
+          title="Theme"
+          description="Dark is the default, but you can switch it here."
+          accent="violet"
+        >
           <ThemeCard
             themePreference={themePreference}
             setThemePreference={setThemePreference}
             isLight={isLight}
           />
-        </section>
+        </MobileSectionShell>
 
-        <section className="mb-5 sm:hidden">
-          <SectionTitle
-            eyebrow="Sound"
-            title="Sound controls"
-            description="Control answer feedback and timer warnings for this phone."
-          />
+        <MobileSectionShell
+          eyebrow="Sound"
+          title="Sound controls"
+          description="Control answer feedback and timer warnings for this phone."
+          accent="amber"
+        >
           <SoundCard
             soundEffectsEnabled={soundEffectsEnabled}
             timerWarningsEnabled={timerWarningsEnabled}
@@ -1558,7 +1675,7 @@ export default function ProfilePage() {
             setTimerWarningsEnabled={setTimerWarningsEnabled}
             isLight={isLight}
           />
-        </section>
+        </MobileSectionShell>
 
         <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="space-y-6">
@@ -1858,80 +1975,164 @@ export default function ProfilePage() {
             </section>
 
             <section>
-              <SectionTitle
+              <div className="hidden sm:block">
+                <SectionTitle
+                  eyebrow="History"
+                  title="Recent Battle Trivia results"
+                  description="Your latest finishes without needing to open the full activity page."
+                />
+              </div>
+
+              <MobileSectionShell
                 eyebrow="History"
-                title="Recent Battle Trivia results"
-                description="Your latest finishes without needing to open the full activity page."
-              />
+                title="Recent results"
+                description="Your latest Battle Trivia finishes in a cleaner mobile stack."
+                accent="blue"
+              >
+                <Panel>
+                  {isLoadingHistory ? (
+                    <div className="text-sm text-neutral-500">Loading history...</div>
+                  ) : history.length === 0 ? (
+                    <div className="text-sm text-neutral-500">No history yet.</div>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {history.map((item) => (
+                        <HistoryItem key={item.id} item={item} />
+                      ))}
 
-              <Panel>
-                {isLoadingHistory ? (
-                  <div className="text-sm text-neutral-500">Loading history...</div>
-                ) : history.length === 0 ? (
-                  <div className="text-sm text-neutral-500">No history yet.</div>
-                ) : (
-                  <div className="space-y-2.5">
-                    {history.map((item) => (
-                      <HistoryItem key={item.id} item={item} />
-                    ))}
+                      <div className="flex items-center justify-between gap-3 pt-2">
+                        <button
+                          type="button"
+                          disabled={page <= 1}
+                          onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                          className="rounded-[14px] border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white transition hover:bg-white/[0.06] disabled:opacity-50"
+                        >
+                          Previous
+                        </button>
 
-                    <div className="flex items-center justify-between pt-2">
-                      <button
-                        type="button"
-                        disabled={page <= 1}
-                        onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                        className="rounded-[14px] border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white transition hover:bg-white/[0.06] disabled:opacity-50"
-                      >
-                        Previous
-                      </button>
+                        <div className="text-center text-sm text-neutral-400">
+                          Page {page} of {totalPages}
+                        </div>
 
-                      <div className="text-sm text-neutral-400">
-                        Page {page} of {totalPages}
+                        <button
+                          type="button"
+                          disabled={page >= totalPages}
+                          onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                          className="rounded-[14px] border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white transition hover:bg-white/[0.06] disabled:opacity-50"
+                        >
+                          Next
+                        </button>
                       </div>
-
-                      <button
-                        type="button"
-                        disabled={page >= totalPages}
-                        onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-                        className="rounded-[14px] border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white transition hover:bg-white/[0.06] disabled:opacity-50"
-                      >
-                        Next
-                      </button>
                     </div>
-                  </div>
-                )}
-              </Panel>
+                  )}
+                </Panel>
+              </MobileSectionShell>
+
+              <div className="hidden sm:block">
+                <Panel>
+                  {isLoadingHistory ? (
+                    <div className="text-sm text-neutral-500">Loading history...</div>
+                  ) : history.length === 0 ? (
+                    <div className="text-sm text-neutral-500">No history yet.</div>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {history.map((item) => (
+                        <HistoryItem key={item.id} item={item} />
+                      ))}
+
+                      <div className="flex items-center justify-between pt-2">
+                        <button
+                          type="button"
+                          disabled={page <= 1}
+                          onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                          className="rounded-[14px] border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white transition hover:bg-white/[0.06] disabled:opacity-50"
+                        >
+                          Previous
+                        </button>
+
+                        <div className="text-sm text-neutral-400">
+                          Page {page} of {totalPages}
+                        </div>
+
+                        <button
+                          type="button"
+                          disabled={page >= totalPages}
+                          onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                          className="rounded-[14px] border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white transition hover:bg-white/[0.06] disabled:opacity-50"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </Panel>
+              </div>
             </section>
           </div>
         </div>
 
         <section className="mt-6">
-          <SectionTitle
+          <div className="hidden sm:block">
+            <SectionTitle
+              eyebrow="Missions"
+              title="Daily and weekly goals"
+              description="Short goals that tell you what to do next."
+            />
+          </div>
+          <MobileSectionShell
             eyebrow="Missions"
             title="Daily and weekly goals"
             description="Short goals that tell you what to do next."
-          />
-          <ProfileMissionsCard missions={missions} loading={isLoadingMissions} />
+            accent="amber"
+          >
+            <ProfileMissionsCard missions={missions} loading={isLoadingMissions} />
+          </MobileSectionShell>
+          <div className="hidden sm:block">
+            <ProfileMissionsCard missions={missions} loading={isLoadingMissions} />
+          </div>
         </section>
 
         <section className="mt-6">
-          <SectionTitle
+          <div className="hidden sm:block">
+            <SectionTitle
+              eyebrow="Friends"
+              title="People you compete with"
+              description="Search, add, and manage the people you want on your board."
+            />
+          </div>
+          <MobileSectionShell
             eyebrow="Friends"
-            title="People you compete with"
+            title="Friends and rivals"
             description="Search, add, and manage the people you want on your board."
-          />
-          <ProfileFriendsCard
-            searchQuery={friendSearchQuery}
-            onSearchQueryChange={setFriendSearchQuery}
-            onSearch={handleFriendSearch}
-            searchResults={friendSearchResults}
-            network={friendNetwork}
-            loading={isLoadingFriends}
-            onSendRequest={handleSendFriendRequest}
-            onAcceptRequest={handleAcceptFriendRequest}
-            onDeclineRequest={handleDeclineFriendRequest}
-          />
-          {friendMessage ? <div className="mt-3 text-sm text-neutral-400">{friendMessage}</div> : null}
+            accent="violet"
+          >
+            <ProfileFriendsCard
+              searchQuery={friendSearchQuery}
+              onSearchQueryChange={setFriendSearchQuery}
+              onSearch={handleFriendSearch}
+              searchResults={friendSearchResults}
+              network={friendNetwork}
+              loading={isLoadingFriends}
+              onSendRequest={handleSendFriendRequest}
+              onAcceptRequest={handleAcceptFriendRequest}
+              onDeclineRequest={handleDeclineFriendRequest}
+            />
+            {friendMessage ? <div className="mt-3 text-sm text-neutral-400">{friendMessage}</div> : null}
+          </MobileSectionShell>
+          <div className="hidden sm:block">
+            <ProfileFriendsCard
+              searchQuery={friendSearchQuery}
+              onSearchQueryChange={setFriendSearchQuery}
+              onSearch={handleFriendSearch}
+              searchResults={friendSearchResults}
+              network={friendNetwork}
+              loading={isLoadingFriends}
+              onSendRequest={handleSendFriendRequest}
+              onAcceptRequest={handleAcceptFriendRequest}
+              onDeclineRequest={handleDeclineFriendRequest}
+            />
+            {friendMessage ? <div className="mt-3 text-sm text-neutral-400">{friendMessage}</div> : null}
+          </div>
         </section>
 
         <section className="mt-6">

@@ -50,6 +50,29 @@ function StatCard({ label, value, detail }) {
   );
 }
 
+function SummaryCard({ label, value, detail, accent = "blue" }) {
+  const accentClassName =
+    accent === "violet"
+      ? "border-violet-300/18 bg-violet-500/10 text-violet-200"
+      : accent === "emerald"
+        ? "border-emerald-300/18 bg-emerald-400/10 text-emerald-200"
+        : "border-blue-300/18 bg-blue-400/10 text-blue-200";
+
+  return (
+    <div className="rounded-[18px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-3.5 transition hover:border-white/15 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.018))] sm:rounded-[20px] sm:p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">{label}</div>
+        <div className={`rounded-full border px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] ${accentClassName}`}>
+          Live
+        </div>
+      </div>
+      <div className="mt-1.5 text-[16px] font-semibold tracking-[-0.03em] text-white sm:text-[17px]">{label}</div>
+      <div className="mt-2 text-[22px] font-semibold tracking-[-0.05em] text-white sm:text-[24px]">{value}</div>
+      <div className="mt-1 text-[12px] leading-5 text-neutral-400 sm:text-[13px]">{detail}</div>
+    </div>
+  );
+}
+
 export default function SquadsPage() {
   const { resolvedTheme } = useTheme();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -397,6 +420,27 @@ export default function SquadsPage() {
           actions={[]}
         />
 
+        <div className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <SummaryCard
+            label="Your squads"
+            value={squads.length}
+            detail="Private crew spaces you can switch between and compete inside."
+            accent="blue"
+          />
+          <SummaryCard
+            label="Top member"
+            value={topMember ? topMember.displayName || topMember.username : "Waiting"}
+            detail={topMember ? `${topMember.score} points currently lead your selected squad board.` : "Your leading squad member appears here once the board loads."}
+            accent="emerald"
+          />
+          <SummaryCard
+            label="Board mode"
+            value={selectedSquad?.leaderboardLabel || "Combined"}
+            detail="Current squad board slice shown in the detailed panel below."
+            accent="violet"
+          />
+        </div>
+
         {error ? (
           <div className="mb-4 rounded-[18px] border border-red-900/35 bg-red-950/25 px-4 py-3 text-sm text-red-300/90">
             {error}
@@ -410,7 +454,7 @@ export default function SquadsPage() {
         ) : null}
 
         <div className="mb-6 grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
-          <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
+          <div className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-4">
             <SectionHeader
               eyebrow="Start a squad"
               title="Create or join"
@@ -468,7 +512,7 @@ export default function SquadsPage() {
         </div>
 
         <div className="grid gap-4 lg:grid-cols-[0.88fr_1.12fr]">
-          <section className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
+          <section className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-4">
             <SectionHeader
               eyebrow="Your squads"
               title="Choose a squad"
@@ -519,7 +563,7 @@ export default function SquadsPage() {
             )}
           </section>
 
-          <section className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
+          <section className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-4">
             <SectionHeader
               eyebrow="Squad board"
               title={selectedSquad?.name || "Select a squad"}

@@ -298,10 +298,10 @@ export default function ChatInput({
         <div className="group relative flex-1">
           <div className="pointer-events-none absolute inset-0 rounded-[24px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_58%)]" />
 
-          <div className="relative min-h-[54px] overflow-hidden rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.018))] shadow-[0_10px_24px_rgba(0,0,0,0.18)] backdrop-blur-xl transition-all duration-300 focus-within:border-blue-400/20 focus-within:shadow-[0_12px_30px_rgba(0,0,0,0.22)] sm:min-h-[58px] sm:rounded-[24px]">
+          <div className="relative min-h-[52px] overflow-hidden rounded-[20px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.018))] shadow-[0_10px_24px_rgba(0,0,0,0.18)] backdrop-blur-xl transition-all duration-300 focus-within:border-blue-400/20 focus-within:shadow-[0_12px_30px_rgba(0,0,0,0.22)] sm:min-h-[58px] sm:rounded-[24px]">
             <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/10" />
 
-            <div className="flex min-h-[54px] items-center gap-2.5 px-3.5 sm:min-h-[58px] sm:gap-3 sm:px-4">
+            <div className="flex min-h-[52px] items-center gap-2 px-3 sm:min-h-[58px] sm:gap-3 sm:px-4">
               <span
                 className={`hidden h-2 w-2 shrink-0 rounded-full sm:block ${
                   canSubmit
@@ -336,7 +336,7 @@ export default function ChatInput({
                 data-1p-ignore="true"
                 enterKeyHint="send"
                 inputMode="text"
-                className="max-h-[120px] min-h-[26px] w-full resize-none overflow-y-auto bg-transparent py-0.5 text-[16px] leading-6 text-white outline-none placeholder:text-neutral-500 disabled:cursor-not-allowed disabled:opacity-60 sm:text-[15px]"
+                className="max-h-[120px] min-h-[26px] w-full resize-none overflow-y-auto bg-transparent py-0.5 text-[15px] leading-5 text-white outline-none placeholder:text-neutral-500 disabled:cursor-not-allowed disabled:opacity-60 sm:text-[15px] sm:leading-6"
               />
             </div>
           </div>
@@ -345,7 +345,7 @@ export default function ChatInput({
         <button
           type="submit"
           disabled={!canSubmit}
-          className={`group relative h-[54px] overflow-hidden rounded-[20px] transition-all duration-300 sm:h-[58px] sm:rounded-[22px] ${
+          className={`group relative h-[52px] overflow-hidden rounded-[18px] transition-all duration-300 sm:h-[58px] sm:rounded-[22px] ${
             canSubmit
               ? "shadow-[0_12px_28px_rgba(37,99,235,0.28)] hover:-translate-y-[1px] hover:shadow-[0_15px_34px_rgba(37,99,235,0.34)] active:translate-y-0"
               : "shadow-none"

@@ -9,7 +9,7 @@ import { useState } from "react";
 
 function Panel({ children, className = "" }) {
   return (
-    <div className={`rounded-[26px] border border-white/10 bg-white/[0.03] p-4 sm:p-5 ${className}`}>
+    <div className={`min-w-0 rounded-[26px] border border-white/10 bg-white/[0.03] p-4 sm:p-5 ${className}`}>
       {children}
     </div>
   );
@@ -25,6 +25,29 @@ function StatusPill({ active, label }) {
       }`}
     >
       {label}
+    </div>
+  );
+}
+
+function SummaryCard({ label, value, detail, accent = "amber" }) {
+  const accentClassName =
+    accent === "emerald"
+      ? "border-emerald-300/18 bg-emerald-400/10 text-emerald-200"
+      : accent === "blue"
+        ? "border-blue-300/18 bg-blue-400/10 text-blue-200"
+        : "border-amber-300/18 bg-amber-400/10 text-amber-200";
+
+  return (
+    <div className="rounded-[18px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-3.5 transition hover:border-white/15 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.018))] sm:rounded-[20px] sm:p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">{label}</div>
+        <div className={`rounded-full border px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] ${accentClassName}`}>
+          Live
+        </div>
+      </div>
+      <div className="mt-1.5 text-[16px] font-semibold tracking-[-0.03em] text-white sm:text-[17px]">{label}</div>
+      <div className="mt-2 text-[22px] font-semibold tracking-[-0.05em] text-white sm:text-[24px]">{value}</div>
+      <div className="mt-1 text-[12px] leading-5 text-neutral-400 sm:text-[13px]">{detail}</div>
     </div>
   );
 }
@@ -88,6 +111,27 @@ export default function SupportPage() {
           description="Two safe ways to help: a low-cost once-off supporter payment and a simple ad-backed support page."
           actions={[{ label: "Open profile", to: "/profile" }]}
         />
+
+        <div className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <SummaryCard
+            label="Supporter tier"
+            value="R18"
+            detail="One simple once-off payment that activates supporter status for 30 days."
+            accent="amber"
+          />
+          <SummaryCard
+            label="Status"
+            value={isSupporter ? supporterBadge : "Available"}
+            detail="Your account can carry a visible supporter identity across chat and DMs."
+            accent="emerald"
+          />
+          <SummaryCard
+            label="Backup support"
+            value="Ads"
+            detail="A clean ad-backed support area keeps this page useful even when people skip checkout."
+            accent="blue"
+          />
+        </div>
 
         <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
           <Panel className="bg-[radial-gradient(circle_at_top_left,rgba(251,191,36,0.12),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.012))]">

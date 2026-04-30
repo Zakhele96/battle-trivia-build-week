@@ -5,10 +5,10 @@ function MissionProgress({ mission }) {
       : 0;
 
   return (
-    <div className="rounded-[18px] border border-white/8 bg-black/20 p-4">
+    <div className="rounded-[20px] border border-white/8 bg-black/20 p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-sm font-semibold text-white">{mission.title}</div>
+          <div className="text-[15px] font-semibold text-white">{mission.title}</div>
           <div className="mt-1 text-[12px] leading-5 text-neutral-400">
             {mission.description}
           </div>
@@ -52,7 +52,7 @@ export default function ProfileMissionsCard({
 }) {
   if (loading) {
     return (
-      <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5">
+      <div className="rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(245,158,11,0.11),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] p-5">
         <div className="text-sm text-neutral-500">Loading missions...</div>
       </div>
     );
@@ -60,7 +60,7 @@ export default function ProfileMissionsCard({
 
   if (!missions) {
     return (
-      <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5">
+      <div className="rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(245,158,11,0.11),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] p-5">
         <div className="text-sm text-neutral-500">No missions yet.</div>
       </div>
     );
@@ -79,10 +79,13 @@ export default function ProfileMissionsCard({
       : 0;
 
   return (
-    <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5">
+    <div className="rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(245,158,11,0.11),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] p-5">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <div className="text-sm font-semibold text-white">Daily and weekly missions</div>
+          <div className="text-[10px] uppercase tracking-[0.16em] text-amber-200/75">
+            Momentum
+          </div>
+          <div className="mt-1 text-[22px] font-semibold tracking-[-0.04em] text-white">Daily and weekly missions</div>
           <div className="mt-1 text-[12px] leading-5 text-neutral-400">
             Short-term goals give people a reason to come back before the board resets.
           </div>

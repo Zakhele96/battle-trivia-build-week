@@ -92,7 +92,7 @@ function StreamHeader({ count, compact = false }) {
   return (
     <div
       className={`sticky top-0 z-[2] bg-[linear-gradient(180deg,rgba(10,10,10,0.94),rgba(10,10,10,0.82),rgba(10,10,10,0))] backdrop-blur-md ${
-        compact ? "mb-2 pb-1.5 pt-0" : "mb-3 pb-3 pt-1"
+        compact ? "mb-2 pb-1.5 pt-0" : "mb-2.5 pb-2.5 pt-0.5"
       }`}
     >
       <div className="flex items-center justify-center">
@@ -115,7 +115,7 @@ function StreamHistoryLoader({
   if (!hasOlderMessages && !loadingOlder) return null;
 
   return (
-    <div className="mb-3 flex justify-center">
+    <div className="mb-2.5 flex justify-center">
       {loadingOlder ? (
         <StreamStatusPill>Loading older messages</StreamStatusPill>
       ) : (
@@ -268,9 +268,9 @@ export default function ChatStream({
         className={`mx-auto flex w-full max-w-[64rem] flex-col px-3 sm:px-4 lg:px-5 ${
           bottomAlign
             ? compact
-              ? "min-h-full pt-1 pb-1.5 sm:pt-1.5 sm:pb-2"
+              ? "min-h-full pt-1 pb-1 sm:pt-1.5 sm:pb-2"
               : "min-h-full py-2 sm:py-3 lg:py-4"
-            : "py-3 sm:py-4 lg:py-5"
+            : "py-2.5 sm:py-4 lg:py-5"
         }`}
       >
         <StreamErrorBanner error={error} />
@@ -297,7 +297,7 @@ export default function ChatStream({
             <StreamHeader count={messageCount} compact={compact && bottomAlign} />
 
             <div
-              className={`rounded-[24px] px-2 py-2 shadow-[0_18px_40px_rgba(0,0,0,0.14)] sm:px-3 sm:py-3 ${
+              className={`rounded-[22px] px-1.5 py-1.5 shadow-[0_18px_40px_rgba(0,0,0,0.14)] sm:rounded-[24px] sm:px-3 sm:py-3 ${
                 variant === "general-chat"
                   ? "border border-white/7 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.03),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.024),rgba(255,255,255,0.008))]"
                   : "border border-white/6 bg-[linear-gradient(180deg,rgba(255,255,255,0.018),rgba(255,255,255,0.008))]"

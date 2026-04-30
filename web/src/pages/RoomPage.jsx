@@ -325,7 +325,7 @@ function MobileRoomMetaBar({
   const meta = getRoomModeMeta(room, isBattleTrivia, isWordScramble);
 
   return (
-    <div className="mb-2.5 rounded-[16px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.015))] px-3 py-2.5 sm:hidden">
+    <div className="mb-2 rounded-[15px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.026),rgba(255,255,255,0.012))] px-3 py-2 sm:hidden">
       <div className="flex flex-wrap items-center gap-2">
         <span
           className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] ${meta.badgeClass}`}
@@ -340,7 +340,7 @@ function MobileRoomMetaBar({
         ) : null}
       </div>
 
-      <div className="mt-2.5">
+      <div className="mt-2">
         <div className="truncate text-[15px] font-semibold tracking-[-0.03em] text-white">
           {room?.name || "Room"}
         </div>

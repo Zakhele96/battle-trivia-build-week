@@ -144,6 +144,28 @@ function ProfileAvatar({ name, avatarUrl, isOnline, size = "h-11 w-11", textSize
   );
 }
 
+function SearchInput({ value, onChange, placeholder = "Search", className = "" }) {
+  return (
+    <label
+      className={`flex items-center gap-3 rounded-[18px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] px-4 py-3 text-neutral-400 shadow-[0_10px_24px_rgba(0,0,0,0.12)] ${className}`}
+    >
+      <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 shrink-0" aria-hidden="true">
+        <path
+          d="M10.75 5.75C7.85 5.75 5.5 8.1 5.5 11C5.5 13.9 7.85 16.25 10.75 16.25C13.65 16.25 16 13.9 16 11C16 8.1 13.65 5.75 10.75 5.75ZM10.75 4.25C14.48 4.25 17.5 7.27 17.5 11C17.5 12.61 16.94 14.08 16 15.24L19.28 18.53C19.57 18.82 19.57 19.3 19.28 19.59C18.99 19.88 18.51 19.88 18.22 19.59L14.94 16.31C13.78 17.25 12.31 17.81 10.75 17.81C7.02 17.81 4 14.79 4 11.06C4 7.33 7.02 4.25 10.75 4.25Z"
+          className="fill-current"
+        />
+      </svg>
+
+      <input
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-neutral-500"
+      />
+    </label>
+  );
+}
+
 function ConversationRow({ item, active, onClick }) {
   const isSentByMe =
     item.lastMessageSenderUserId && item.lastMessageSenderUserId !== item.otherUserId;
@@ -152,10 +174,10 @@ function ConversationRow({ item, active, onClick }) {
     <button
       type="button"
       onClick={() => onClick?.(item)}
-      className={`w-full rounded-[18px] border px-3 py-3 text-left transition ${
+      className={`w-full rounded-[20px] border px-3.5 py-3.5 text-left transition ${
         active
-          ? "border-blue-300/22 bg-blue-500/10 shadow-[0_14px_28px_rgba(37,99,235,0.12)]"
-          : "border-white/8 bg-white/[0.03] hover:border-white/12 hover:bg-white/[0.05]"
+          ? "border-blue-300/22 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.18),transparent_34%),linear-gradient(180deg,rgba(37,99,235,0.12),rgba(12,17,27,0.96))] shadow-[0_16px_32px_rgba(37,99,235,0.16)]"
+          : "border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015))] hover:border-white/12 hover:bg-white/[0.05]"
       }`}
     >
       <div className="flex items-start gap-3">
@@ -168,7 +190,7 @@ function ConversationRow({ item, active, onClick }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1 pr-1">
-              <div className="break-words text-sm font-semibold leading-5 text-white">
+              <div className="break-words text-[15px] font-semibold leading-5 text-white">
                 {item.otherDisplayName || item.otherUsername}
               </div>
               {item.otherIsSupporter ? (
@@ -197,7 +219,7 @@ function ConversationRow({ item, active, onClick }) {
             </div>
           </div>
 
-          <div className="mt-2 line-clamp-2 break-words text-[12px] leading-5 text-neutral-400">
+          <div className="mt-2 max-w-[11rem] truncate text-[12px] leading-5 text-neutral-400 sm:max-w-none sm:line-clamp-2 sm:whitespace-normal sm:break-words">
             {item.lastMessageText
               ? `${isSentByMe ? "You: " : ""}${item.lastMessageText}`
               : "Start the conversation."}
@@ -218,7 +240,7 @@ function FriendStarterRow({ friend, onStart }) {
     <button
       type="button"
       onClick={() => onStart?.(friend)}
-      className="flex w-full min-w-0 items-center gap-3 overflow-hidden rounded-[18px] border border-white/8 bg-black/20 px-3 py-3 text-left transition hover:border-white/12 hover:bg-white/[0.05]"
+      className="flex w-full min-w-0 items-center gap-3 overflow-hidden rounded-[20px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015))] px-3.5 py-3.5 text-left transition hover:border-white/12 hover:bg-white/[0.05]"
     >
       <ProfileAvatar
         name={friend.displayName || friend.username || "U"}
@@ -230,7 +252,7 @@ function FriendStarterRow({ friend, onStart }) {
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1 overflow-hidden">
             <div className="flex min-w-0 items-center gap-2">
-              <div className="min-w-0 break-words text-sm font-medium leading-5 text-white">
+              <div className="min-w-0 break-words text-[15px] font-medium leading-5 text-white">
                 {friend.displayName || friend.username}
               </div>
               {friend.conversation?.unreadCount > 0 ? (
@@ -253,7 +275,7 @@ function FriendStarterRow({ friend, onStart }) {
           </div>
         </div>
 
-        <div className="mt-2 block min-w-0 break-words text-[12px] leading-5 text-neutral-400 line-clamp-2 sm:max-w-none">
+        <div className="mt-2 block min-w-0 max-w-[11rem] truncate text-[12px] leading-5 text-neutral-400 sm:max-w-none sm:line-clamp-2 sm:whitespace-normal sm:break-words">
           {preview}
         </div>
       </div>
@@ -390,6 +412,25 @@ export default function DirectMessagesPage() {
       return name.includes(query);
     });
   }, [acceptedFriends, conversationsByUserId, friendSearch]);
+
+  const filteredConversations = useMemo(() => {
+    const query = friendSearch.trim().toLowerCase();
+    if (!query) return conversations;
+
+    return conversations.filter((conversation) => {
+      const haystack = [
+        conversation.otherDisplayName,
+        conversation.otherUsername,
+        conversation.lastMessageText,
+        conversation.otherStatusMessage,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(query);
+    });
+  }, [conversations, friendSearch]);
 
   const loadMessages = useCallback(
     async (conversationId) => {
@@ -790,7 +831,7 @@ export default function DirectMessagesPage() {
       style={lightModeUndoFilter}
     >
       <div className="mx-auto w-full max-w-[76rem] px-4 py-4 pb-24 sm:px-5 sm:py-7 sm:pb-7 lg:px-6 lg:py-9">
-        <AppSectionNav />
+        <AppSectionNav hideMobileNav={Boolean(selectedConversation)} />
 
         <div className={selectedConversation ? "hidden sm:block" : ""}>
           <AppTopBar
@@ -863,12 +904,105 @@ export default function DirectMessagesPage() {
 
         <div className="grid min-h-0 gap-4 lg:grid-cols-[22rem_minmax(0,1fr)]">
           <section className={`space-y-4 lg:hidden ${selectedConversation ? "hidden" : ""}`}>
-            <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-4">
+            <div className="overflow-hidden rounded-[30px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.14),transparent_30%),radial-gradient(circle_at_top_right,rgba(139,92,246,0.12),transparent_24%),linear-gradient(180deg,rgba(20,24,34,0.98),rgba(8,10,16,0.98))] p-4 shadow-[0_22px_48px_rgba(0,0,0,0.24)]">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-[10px] uppercase tracking-[0.18em] text-blue-200/70">
+                    Direct messages
+                  </div>
+                  <h1 className="mt-2 text-[30px] font-semibold tracking-[-0.06em] text-white">
+                    Friends first. Chat fast.
+                  </h1>
+                  <p className="mt-2 max-w-[22rem] text-[13px] leading-6 text-neutral-400">
+                    Search friends, reopen recent chats, and jump straight into the full thread.
+                  </p>
+                </div>
+
+                <div className="rounded-[18px] border border-white/10 bg-white/[0.04] px-3 py-2 text-right shadow-[0_12px_24px_rgba(0,0,0,0.14)]">
+                  <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
+                    Chats
+                  </div>
+                  <div className="mt-1 text-[20px] font-semibold tracking-[-0.04em] text-white">
+                    {filteredConversations.length}
+                  </div>
+                </div>
+              </div>
+
+              <SearchInput
+                value={friendSearch}
+                onChange={(event) => setFriendSearch(event.target.value)}
+                placeholder="Search friends or messages"
+                className="mt-4"
+              />
+
+              <div className="mt-4 grid grid-cols-2 gap-2.5">
+                <div className="rounded-[20px] border border-white/8 bg-white/[0.03] px-3 py-3">
+                  <div className="text-[9px] uppercase tracking-[0.16em] text-neutral-500">
+                    Friends
+                  </div>
+                  <div className="mt-1 text-[16px] font-semibold text-white">
+                    {filteredFriends.length}
+                  </div>
+                </div>
+                <div className="rounded-[20px] border border-white/8 bg-white/[0.03] px-3 py-3">
+                  <div className="text-[9px] uppercase tracking-[0.16em] text-neutral-500">
+                    Live state
+                  </div>
+                  <div className="mt-1 text-[16px] font-semibold text-white">
+                    {liveConnectionStatus === "connected" ? "Synced" : "Waiting"}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(18,22,31,0.98),rgba(8,10,16,0.98))] p-4 shadow-[0_18px_40px_rgba(0,0,0,0.2)]">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div>
-                  <div className="text-sm font-semibold text-white">Friends</div>
+                  <div className="text-[10px] uppercase tracking-[0.18em] text-blue-200/70">
+                    Recent chats
+                  </div>
+                  <div className="mt-1 text-[22px] font-semibold tracking-[-0.05em] text-white">
+                    Inbox
+                  </div>
+                </div>
+                <div className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-300">
+                  {filteredConversations.length}
+                </div>
+              </div>
+
+              <div className="space-y-2.5">
+                {isLoading || isLoadingConversations ? (
+                  <div className="text-sm text-neutral-500">Loading chats...</div>
+                ) : filteredConversations.length === 0 ? (
+                  <div className="rounded-[18px] border border-white/8 bg-black/20 px-4 py-5 text-sm text-neutral-500">
+                    {conversations.length === 0
+                      ? "No chats yet. Start with a friend below."
+                      : "No conversations match that search yet."}
+                  </div>
+                ) : (
+                  filteredConversations.map((conversation) => (
+                    <ConversationRow
+                      key={conversation.conversationId}
+                      item={conversation}
+                      active={conversation.conversationId === selectedConversationId}
+                      onClick={handleOpenConversation}
+                    />
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(18,22,31,0.98),rgba(8,10,16,0.98))] p-4 shadow-[0_18px_40px_rgba(0,0,0,0.2)]">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-[10px] uppercase tracking-[0.18em] text-blue-200/70">
+                    Start chat
+                  </div>
+                  <div className="mt-1 text-[22px] font-semibold tracking-[-0.05em] text-white">
+                    Friends
+                  </div>
                   <div className="mt-1 text-[12px] text-neutral-400">
-                    Tap a friend and the chat opens full screen.
+                    Tap a friend and the full chat opens.
                   </div>
                 </div>
                 <div className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-300">
@@ -876,18 +1010,11 @@ export default function DirectMessagesPage() {
                 </div>
               </div>
 
-              <input
-                value={friendSearch}
-                onChange={(event) => setFriendSearch(event.target.value)}
-                placeholder="Search your friends"
-                className="mb-3 w-full rounded-[16px] border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none focus:border-blue-400/20"
-              />
-
               <div className="space-y-2.5">
                 {isLoading || isLoadingConversations ? (
                   <div className="text-sm text-neutral-500">Loading chats...</div>
                 ) : filteredFriends.length === 0 ? (
-                  <div className="text-sm text-neutral-500">
+                  <div className="rounded-[18px] border border-white/8 bg-black/20 px-4 py-5 text-sm text-neutral-500">
                     {acceptedFriends.length === 0
                       ? "Add friends first, then your private chats start here."
                       : "No friends match that search yet."}
@@ -931,7 +1058,7 @@ export default function DirectMessagesPage() {
                 </div>
               ) : (
                 <div className="space-y-2.5">
-                  {conversations.map((conversation) => (
+                  {filteredConversations.map((conversation) => (
                     <ConversationRow
                       key={conversation.conversationId}
                       item={conversation}
@@ -949,11 +1076,11 @@ export default function DirectMessagesPage() {
                 <div className="text-[11px] text-neutral-500">Friends only</div>
               </div>
 
-              <input
+              <SearchInput
                 value={friendSearch}
                 onChange={(event) => setFriendSearch(event.target.value)}
                 placeholder="Search your friends"
-                className="mb-3 w-full rounded-[16px] border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none focus:border-blue-400/20"
+                className="mb-3"
               />
 
               <div className="space-y-2.5">
@@ -981,7 +1108,7 @@ export default function DirectMessagesPage() {
               !selectedConversation ? "hidden lg:flex" : "flex"
             } ${
               selectedConversation
-                ? "fixed inset-x-0 top-0 bottom-0 z-40 rounded-none border-x-0 border-t-0 pb-[var(--bts-mobile-nav-height,5.5rem)] pt-[env(safe-area-inset-top)] sm:inset-auto sm:relative sm:h-[calc(100vh-8.5rem)] sm:rounded-[26px] sm:border sm:pt-0"
+                ? "fixed inset-x-0 top-0 bottom-0 z-40 rounded-none border-x-0 border-t-0 pb-0 pt-[env(safe-area-inset-top)] sm:inset-auto sm:relative sm:h-[calc(100vh-8.5rem)] sm:rounded-[26px] sm:border sm:pt-0"
                 : "h-[42rem] rounded-[30px]"
             } lg:relative lg:inset-auto lg:h-[42rem] lg:rounded-[30px] lg:border lg:px-0 lg:pb-0 lg:pt-0 flex-col`}
           >
@@ -1063,7 +1190,7 @@ export default function DirectMessagesPage() {
 
             <form
               onSubmit={handleSend}
-              className="shrink-0 border-t border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.012))] px-4 py-3 sm:px-5"
+              className="shrink-0 border-t border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.012))] px-4 pt-3 pb-[max(0.85rem,env(safe-area-inset-bottom))] sm:px-5 sm:py-3"
             >
               {sendError ? (
                 <div className="mb-2 text-[12px] text-red-300/90">{sendError}</div>

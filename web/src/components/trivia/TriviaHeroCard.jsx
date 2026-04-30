@@ -234,7 +234,7 @@ export default function TriviaHeroCard({
           className={`rounded-[16px] border border-white/8 bg-black/20 ${
             compact
               ? "mt-2 px-3 py-2.5 sm:rounded-[16px] sm:px-3 sm:py-3"
-              : "mt-2.5 px-3 py-3 sm:mt-3 sm:rounded-[18px] sm:px-3.5 sm:py-3.5"
+              : "mt-2 px-3 py-3 sm:mt-3 sm:rounded-[18px] sm:px-3.5 sm:py-3.5"
           }`}
         >
           <div className="text-[9px] uppercase tracking-[0.16em] text-blue-300/70">
@@ -245,11 +245,11 @@ export default function TriviaHeroCard({
               : "Trivia state"}
           </div>
 
-          <div className={compact ? "mt-1.5 min-h-[44px] sm:min-h-[52px]" : "mt-2 min-h-[54px] sm:min-h-[64px]"}>
+          <div className={compact ? "mt-1.5 min-h-[44px] sm:min-h-[52px]" : "mt-2 min-h-[48px] sm:min-h-[64px]"}>
             {hasActiveRound ? (
               <div
                 className={`font-semibold tracking-[-0.02em] text-white transition-all duration-500 ${
-                  compact ? "text-[14px] sm:text-[16px]" : "text-[15px] sm:text-[17px]"
+                  compact ? "text-[14px] sm:text-[16px]" : "text-[17px] sm:text-[17px]"
                 } ${
                   isQuestionFresh
                     ? "translate-y-0 opacity-100 drop-shadow-[0_0_10px_rgba(96,165,250,0.16)]"
@@ -275,7 +275,7 @@ export default function TriviaHeroCard({
           </div>
         </div>
 
-        <div className={compact ? "mt-2 min-h-[40px] sm:min-h-[46px]" : "mt-2.5 min-h-[48px] sm:mt-3 sm:min-h-[58px]"}>
+        <div className={compact ? "mt-2 min-h-[40px] sm:min-h-[46px]" : "mt-2 min-h-[44px] sm:mt-3 sm:min-h-[58px]"}>
           {hasRevealContent ? (
             <TriviaRevealTray
               correctAnswer={correctAnswer}

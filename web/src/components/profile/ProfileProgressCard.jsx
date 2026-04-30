@@ -7,7 +7,7 @@ function getProgressPercent(xpTotal, currentLevelStartXp, nextLevelXp) {
 export default function ProfileProgressCard({ progression, loading = false }) {
   if (loading) {
     return (
-      <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5">
+      <div className="rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.1),transparent_35%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] p-5">
         <div className="text-sm text-neutral-500">Loading progression...</div>
       </div>
     );
@@ -15,7 +15,7 @@ export default function ProfileProgressCard({ progression, loading = false }) {
 
   if (!progression) {
     return (
-      <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5">
+      <div className="rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.1),transparent_35%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] p-5">
         <div className="text-sm text-neutral-500">No progression yet.</div>
       </div>
     );
@@ -28,23 +28,44 @@ export default function ProfileProgressCard({ progression, loading = false }) {
   );
 
   return (
-    <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5">
+    <div className="rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.1),transparent_35%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
-          <div className="text-sm font-semibold text-white">Progression</div>
-          <div className="mt-1 text-[11px] text-neutral-500">
+          <div className="text-[10px] uppercase tracking-[0.16em] text-blue-300/75">
+            Progression
+          </div>
+          <div className="mt-1 text-[22px] font-semibold tracking-[-0.04em] text-white">
             Level {progression.level}
           </div>
         </div>
 
         <div className="rounded-full border border-blue-400/20 bg-blue-500/10 px-3 py-1 text-[11px] font-semibold text-blue-200">
-          {progression.xpTotal} XP
+          {progression.xpTotal.toLocaleString()} XP
+        </div>
+      </div>
+
+      <div className="mb-4 grid grid-cols-2 gap-3">
+        <div className="rounded-[18px] border border-white/8 bg-black/20 px-4 py-3">
+          <div className="text-[10px] uppercase tracking-[0.14em] text-neutral-500">
+            Current floor
+          </div>
+          <div className="mt-1 text-[16px] font-semibold tracking-[-0.03em] text-white">
+            {progression.currentLevelStartXp.toLocaleString()} XP
+          </div>
+        </div>
+        <div className="rounded-[18px] border border-white/8 bg-black/20 px-4 py-3">
+          <div className="text-[10px] uppercase tracking-[0.14em] text-neutral-500">
+            Next level
+          </div>
+          <div className="mt-1 text-[16px] font-semibold tracking-[-0.03em] text-white">
+            {progression.nextLevelXp.toLocaleString()} XP
+          </div>
         </div>
       </div>
 
       <div className="mb-2 flex items-center justify-between text-[11px] text-neutral-400">
-        <span>{progression.currentLevelStartXp} XP</span>
-        <span>{progression.nextLevelXp} XP</span>
+        <span>Current level progress</span>
+        <span>{percent}%</span>
       </div>
 
       <div className="h-3 overflow-hidden rounded-full bg-white/[0.05]">

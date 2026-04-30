@@ -68,6 +68,29 @@ function StatCard({ label, value }) {
   );
 }
 
+function SummaryCard({ label, value, detail, accent = "blue" }) {
+  const accentClassName =
+    accent === "violet"
+      ? "border-violet-300/18 bg-violet-500/10 text-violet-200"
+      : accent === "emerald"
+        ? "border-emerald-300/18 bg-emerald-400/10 text-emerald-200"
+        : "border-blue-300/18 bg-blue-400/10 text-blue-200";
+
+  return (
+    <div className="rounded-[18px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-3.5 transition hover:border-white/15 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.018))] sm:rounded-[20px] sm:p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">{label}</div>
+        <div className={`rounded-full border px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] ${accentClassName}`}>
+          Live
+        </div>
+      </div>
+      <div className="mt-1.5 text-[16px] font-semibold tracking-[-0.03em] text-white sm:text-[17px]">{label}</div>
+      <div className="mt-2 text-[22px] font-semibold tracking-[-0.05em] text-white sm:text-[24px]">{value}</div>
+      <div className="mt-1 text-[12px] leading-5 text-neutral-400 sm:text-[13px]">{detail}</div>
+    </div>
+  );
+}
+
 function EmptyBlock({ message }) {
   return (
     <div className="rounded-[18px] border border-white/8 bg-white/[0.03] px-4 py-6 text-sm text-neutral-500">
@@ -254,6 +277,27 @@ export default function ActivityPage() {
           description="Recent results, progression, and performance over time."
           actions={[]}
         />
+
+        <div className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <SummaryCard
+            label="History loaded"
+            value={history.length}
+            detail="Recent recorded sessions currently loaded into this activity view."
+            accent="blue"
+          />
+          <SummaryCard
+            label="Current page"
+            value={page}
+            detail={`Browsing page ${page} of ${totalPages} in your full recorded battle history.`}
+            accent="violet"
+          />
+          <SummaryCard
+            label="Highlights"
+            value={recentHighlights.length}
+            detail="Latest notable results surfaced into the highlight rail for quick review."
+            accent="emerald"
+          />
+        </div>
 
         {error ? (
           <div className="mb-4 rounded-[20px] border border-red-900/35 bg-red-950/25 px-4 py-3 text-sm text-red-300/90">

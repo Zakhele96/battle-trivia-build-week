@@ -77,7 +77,7 @@ export default function WordScrambleHeroCard({
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_18%,transparent_82%,rgba(255,255,255,0.02))]" />
       <div className="pointer-events-none h-px bg-white/10" />
 
-      <div className={`relative ${compact ? "p-3 sm:p-3.5" : "p-3.5 sm:p-4 lg:p-5"}`}>
+      <div className={`relative ${compact ? "p-3 sm:p-3.5" : "p-3 sm:p-4 lg:p-5"}`}>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
@@ -155,7 +155,7 @@ export default function WordScrambleHeroCard({
 
         <div
           className={`rounded-[20px] border border-white/8 bg-black/20 ${
-            compact ? "mt-3 px-3 py-3 sm:px-3.5 sm:py-3.5" : "mt-4 px-3.5 py-4 sm:px-4 sm:py-5"
+            compact ? "mt-2.5 px-3 py-3 sm:px-3.5 sm:py-3.5" : "mt-3 px-3 py-3.5 sm:px-4 sm:py-5"
           }`}
         >
           <div className="overflow-x-auto">
@@ -163,7 +163,7 @@ export default function WordScrambleHeroCard({
               className={`min-w-max text-center font-mono font-semibold uppercase ${
                 compact
                   ? "text-[20px] tracking-[0.14em] sm:text-[24px] lg:text-[30px]"
-                  : "text-[24px] tracking-[0.18em] sm:text-[32px] lg:text-[38px]"
+                  : "text-[22px] tracking-[0.18em] sm:text-[32px] lg:text-[38px]"
               } ${isReveal ? "text-emerald-100" : "text-white"} ${
                 shouldBlinkWord ? "animate-pulse" : ""
               }`}
@@ -175,7 +175,7 @@ export default function WordScrambleHeroCard({
 
         <div
           className={`rounded-[18px] border ${liveStateShellClass} ${
-            compact ? "mt-2.5 px-3 py-2.5" : "mt-3 px-3.5 py-3"
+            compact ? "mt-2.5 px-3 py-2.5" : "mt-2.5 px-3 py-3"
           }`}
         >
           <div className="text-[9px] uppercase tracking-[0.16em] text-neutral-500">

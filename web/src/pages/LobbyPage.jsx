@@ -95,6 +95,52 @@ function SectionHeader({ eyebrow, title, description, isLight = false }) {
   );
 }
 
+function MobileLobbySection({
+  eyebrow,
+  title,
+  description,
+  isLight = false,
+  children,
+}) {
+  return (
+    <section
+      className={`rounded-[28px] border p-4 shadow-[0_18px_40px_rgba(0,0,0,0.2)] sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none ${
+        isLight
+          ? "border-[#dcc9aa] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(243,232,216,0.96))]"
+          : "border-white/10 bg-[linear-gradient(180deg,rgba(18,22,31,0.98),rgba(8,10,16,0.98))]"
+      }`}
+    >
+      <div className="sm:hidden">
+        <div
+          className={`text-[10px] uppercase tracking-[0.18em] ${
+            isLight ? "text-stone-500" : "text-blue-200/70"
+          }`}
+        >
+          {eyebrow}
+        </div>
+        <h2
+          className={`mt-2 text-[24px] font-semibold tracking-[-0.05em] ${
+            isLight ? "text-stone-900" : "text-white"
+          }`}
+        >
+          {title}
+        </h2>
+        {description ? (
+          <p
+            className={`mt-1.5 text-[13px] leading-6 ${
+              isLight ? "text-stone-600" : "text-neutral-400"
+            }`}
+          >
+            {description}
+          </p>
+        ) : null}
+      </div>
+
+      <div className="mt-4 sm:mt-0">{children}</div>
+    </section>
+  );
+}
+
 function DeferredSection({
   children,
   minHeightClassName = "min-h-[180px]",
@@ -421,18 +467,18 @@ function DashboardHero({
 
   return (
     <div
-      className={`mb-5 rounded-[24px] border p-3.5 sm:mb-7 sm:rounded-[30px] sm:p-5 lg:p-5 ${
+      className={`mb-5 rounded-[30px] border p-4 sm:mb-7 sm:rounded-[30px] sm:p-5 lg:p-5 ${
         isLight
           ? "border-[#d8c3a0] bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.14),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(245,158,11,0.1),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.96),rgba(243,231,214,0.98))] shadow-[0_18px_40px_rgba(114,84,41,0.12)]"
-          : "border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.14),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015))] shadow-[0_18px_40px_rgba(0,0,0,0.16)]"
+          : "border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.16),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(251,191,36,0.08),transparent_22%),linear-gradient(180deg,rgba(20,24,34,0.98),rgba(8,10,16,0.98))] shadow-[0_22px_48px_rgba(0,0,0,0.22)]"
       }`}
     >
-      <div className="flex items-start gap-3 sm:gap-4">
+      <div className="flex items-start gap-3.5 sm:gap-4">
         <div
-          className={`h-11 w-11 shrink-0 overflow-hidden rounded-full border sm:h-14 sm:w-14 ${
+          className={`h-14 w-14 shrink-0 overflow-hidden rounded-full border sm:h-14 sm:w-14 ${
             isLight
               ? "border-[#e2d4c2] bg-white/80"
-              : "border-white/10 bg-white/[0.05]"
+              : "border-amber-300/20 bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.18),rgba(255,255,255,0.04))]"
           }`}
         >
           {user?.avatarUrl ? (
@@ -459,7 +505,7 @@ function DashboardHero({
                 isLight ? "text-[#9a6706]" : "text-blue-300/70"
               }`}
             >
-              Ready to move?
+              Dashboard live
             </div>
             <span
               className={`inline-flex rounded-full border px-2 py-0.5 text-[8px] font-medium uppercase tracking-[0.14em] sm:hidden ${
@@ -500,7 +546,7 @@ function DashboardHero({
           </div>
 
           <h1
-            className={`mt-2 text-[24px] font-semibold leading-[1.02] tracking-[-0.05em] sm:mt-3 sm:text-[30px] ${
+            className={`mt-2 text-[30px] font-semibold leading-[0.98] tracking-[-0.06em] sm:mt-3 sm:text-[30px] ${
               isLight ? "text-stone-950" : "text-white"
             }`}
           >
@@ -525,13 +571,13 @@ function DashboardHero({
             {summary}
           </p>
 
-          <div className="mt-3 grid grid-cols-2 gap-2.5 sm:gap-2">
+          <div className="mt-4 grid grid-cols-2 gap-2.5 sm:gap-2">
             <Link
               to="/rooms"
-              className={`inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[18px] border px-3 py-3 text-[10px] font-medium uppercase tracking-[0.14em] transition sm:min-h-0 sm:rounded-full sm:px-3.5 sm:py-2 sm:text-[11px] ${
+              className={`inline-flex min-h-[54px] items-center justify-center gap-2 rounded-[20px] border px-3 py-3 text-[10px] font-medium uppercase tracking-[0.14em] transition sm:min-h-0 sm:rounded-full sm:px-3.5 sm:py-2 sm:text-[11px] ${
                 isLight
                   ? "border-stone-200 bg-white/78 text-stone-900 hover:border-[#cda768] hover:bg-white"
-                  : "border-white/10 bg-white/[0.04] text-white hover:border-white/15 hover:bg-white/[0.06]"
+                  : "border-blue-400/18 bg-blue-500/10 text-white hover:border-blue-400/22 hover:bg-blue-500/14"
               }`}
             >
               Jump into rooms
@@ -539,7 +585,7 @@ function DashboardHero({
             </Link>
             <Link
               to="/leaderboards?mode=battle-trivia&period=current"
-              className={`inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[18px] border px-3 py-3 text-[10px] font-medium uppercase tracking-[0.14em] transition sm:min-h-0 sm:rounded-full sm:px-3.5 sm:py-2 sm:text-[11px] ${
+              className={`inline-flex min-h-[54px] items-center justify-center gap-2 rounded-[20px] border px-3 py-3 text-[10px] font-medium uppercase tracking-[0.14em] transition sm:min-h-0 sm:rounded-full sm:px-3.5 sm:py-2 sm:text-[11px] ${
                 isLight
                   ? "border-stone-200 bg-white/62 text-stone-700 hover:border-stone-300 hover:bg-white"
                   : "border-white/8 bg-black/20 text-neutral-200 hover:border-white/12 hover:bg-white/[0.05]"
@@ -549,11 +595,11 @@ function DashboardHero({
             </Link>
           </div>
 
-          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
             {statCards.map((item, index) => (
               <div
                 key={item.label}
-                className={`rounded-[18px] border p-2.5 sm:rounded-[16px] sm:p-3 ${
+                className={`rounded-[20px] border p-3 sm:rounded-[16px] sm:p-3 ${
                   isLight
                     ? "border-[#e2d4c2] bg-white/74"
                     : "border-white/8 bg-black/20"
@@ -1398,48 +1444,78 @@ export default function LobbyPage() {
         ) : (
           <>
             <section className="mb-6 sm:mb-8">
-              <WinnerSpotlightCard
-                winner={latestWinner}
-                sessionPodium={sessionPodium}
+              <MobileLobbySection
+                eyebrow="Winners"
+                title="Who owns the week?"
+                description="Latest result up top, then the current board if the race is still moving."
                 isLight={isLight}
-              />
-
-              {hasSponsorPlacement(battleTriviaSponsor, "lobby-featured") ? (
-                <div className="mt-3 sm:mt-4">
-                  <SponsorSpotlightCard sponsor={battleTriviaSponsor} />
+              >
+                <div className="sm:hidden">
+                  {showPodium ? (
+                    <WinnersPodiumCard
+                      title="Latest Battle Trivia winners"
+                      subtitle={`Finished ${formatEndedAt(
+                        sessionPodium.endedAt
+                      )}. First, second, and third are now front and center in the dashboard.`}
+                      winners={sessionPodium.winners}
+                      to="/leaderboards?mode=battle-trivia&period=previous"
+                    />
+                  ) : (
+                    <WinnerSpotlightCard
+                      winner={latestWinner}
+                      sessionPodium={sessionPodium}
+                      isLight={isLight}
+                    />
+                  )}
                 </div>
-              ) : null}
 
-              {showPodium ? (
-                <WinnersPodiumCard
-                  title="Latest Battle Trivia winners"
-                  subtitle={`Finished ${formatEndedAt(
-                    sessionPodium.endedAt
-                  )}. First, second, and third are now front and center in the dashboard.`}
-                  winners={sessionPodium.winners}
-                  to="/leaderboards?mode=battle-trivia&period=previous"
-                />
-              ) : showCurrentLeaders ? (
-                <LeadersPanel
-                  title="Current Battle Trivia leaders"
-                  subtitle="Live standings for this week"
-                  entries={currentLeaders}
-                  isLight={isLight}
-                />
-              ) : null}
+                <div className="hidden sm:block">
+                  <WinnerSpotlightCard
+                    winner={latestWinner}
+                    sessionPodium={sessionPodium}
+                    isLight={isLight}
+                  />
+                </div>
+
+                {hasSponsorPlacement(battleTriviaSponsor, "lobby-featured") ? (
+                  <div className="mt-3 sm:mt-4">
+                    <SponsorSpotlightCard sponsor={battleTriviaSponsor} />
+                  </div>
+                ) : null}
+
+                <div className="hidden sm:block">
+                  {showPodium ? (
+                    <WinnersPodiumCard
+                      title="Latest Battle Trivia winners"
+                      subtitle={`Finished ${formatEndedAt(
+                        sessionPodium.endedAt
+                      )}. First, second, and third are now front and center in the dashboard.`}
+                      winners={sessionPodium.winners}
+                      to="/leaderboards?mode=battle-trivia&period=previous"
+                    />
+                  ) : showCurrentLeaders ? (
+                    <LeadersPanel
+                      title="Current Battle Trivia leaders"
+                      subtitle="Live standings for this week"
+                      entries={currentLeaders}
+                      isLight={isLight}
+                    />
+                  ) : null}
+                </div>
+              </MobileLobbySection>
             </section>
             {featuredRoom ? (
               <section className="mb-6 sm:hidden">
-                <SectionHeader
+                <MobileLobbySection
                   eyebrow="Battle Trivia"
                   title="Main competition"
                   description="Jump straight into the featured room from the dashboard."
                   isLight={isLight}
-                />
-
-                <div className="grid gap-4">
-                  <FeaturedTriviaCard room={featuredRoom} />
-                </div>
+                >
+                  <div className="grid gap-4">
+                    <FeaturedTriviaCard room={featuredRoom} />
+                  </div>
+                </MobileLobbySection>
               </section>
             ) : null}
 
@@ -1617,50 +1693,59 @@ export default function LobbyPage() {
               onVisible={() => setShouldLoadStandingsSection(true)}
             >
               <section>
-              <SectionHeader
+              <MobileLobbySection
                 eyebrow="Standings"
                 title="Weekly race"
-                description="A quick Battle Trivia score race for this week, then the full standings page when you want the deeper view."
+                description="A quick Battle Trivia score race for this week, then the deeper boards when you want them."
                 isLight={isLight}
-              />
-
-              {hasSponsorPlacement(battleTriviaSponsor, "lobby-standings") ? (
-                <div className="mb-3 sm:mb-4">
-                  <SponsorSpotlightCard sponsor={battleTriviaSponsor} compact />
-                </div>
-              ) : null}
-
-              <div className="grid gap-3 sm:gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-                <LeaderboardPreviewCard
-                  title="Battle Trivia race"
-                  subtitle="Current week · Top 3 across Battle Trivia and Word Scramble"
-                  rows={battleTriviaLeadersPreview}
-                  to="/leaderboards?mode=battle-trivia&period=current"
-                  accent="blue"
-                />
-
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-                  <QuickDestinationCard
-                    to="/leaderboards?mode=battle-trivia&period=previous"
-                    eyebrow="Winners archive"
-                    title="See recent Battle Trivia results"
-                    description="Open the leaderboard page to review completed sessions and full rankings beyond the podium."
-                    isLight={isLight}
-                  />
-
-                  <QuickDestinationCard
-                    to="/leaderboards?mode=word-scramble&period=current"
-                    eyebrow="Live race"
-                    title="Check Word Scramble standings"
-                    description={`${
-                      wordScrambleLeaders[0]?.displayName ||
-                      wordScrambleLeaders[0]?.username ||
-                      "Live players"
-                    } and the rest of the field are still climbing this week's board.`}
+              >
+                <div className="hidden sm:block">
+                  <SectionHeader
+                    eyebrow="Standings"
+                    title="Weekly race"
+                    description="A quick Battle Trivia score race for this week, then the full standings page when you want the deeper view."
                     isLight={isLight}
                   />
                 </div>
-              </div>
+
+                {hasSponsorPlacement(battleTriviaSponsor, "lobby-standings") ? (
+                  <div className="mb-3 sm:mb-4">
+                    <SponsorSpotlightCard sponsor={battleTriviaSponsor} compact />
+                  </div>
+                ) : null}
+
+                <div className="grid gap-3 sm:gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+                  <LeaderboardPreviewCard
+                    title="Battle Trivia race"
+                    subtitle="Current week · Top 3 across Battle Trivia and Word Scramble"
+                    rows={battleTriviaLeadersPreview}
+                    to="/leaderboards?mode=battle-trivia&period=current"
+                    accent="blue"
+                  />
+
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                    <QuickDestinationCard
+                      to="/leaderboards?mode=battle-trivia&period=previous"
+                      eyebrow="Winners archive"
+                      title="See recent Battle Trivia results"
+                      description="Open the leaderboard page to review completed sessions and full rankings beyond the podium."
+                      isLight={isLight}
+                    />
+
+                    <QuickDestinationCard
+                      to="/leaderboards?mode=word-scramble&period=current"
+                      eyebrow="Live race"
+                      title="Check Word Scramble standings"
+                      description={`${
+                        wordScrambleLeaders[0]?.displayName ||
+                        wordScrambleLeaders[0]?.username ||
+                        "Live players"
+                      } and the rest of the field are still climbing this week's board.`}
+                      isLight={isLight}
+                    />
+                  </div>
+                </div>
+              </MobileLobbySection>
               </section>
             </DeferredSection>
           </>

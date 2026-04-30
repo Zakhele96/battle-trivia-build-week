@@ -292,21 +292,21 @@ function NavCountBadge({ count, mobile = false, isLight = false, tone = "amber" 
 
 function NavIconShell({ children, active = false, isLight = false, mobile = false }) {
   const baseClassName = mobile
-    ? "flex h-10 w-10 items-center justify-center rounded-[14px] border transition"
+    ? "flex h-11 w-11 items-center justify-center rounded-[16px] border transition"
     : "flex h-8 w-8 items-center justify-center rounded-[11px] border transition";
 
   const toneClassName = active
     ? isLight
       ? "border-sky-300 bg-sky-50 text-sky-800 shadow-[0_8px_18px_rgba(59,130,246,0.12)]"
-      : "border-blue-400/25 bg-blue-500/14 text-blue-100 shadow-[0_10px_24px_rgba(37,99,235,0.14)]"
+      : "border-blue-400/25 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.3),transparent_62%),linear-gradient(180deg,rgba(37,99,235,0.2),rgba(24,28,38,0.96))] text-blue-100 shadow-[0_12px_28px_rgba(37,99,235,0.24)]"
     : isLight
     ? "border-stone-200 bg-white/78 text-stone-700"
-    : "border-white/10 bg-white/[0.04] text-neutral-300";
+    : "border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.025))] text-neutral-300";
 
   return <span className={`${baseClassName} ${toneClassName}`}>{children}</span>;
 }
 
-export default function AppSectionNav() {
+export default function AppSectionNav({ hideMobileNav = false }) {
   const location = useLocation();
   const { totalUnreadMentions } = useMentions();
   const { unreadCount } = useAlerts();
@@ -367,8 +367,8 @@ export default function AppSectionNav() {
     ? "rounded-[22px] border border-[#ddc8a8] bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(245,234,216,0.96))] p-2 shadow-[0_18px_34px_rgba(114,84,41,0.12)]"
     : "rounded-[22px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.08),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-2 shadow-[0_18px_36px_rgba(0,0,0,0.16)]";
   const mobileShellClassName = isLight
-    ? "pointer-events-auto border-t border-[#d9c7aa] bg-[#f6ebd9] px-2 pt-2 pb-[max(0.55rem,env(safe-area-inset-bottom))] shadow-[0_-12px_28px_rgba(114,84,41,0.16)]"
-    : "pointer-events-auto border-t border-white/10 bg-neutral-950/96 px-2 pt-2 pb-[max(0.55rem,env(safe-area-inset-bottom))] shadow-[0_-14px_34px_rgba(0,0,0,0.3)] backdrop-blur-xl supports-[backdrop-filter]:bg-neutral-950/88";
+    ? "pointer-events-auto mx-auto max-w-[38rem] rounded-t-[30px] border border-b-0 border-[#d9c7aa] bg-[#f6ebd9] px-2 pt-2 pb-[max(0.55rem,env(safe-area-inset-bottom))] shadow-[0_-18px_36px_rgba(114,84,41,0.18)]"
+    : "pointer-events-auto mx-auto max-w-[38rem] rounded-t-[30px] border border-b-0 border-white/10 bg-[linear-gradient(180deg,rgba(18,22,31,0.98),rgba(8,10,16,0.98))] px-2 pt-2 pb-[max(0.55rem,env(safe-area-inset-bottom))] shadow-[0_-22px_48px_rgba(0,0,0,0.4)] backdrop-blur-xl supports-[backdrop-filter]:bg-neutral-950/88";
 
   const mobileNav = (
     <div
@@ -376,8 +376,9 @@ export default function AppSectionNav() {
         isKeyboardOpen ? "hidden" : ""
       }`}
     >
-      <div ref={moreTrayRef} className={`${mobileShellClassName} relative overflow-visible`}>
-        <div className="relative mx-auto max-w-[38rem] overflow-visible">
+      <div className="px-1.5">
+        <div ref={moreTrayRef} className={`${mobileShellClassName} relative overflow-visible`}>
+        <div className="relative overflow-visible">
           {isMoreOpen ? (
             <div
               className={`pointer-events-auto absolute bottom-[calc(100%+0.7rem)] right-0 z-[60] w-[min(18.5rem,calc(100vw-1.5rem))] overflow-hidden rounded-[26px] border p-2 shadow-[0_22px_44px_rgba(0,0,0,0.28)] transition-all duration-200 ease-out ${
@@ -464,7 +465,7 @@ export default function AppSectionNav() {
                   key={item.to}
                   to={item.to}
                   end={item.exact}
-                  className={`relative flex min-h-[4.25rem] touch-manipulation flex-col items-center justify-center gap-1.5 rounded-[18px] px-1 py-2 text-[10px] font-medium transition ${itemClassName}`}
+                  className={`relative flex min-h-[4.6rem] touch-manipulation flex-col items-center justify-center gap-1.5 rounded-[20px] px-1 py-2.5 text-[10px] font-medium transition ${itemClassName}`}
                 >
                   <div className="relative">
                     <NavIconShell active={active} isLight={isLight} mobile>
@@ -508,11 +509,11 @@ export default function AppSectionNav() {
             <button
               type="button"
               onClick={() => setIsMoreOpen((previous) => !previous)}
-              className={`relative flex min-h-[4.25rem] touch-manipulation flex-col items-center justify-center gap-1.5 rounded-[18px] px-1 py-2 text-[10px] font-medium transition ${
+              className={`relative flex min-h-[4.6rem] touch-manipulation flex-col items-center justify-center gap-1.5 rounded-[20px] px-1 py-2.5 text-[10px] font-medium transition ${
                 isMoreOpen || isMoreActive
                   ? isLight
                     ? "border border-sky-300 bg-white text-stone-900 shadow-[0_8px_18px_rgba(59,130,246,0.12)]"
-                    : "border border-blue-400/15 bg-[linear-gradient(180deg,rgba(32,63,120,0.46),rgba(18,23,35,0.9))] text-white shadow-[0_8px_22px_rgba(37,99,235,0.12)]"
+                    : "border border-blue-400/20 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.28),transparent_58%),linear-gradient(180deg,rgba(28,45,84,0.72),rgba(18,23,35,0.94))] text-white shadow-[0_10px_24px_rgba(37,99,235,0.2)]"
                   : isLight
                   ? "border border-transparent text-stone-600 hover:bg-white/72 hover:text-stone-900"
                   : "border border-transparent text-neutral-400 hover:bg-white/[0.04] hover:text-white"
@@ -537,6 +538,7 @@ export default function AppSectionNav() {
           </div>
         </div>
       </div>
+      </div>
       <style>{`
         @keyframes bts-mobile-more-in {
           0% {
@@ -556,12 +558,7 @@ export default function AppSectionNav() {
     <>
       <div className="mb-5 hidden sm:block sm:mb-6">
         <div className={desktopShellClassName}>
-          <div
-            className="grid gap-1 lg:gap-1.5"
-            style={{
-              gridTemplateColumns: `repeat(${DESKTOP_ITEMS.length}, minmax(0, 1fr))`,
-            }}
-          >
+          <div className="flex flex-wrap gap-1 overflow-hidden lg:gap-1.5">
             {DESKTOP_ITEMS.map((item) => {
               const Icon = item.icon;
               const active = isItemActive(item, location.pathname);
@@ -578,7 +575,7 @@ export default function AppSectionNav() {
                   key={item.to}
                   to={item.to}
                   end={item.exact}
-                  className={`relative inline-flex min-w-0 flex-col items-center justify-center gap-1 rounded-[16px] px-1.5 py-2 text-center text-[9px] font-medium transition lg:px-2 lg:text-[10px] ${itemClassName}`}
+                  className={`relative inline-flex min-w-0 flex-[1_1_5.35rem] flex-col items-center justify-center gap-1 rounded-[16px] px-1.5 py-2 text-center text-[9px] font-medium transition lg:px-2 lg:text-[10px] ${itemClassName}`}
                 >
                   <NavIconShell active={active} isLight={isLight}>
                     <Icon />
@@ -612,7 +609,7 @@ export default function AppSectionNav() {
         </div>
       </div>
 
-      {createPortal(mobileNav, document.body)}
+      {hideMobileNav ? null : createPortal(mobileNav, document.body)}
     </>
   );
 }

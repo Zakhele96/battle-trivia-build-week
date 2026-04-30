@@ -6,6 +6,16 @@ function getSeoConfig(pathname) {
     return null;
   }
 
+  if (pathname === "/") {
+    return {
+      title: "BTS",
+      description:
+        "Live competition app with Battle Trivia, Word Scramble, weekly leaderboards, squads, alerts, and direct messages.",
+      canonicalPath: "/",
+      robots: "noindex,nofollow",
+    };
+  }
+
   if (pathname === "/login") {
     return {
       title: "Login",

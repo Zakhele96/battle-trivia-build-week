@@ -8,6 +8,7 @@ import PwaInstallPrompt from "./components/pwa/PwaInstallPrompt";
 import PwaUpdatePrompt from "./components/pwa/PwaUpdatePrompt";
 
 const LobbyPage = lazy(() => import("./pages/LobbyPage"));
+const LandingPage = lazy(() => import("./pages/LandingPage"));
 const LoginPage = lazy(() => import("./pages/LoginPage"));
 const RegisterPage = lazy(() => import("./pages/RegisterPage"));
 const RoomPage = lazy(() => import("./pages/RoomPage"));
@@ -54,6 +55,16 @@ function PublicOnlyRoute({ children }) {
   return children;
 }
 
+function HomeRoute() {
+  const { isAuthenticated, isInitializing } = useAuth();
+
+  if (isInitializing) {
+    return <RouteLoadingScreen />;
+  }
+
+  return isAuthenticated ? <LobbyPage /> : <LandingPage />;
+}
+
 export default function App() {
   return (
     <>
@@ -83,9 +94,7 @@ export default function App() {
           <Route
             path="/"
             element={
-              <ProtectedRoute>
-                <LobbyPage />
-              </ProtectedRoute>
+              <HomeRoute />
             }
           />
 

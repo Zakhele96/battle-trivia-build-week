@@ -133,7 +133,7 @@ function ModeOption({ item, active, onClick }) {
 
 function CompactModeSwitcher({ value, onChange }) {
   return (
-    <div className="rounded-[20px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.038),rgba(255,255,255,0.018))] p-1 sm:hidden">
+    <div className="rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(18,22,31,0.98),rgba(8,10,16,0.98))] p-1.5 shadow-[0_16px_34px_rgba(0,0,0,0.18)] sm:hidden">
       <div className="grid grid-cols-3 gap-1">
         {MODES.map((item) => {
           const active = value === item.key;
@@ -143,9 +143,9 @@ function CompactModeSwitcher({ value, onChange }) {
               key={item.key}
               type="button"
               onClick={() => onChange(item.key)}
-              className={`rounded-[14px] px-2 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] transition ${
+              className={`rounded-[16px] px-2 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] transition ${
                 active
-                  ? "bg-blue-500 text-white shadow-[0_12px_24px_rgba(37,99,235,0.18)]"
+                  ? "bg-[radial-gradient(circle_at_top,rgba(96,165,250,0.26),transparent_58%),linear-gradient(180deg,rgba(59,130,246,0.96),rgba(37,99,235,0.96))] text-white shadow-[0_14px_28px_rgba(37,99,235,0.24)]"
                   : "text-neutral-300"
               }`}
             >
@@ -322,9 +322,9 @@ function MobileLeaderboardCard({
 
   return (
     <div
-      className={`rounded-[18px] border p-3.5 shadow-[0_10px_22px_rgba(0,0,0,0.12)] ${
+      className={`rounded-[22px] border p-4 shadow-[0_16px_34px_rgba(0,0,0,0.18)] ${
         isCurrentUser
-          ? "border-blue-300/25 bg-blue-500/10"
+          ? "border-blue-300/25 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.18),transparent_32%),linear-gradient(180deg,rgba(37,99,235,0.16),rgba(14,18,28,0.98))]"
           : `${tone.shell} ${tone.accent}`
       }`}
     >
@@ -390,7 +390,7 @@ function MobileLeaderboardCard({
         </div>
       ) : null}
 
-      <div className="mt-3 rounded-[14px] border border-white/8 bg-black/20 px-3 py-2.5 text-[11px] leading-4 text-neutral-300">
+      <div className="mt-3 rounded-[16px] border border-white/8 bg-black/20 px-3.5 py-3 text-[11px] leading-5 text-neutral-300">
         {row.rank === 1
           ? "Currently leading this board."
           : `${gap} point${gap === 1 ? "" : "s"} behind the leader.`}
@@ -436,6 +436,28 @@ function MobileLeaderboardCard({
         </div>
       ) : null}
     </div>
+  );
+}
+
+function MobileStandingsShell({ eyebrow, title, description, children }) {
+  return (
+    <section className="rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(18,22,31,0.98),rgba(8,10,16,0.98))] p-4 shadow-[0_18px_40px_rgba(0,0,0,0.22)] sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none">
+      <div className="sm:hidden">
+        <div className="text-[10px] uppercase tracking-[0.18em] text-blue-200/70">
+          {eyebrow}
+        </div>
+        <h2 className="mt-2 text-[24px] font-semibold tracking-[-0.05em] text-white">
+          {title}
+        </h2>
+        {description ? (
+          <p className="mt-1.5 text-[13px] leading-6 text-neutral-400">
+            {description}
+          </p>
+        ) : null}
+      </div>
+
+      <div className="mt-4 sm:mt-0">{children}</div>
+    </section>
   );
 }
 
@@ -850,9 +872,9 @@ export default function LeaderboardsPage() {
           </div>
         ) : null}
 
-        <div className="mb-5 rounded-[24px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.12),transparent_32%),linear-gradient(180deg,rgba(255,255,255,0.032),rgba(255,255,255,0.014))] p-3.5 sm:mb-6 sm:p-5">
+        <div className="mb-5 rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.16),transparent_30%),radial-gradient(circle_at_top_right,rgba(139,92,246,0.12),transparent_26%),linear-gradient(180deg,rgba(20,24,34,0.98),rgba(8,10,16,0.98))] p-4 shadow-[0_20px_42px_rgba(0,0,0,0.2)] sm:mb-6 sm:rounded-[24px] sm:bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.12),transparent_32%),linear-gradient(180deg,rgba(255,255,255,0.032),rgba(255,255,255,0.014))] sm:p-5 sm:shadow-none">
           <div className="grid gap-4 lg:grid-cols-[1.18fr_0.82fr]">
-            <div>
+            <div className="min-w-0">
               <div className="mb-2 text-[10px] uppercase tracking-[0.18em] text-neutral-500">
                 Choose a board
               </div>
@@ -880,7 +902,7 @@ export default function LeaderboardsPage() {
               </div>
             </div>
 
-            <div>
+            <div className="min-w-0">
               <div className="mb-2 text-[10px] uppercase tracking-[0.18em] text-neutral-500">
                 Time window
               </div>
@@ -889,7 +911,7 @@ export default function LeaderboardsPage() {
                 onChange={(nextPeriod) => updateQuery(mode, nextPeriod)}
               />
 
-              <div className="mt-3 rounded-[18px] border border-white/8 bg-black/20 px-3.5 py-3 sm:px-4">
+              <div className="mt-4 rounded-[20px] border border-white/8 bg-black/20 px-3.5 py-3.5 sm:mt-3 sm:px-4 sm:py-3">
                 <div className="text-[10px] uppercase tracking-[0.14em] text-neutral-500">
                   Current selection
                 </div>
@@ -903,7 +925,7 @@ export default function LeaderboardsPage() {
                 </div>
               </div>
 
-              <div className="mt-3">
+              <div className="mt-4 sm:mt-3">
                 <div className="mb-2 text-[10px] uppercase tracking-[0.18em] text-neutral-500">
                   Scope
                 </div>
@@ -918,16 +940,16 @@ export default function LeaderboardsPage() {
           </div>
         </div>
 
-        <div className="mb-5 rounded-[24px] border border-white/10 bg-white/[0.03] p-3.5 sm:mb-6 sm:p-5">
+        <div className="mb-5 rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(18,22,31,0.98),rgba(8,10,16,0.98))] p-4 shadow-[0_18px_40px_rgba(0,0,0,0.2)] sm:mb-6 sm:rounded-[24px] sm:bg-white/[0.03] sm:p-5 sm:shadow-none">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500 sm:text-[11px]">
+              <div className="text-[10px] uppercase tracking-[0.18em] text-blue-200/70 sm:text-[11px] sm:text-neutral-500">
                 {data?.label || getModeLabel(mode)}
               </div>
-              <div className="mt-1 text-[17px] font-semibold tracking-[-0.03em] text-white sm:text-lg">
+              <div className="mt-2 text-[24px] font-semibold tracking-[-0.05em] text-white sm:mt-1 sm:text-lg sm:tracking-[-0.03em]">
                 {getPeriodLabel(period)}
               </div>
-              <div className="mt-1 text-[13px] leading-5 text-neutral-400 sm:text-sm">
+              <div className="mt-1.5 max-w-[28rem] text-[13px] leading-6 text-neutral-400 sm:mt-1 sm:text-sm sm:leading-5">
                 {subtitle}
               </div>
             </div>
@@ -964,7 +986,7 @@ export default function LeaderboardsPage() {
           </div>
 
           {rows.length > PAGE_SIZE ? (
-            <div className="mt-4 rounded-[18px] border border-white/8 bg-black/20 px-3.5 py-3 sm:flex sm:flex-wrap sm:items-center sm:justify-between sm:gap-3 sm:px-4">
+            <div className="mt-4 rounded-[20px] border border-white/8 bg-black/20 px-3.5 py-3.5 sm:flex sm:flex-wrap sm:items-center sm:justify-between sm:gap-3 sm:px-4 sm:py-3">
               <div className="text-[12px] text-neutral-400">
                 Showing {Math.min((page - 1) * PAGE_SIZE + 1, rows.length)}-
                 {Math.min(page * PAGE_SIZE, rows.length)} of {rows.length}
@@ -996,7 +1018,7 @@ export default function LeaderboardsPage() {
           ) : null}
 
           {currentStanding ? (
-            <div className="mt-4 rounded-[18px] border border-blue-300/18 bg-blue-400/10 px-3.5 py-3 sm:flex sm:flex-wrap sm:items-center sm:justify-between sm:gap-3 sm:px-4">
+            <div className="mt-4 rounded-[20px] border border-blue-300/18 bg-blue-400/10 px-3.5 py-3.5 sm:flex sm:flex-wrap sm:items-center sm:justify-between sm:gap-3 sm:px-4 sm:py-3">
               <div className="text-[13px] leading-5 text-blue-100 sm:text-sm">
                 Share your current rank: #{currentStanding.rank} with{" "}
                 {currentStanding.score} pts.
@@ -1072,9 +1094,13 @@ export default function LeaderboardsPage() {
               ) : null}
             </section>
 
-            <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-3 sm:p-4">
+            <MobileStandingsShell
+              eyebrow="Rankings"
+              title="Full rankings"
+              description="Your place, score, gap, and next move stay easy to scan on mobile without a dense table."
+            >
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <div>
+                <div className="hidden sm:block">
                   <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500 sm:text-[11px]">
                     Full rankings
                   </div>
@@ -1232,7 +1258,7 @@ export default function LeaderboardsPage() {
                   </table>
                 </div>
               </div>
-            </div>
+            </MobileStandingsShell>
           </>
         )}
 

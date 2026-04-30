@@ -11,7 +11,7 @@ function getInitials(value) {
 
 function FriendAvatar({ name, avatarUrl }) {
   return (
-    <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full border border-white/10 bg-white/[0.05]">
+    <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full border border-white/10 bg-white/[0.05]">
       {avatarUrl ? (
         <img src={avatarUrl} alt={name} className="h-full w-full object-cover" />
       ) : (
@@ -50,7 +50,7 @@ function PlayerRowActions({ item, actionLabel, onAction, tone = "blue", disabled
     <div className="flex shrink-0 flex-wrap gap-2 self-start">
       <Link
         to={`/profile/${item.userId}`}
-        className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-white/[0.08]"
+        className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-white/[0.08]"
       >
         View profile
       </Link>
@@ -60,7 +60,7 @@ function PlayerRowActions({ item, actionLabel, onAction, tone = "blue", disabled
           type="button"
           onClick={() => onAction(item)}
           disabled={disabled}
-          className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] transition disabled:cursor-not-allowed disabled:opacity-45 ${buttonClass}`}
+          className={`rounded-full border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition disabled:cursor-not-allowed disabled:opacity-45 ${buttonClass}`}
         >
           {actionLabel}
         </button>
@@ -78,7 +78,7 @@ function NetworkList({
   tone = "blue",
 }) {
   return (
-    <div className="rounded-[18px] border border-white/8 bg-black/20 p-4">
+    <div className="rounded-[20px] border border-white/8 bg-black/20 p-4">
       <div className="mb-3 text-[10px] uppercase tracking-[0.16em] text-neutral-500">
         {title}
       </div>
@@ -90,7 +90,7 @@ function NetworkList({
           {items.map((item) => (
             <div
               key={`${title}-${item.friendshipId || item.userId}`}
-              className="flex flex-col gap-3 rounded-[14px] border border-white/8 bg-white/[0.03] px-3 py-3"
+              className="flex flex-col gap-3 rounded-[18px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] px-3.5 py-3.5"
             >
               <div className="flex items-start gap-3">
                 <FriendAvatar
@@ -127,16 +127,19 @@ export default function ProfileFriendsCard({
 }) {
   if (loading) {
     return (
-      <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5">
+      <div className="rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.11),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] p-5">
         <div className="text-sm text-neutral-500">Loading friends...</div>
       </div>
     );
   }
 
   return (
-    <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5">
+    <div className="rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.11),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] p-5">
       <div className="mb-4">
-        <div className="text-sm font-semibold text-white">Friends and rivals</div>
+        <div className="text-[10px] uppercase tracking-[0.16em] text-violet-200/75">
+          Social circle
+        </div>
+        <div className="mt-1 text-[22px] font-semibold tracking-[-0.04em] text-white">Friends and rivals</div>
         <div className="mt-1 text-[12px] leading-5 text-neutral-400">
           Build a real social circle around the board, then compare against people you actually know.
         </div>
@@ -158,7 +161,7 @@ export default function ProfileFriendsCard({
       </form>
 
       {searchResults.length > 0 ? (
-        <div className="mb-4 rounded-[18px] border border-white/8 bg-black/20 p-4">
+        <div className="mb-4 rounded-[20px] border border-white/8 bg-black/20 p-4">
           <div className="mb-3 text-[10px] uppercase tracking-[0.16em] text-neutral-500">
             Search results
           </div>
@@ -176,7 +179,7 @@ export default function ProfileFriendsCard({
               return (
                 <div
                   key={player.userId}
-                  className="flex flex-col gap-3 rounded-[14px] border border-white/8 bg-white/[0.03] px-3 py-3"
+                  className="flex flex-col gap-3 rounded-[18px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] px-3.5 py-3.5"
                 >
                   <div className="flex items-start gap-3">
                     <FriendAvatar

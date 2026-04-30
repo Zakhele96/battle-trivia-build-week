@@ -99,6 +99,14 @@ body {
 
 :root[data-theme-resolved="light"] .profile-page--light img,
 :root[data-theme-resolved="light"] .profile-page--light .emoji-native,
+:root[data-theme-resolved="light"] .support-page--light img,
+:root[data-theme-resolved="light"] .support-page--light .emoji-native,
+:root[data-theme-resolved="light"] .alerts-page--light img,
+:root[data-theme-resolved="light"] .alerts-page--light .emoji-native,
+:root[data-theme-resolved="light"] .messages-page--light img,
+:root[data-theme-resolved="light"] .messages-page--light .emoji-native,
+:root[data-theme-resolved="light"] .squads-page--light img,
+:root[data-theme-resolved="light"] .squads-page--light .emoji-native,
 :root[data-theme-resolved="light"] .auth-page--light img,
 :root[data-theme-resolved="light"] .auth-page--light svg,
 :root[data-theme-resolved="light"] .auth-page--light iframe,
@@ -118,10 +126,30 @@ body {
 :root[data-theme-resolved="light"] .activity-page,
 :root[data-theme-resolved="light"] .leaderboards-page,
 :root[data-theme-resolved="light"] .profile-page,
+:root[data-theme-resolved="light"] .support-page,
+:root[data-theme-resolved="light"] .alerts-page,
+:root[data-theme-resolved="light"] .messages-page,
+:root[data-theme-resolved="light"] .squads-page,
 :root[data-theme-resolved="light"] .auth-page,
 :root[data-theme-resolved="light"] .admin-page,
 :root[data-theme-resolved="light"] .room-page {
   position: relative;
+}
+
+.lobby-page,
+.rooms-page,
+.community-page,
+.activity-page,
+.leaderboards-page,
+.profile-page,
+.support-page,
+.alerts-page,
+.messages-page,
+.squads-page {
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.12), transparent 28%),
+    radial-gradient(circle at top right, rgba(245, 158, 11, 0.08), transparent 24%),
+    linear-gradient(180deg, #090b11 0%, #06080d 100%) !important;
 }
 
 :root[data-theme-resolved="light"] .lobby-page--light {
@@ -1304,6 +1332,222 @@ body {
   color: #b24a6a !important;
 }
 
+:root[data-theme-resolved="light"] .support-page--light,
+:root[data-theme-resolved="light"] .alerts-page--light,
+:root[data-theme-resolved="light"] .messages-page--light,
+:root[data-theme-resolved="light"] .squads-page--light {
+  color: #241b12;
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.09), transparent 26%),
+    radial-gradient(circle at top right, rgba(245, 158, 11, 0.1), transparent 24%),
+    linear-gradient(180deg, #f8f2e8 0%, #efe5d7 100%) !important;
+}
+
+:root[data-theme-resolved="light"] .support-page--light .text-white,
+:root[data-theme-resolved="light"] .alerts-page--light .text-white,
+:root[data-theme-resolved="light"] .messages-page--light .text-white,
+:root[data-theme-resolved="light"] .squads-page--light .text-white {
+  color: #1f170f !important;
+}
+
+:root[data-theme-resolved="light"] .support-page--light .text-neutral-500,
+:root[data-theme-resolved="light"] .alerts-page--light .text-neutral-500,
+:root[data-theme-resolved="light"] .messages-page--light .text-neutral-500,
+:root[data-theme-resolved="light"] .squads-page--light .text-neutral-500 {
+  color: #7a6650 !important;
+}
+
+:root[data-theme-resolved="light"] .support-page--light .text-neutral-400,
+:root[data-theme-resolved="light"] .support-page--light .text-neutral-300,
+:root[data-theme-resolved="light"] .alerts-page--light .text-neutral-400,
+:root[data-theme-resolved="light"] .alerts-page--light .text-neutral-300,
+:root[data-theme-resolved="light"] .messages-page--light .text-neutral-400,
+:root[data-theme-resolved="light"] .messages-page--light .text-neutral-300,
+:root[data-theme-resolved="light"] .squads-page--light .text-neutral-400,
+:root[data-theme-resolved="light"] .squads-page--light .text-neutral-300 {
+  color: #5f5141 !important;
+}
+
+:root[data-theme-resolved="light"] .support-page--light .border-white\/10,
+:root[data-theme-resolved="light"] .support-page--light .border-white\/8,
+:root[data-theme-resolved="light"] .support-page--light .border-white\/6,
+:root[data-theme-resolved="light"] .support-page--light .border-white\/12,
+:root[data-theme-resolved="light"] .alerts-page--light .border-white\/10,
+:root[data-theme-resolved="light"] .alerts-page--light .border-white\/8,
+:root[data-theme-resolved="light"] .alerts-page--light .border-white\/6,
+:root[data-theme-resolved="light"] .alerts-page--light .border-white\/12,
+:root[data-theme-resolved="light"] .messages-page--light .border-white\/10,
+:root[data-theme-resolved="light"] .messages-page--light .border-white\/8,
+:root[data-theme-resolved="light"] .messages-page--light .border-white\/6,
+:root[data-theme-resolved="light"] .messages-page--light .border-white\/12,
+:root[data-theme-resolved="light"] .squads-page--light .border-white\/10,
+:root[data-theme-resolved="light"] .squads-page--light .border-white\/8,
+:root[data-theme-resolved="light"] .squads-page--light .border-white\/6,
+:root[data-theme-resolved="light"] .squads-page--light .border-white\/12 {
+  border-color: #e2d4c2 !important;
+}
+
+:root[data-theme-resolved="light"] .support-page--light .bg-black\/20,
+:root[data-theme-resolved="light"] .support-page--light .bg-white\/\[0\.02\],
+:root[data-theme-resolved="light"] .support-page--light .bg-white\/\[0\.03\],
+:root[data-theme-resolved="light"] .support-page--light .bg-white\/\[0\.04\],
+:root[data-theme-resolved="light"] .alerts-page--light .bg-black\/20,
+:root[data-theme-resolved="light"] .alerts-page--light .bg-white\/\[0\.02\],
+:root[data-theme-resolved="light"] .alerts-page--light .bg-white\/\[0\.03\],
+:root[data-theme-resolved="light"] .alerts-page--light .bg-white\/\[0\.04\],
+:root[data-theme-resolved="light"] .messages-page--light .bg-black\/20,
+:root[data-theme-resolved="light"] .messages-page--light .bg-white\/\[0\.02\],
+:root[data-theme-resolved="light"] .messages-page--light .bg-white\/\[0\.03\],
+:root[data-theme-resolved="light"] .messages-page--light .bg-white\/\[0\.04\],
+:root[data-theme-resolved="light"] .messages-page--light .bg-white\/\[0\.05\],
+:root[data-theme-resolved="light"] .squads-page--light .bg-black\/20,
+:root[data-theme-resolved="light"] .squads-page--light .bg-white\/\[0\.02\],
+:root[data-theme-resolved="light"] .squads-page--light .bg-white\/\[0\.03\],
+:root[data-theme-resolved="light"] .squads-page--light .bg-white\/\[0\.04\] {
+  background: rgba(255, 255, 255, 0.82) !important;
+}
+
+:root[data-theme-resolved="light"] .support-page--light .bg-black\/20,
+:root[data-theme-resolved="light"] .alerts-page--light .bg-black\/20,
+:root[data-theme-resolved="light"] .messages-page--light .bg-black\/20,
+:root[data-theme-resolved="light"] .squads-page--light .bg-black\/20 {
+  background: rgba(255, 252, 247, 0.84) !important;
+}
+
+:root[data-theme-resolved="light"] .support-page--light .rounded-\[26px\],
+:root[data-theme-resolved="light"] .support-page--light .rounded-\[24px\],
+:root[data-theme-resolved="light"] .support-page--light .rounded-\[22px\],
+:root[data-theme-resolved="light"] .support-page--light .rounded-\[20px\],
+:root[data-theme-resolved="light"] .support-page--light .rounded-\[18px\],
+:root[data-theme-resolved="light"] .alerts-page--light .rounded-\[24px\],
+:root[data-theme-resolved="light"] .alerts-page--light .rounded-\[22px\],
+:root[data-theme-resolved="light"] .alerts-page--light .rounded-\[20px\],
+:root[data-theme-resolved="light"] .alerts-page--light .rounded-\[18px\],
+:root[data-theme-resolved="light"] .messages-page--light .rounded-\[30px\],
+:root[data-theme-resolved="light"] .messages-page--light .rounded-\[28px\],
+:root[data-theme-resolved="light"] .messages-page--light .rounded-\[26px\],
+:root[data-theme-resolved="light"] .messages-page--light .rounded-\[24px\],
+:root[data-theme-resolved="light"] .messages-page--light .rounded-\[22px\],
+:root[data-theme-resolved="light"] .messages-page--light .rounded-\[20px\],
+:root[data-theme-resolved="light"] .messages-page--light .rounded-\[18px\],
+:root[data-theme-resolved="light"] .squads-page--light .rounded-\[24px\],
+:root[data-theme-resolved="light"] .squads-page--light .rounded-\[22px\],
+:root[data-theme-resolved="light"] .squads-page--light .rounded-\[20px\],
+:root[data-theme-resolved="light"] .squads-page--light .rounded-\[18px\] {
+  box-shadow:
+    0 18px 34px rgba(121, 86, 39, 0.1),
+    0 1px 0 rgba(255, 255, 255, 0.48) inset;
+}
+
+:root[data-theme-resolved="light"] .support-page--light .border-blue-300\/18,
+:root[data-theme-resolved="light"] .support-page--light .border-blue-900\/30,
+:root[data-theme-resolved="light"] .alerts-page--light .border-blue-300\/18,
+:root[data-theme-resolved="light"] .messages-page--light .border-blue-300\/18,
+:root[data-theme-resolved="light"] .messages-page--light .border-blue-300\/22,
+:root[data-theme-resolved="light"] .squads-page--light .border-blue-300\/18 {
+  border-color: #7db5ef !important;
+}
+
+:root[data-theme-resolved="light"] .support-page--light .bg-blue-950\/20,
+:root[data-theme-resolved="light"] .support-page--light .bg-blue-400\/10,
+:root[data-theme-resolved="light"] .alerts-page--light .bg-blue-500\/10,
+:root[data-theme-resolved="light"] .messages-page--light .bg-blue-400\/10,
+:root[data-theme-resolved="light"] .messages-page--light .bg-blue-500\/10,
+:root[data-theme-resolved="light"] .squads-page--light .bg-blue-400\/10 {
+  background: #eff7ff !important;
+}
+
+:root[data-theme-resolved="light"] .support-page--light .text-blue-200,
+:root[data-theme-resolved="light"] .support-page--light .text-blue-100,
+:root[data-theme-resolved="light"] .alerts-page--light .text-blue-200,
+:root[data-theme-resolved="light"] .messages-page--light .text-blue-100,
+:root[data-theme-resolved="light"] .messages-page--light .text-blue-100\/75,
+:root[data-theme-resolved="light"] .squads-page--light .text-blue-200 {
+  color: #0f5fa8 !important;
+}
+
+:root[data-theme-resolved="light"] .support-page--light .border-amber-300\/18,
+:root[data-theme-resolved="light"] .support-page--light .border-amber-400\/18,
+:root[data-theme-resolved="light"] .alerts-page--light .border-amber-300\/18,
+:root[data-theme-resolved="light"] .messages-page--light .border-amber-300\/18,
+:root[data-theme-resolved="light"] .squads-page--light .border-amber-300\/18 {
+  border-color: #e8bf74 !important;
+}
+
+:root[data-theme-resolved="light"] .support-page--light .bg-amber-400\/10,
+:root[data-theme-resolved="light"] .alerts-page--light .bg-amber-400\/10,
+:root[data-theme-resolved="light"] .messages-page--light .bg-amber-400\/10,
+:root[data-theme-resolved="light"] .squads-page--light .bg-amber-400\/10 {
+  background: #fff5df !important;
+}
+
+:root[data-theme-resolved="light"] .support-page--light .text-amber-200,
+:root[data-theme-resolved="light"] .support-page--light .text-amber-100,
+:root[data-theme-resolved="light"] .support-page--light .text-amber-200\/75,
+:root[data-theme-resolved="light"] .messages-page--light .text-amber-100,
+:root[data-theme-resolved="light"] .messages-page--light .text-amber-200\/85 {
+  color: #9a6706 !important;
+}
+
+:root[data-theme-resolved="light"] .support-page--light .border-emerald-300\/18,
+:root[data-theme-resolved="light"] .support-page--light .border-emerald-900\/25,
+:root[data-theme-resolved="light"] .alerts-page--light .border-emerald-300\/18,
+:root[data-theme-resolved="light"] .messages-page--light .border-emerald-300\/18,
+:root[data-theme-resolved="light"] .messages-page--light .border-emerald-900\/25,
+:root[data-theme-resolved="light"] .squads-page--light .border-emerald-300\/18 {
+  border-color: #8dd3ae !important;
+}
+
+:root[data-theme-resolved="light"] .support-page--light .bg-emerald-400\/10,
+:root[data-theme-resolved="light"] .support-page--light .bg-emerald-950\/15,
+:root[data-theme-resolved="light"] .alerts-page--light .bg-emerald-400\/10,
+:root[data-theme-resolved="light"] .messages-page--light .bg-emerald-400\/10,
+:root[data-theme-resolved="light"] .messages-page--light .bg-emerald-950\/15,
+:root[data-theme-resolved="light"] .squads-page--light .bg-emerald-400\/10 {
+  background: #eefcf4 !important;
+}
+
+:root[data-theme-resolved="light"] .support-page--light .text-emerald-200,
+:root[data-theme-resolved="light"] .support-page--light .text-emerald-100,
+:root[data-theme-resolved="light"] .messages-page--light .text-emerald-300,
+:root[data-theme-resolved="light"] .messages-page--light .text-emerald-100,
+:root[data-theme-resolved="light"] .messages-page--light .text-emerald-100\/75 {
+  color: #116149 !important;
+}
+
+:root[data-theme-resolved="light"] .support-page--light .border-red-900\/35,
+:root[data-theme-resolved="light"] .alerts-page--light .border-red-900\/35,
+:root[data-theme-resolved="light"] .messages-page--light .border-red-900\/35,
+:root[data-theme-resolved="light"] .squads-page--light .border-red-900\/35 {
+  border-color: #e7b2aa !important;
+}
+
+:root[data-theme-resolved="light"] .support-page--light .bg-red-950\/25,
+:root[data-theme-resolved="light"] .alerts-page--light .bg-red-950\/25,
+:root[data-theme-resolved="light"] .messages-page--light .bg-red-950\/25,
+:root[data-theme-resolved="light"] .squads-page--light .bg-red-950\/25 {
+  background: rgba(255, 244, 242, 0.92) !important;
+}
+
+:root[data-theme-resolved="light"] .support-page--light .text-red-300\/90,
+:root[data-theme-resolved="light"] .alerts-page--light .text-red-300\/90,
+:root[data-theme-resolved="light"] .messages-page--light .text-red-300\/90,
+:root[data-theme-resolved="light"] .squads-page--light .text-red-300\/90 {
+  color: #b54434 !important;
+}
+
+:root[data-theme-resolved="light"] .messages-page--light .border-violet-300\/18 {
+  border-color: #c9b1f6 !important;
+}
+
+:root[data-theme-resolved="light"] .messages-page--light .bg-violet-500\/10 {
+  background: #f5efff !important;
+}
+
+:root[data-theme-resolved="light"] .messages-page--light .text-violet-100 {
+  color: #6f42c1 !important;
+}
+
 .room-stream-scroll,
 .room-panel-scroll {
   scroll-behavior: smooth;
@@ -1366,6 +1610,10 @@ body {
 :root[data-theme-resolved="light"] .activity-page::before,
 :root[data-theme-resolved="light"] .leaderboards-page::before,
 :root[data-theme-resolved="light"] .profile-page::before,
+:root[data-theme-resolved="light"] .support-page::before,
+:root[data-theme-resolved="light"] .alerts-page::before,
+:root[data-theme-resolved="light"] .messages-page::before,
+:root[data-theme-resolved="light"] .squads-page::before,
 :root[data-theme-resolved="light"] .auth-page::before,
 :root[data-theme-resolved="light"] .admin-page::before,
 :root[data-theme-resolved="light"] .room-page::before {
@@ -1385,6 +1633,10 @@ body {
 :root[data-theme-resolved="light"] .activity-page .mx-auto,
 :root[data-theme-resolved="light"] .leaderboards-page .mx-auto,
 :root[data-theme-resolved="light"] .profile-page .mx-auto,
+:root[data-theme-resolved="light"] .support-page .mx-auto,
+:root[data-theme-resolved="light"] .alerts-page .mx-auto,
+:root[data-theme-resolved="light"] .messages-page .mx-auto,
+:root[data-theme-resolved="light"] .squads-page .mx-auto,
 :root[data-theme-resolved="light"] .auth-page .mx-auto,
 :root[data-theme-resolved="light"] .admin-page .mx-auto {
   position: relative;
@@ -1409,6 +1661,18 @@ body {
 :root[data-theme-resolved="light"] .profile-page .rounded-\[24px\],
 :root[data-theme-resolved="light"] .profile-page .rounded-\[22px\],
 :root[data-theme-resolved="light"] .profile-page .rounded-\[20px\],
+:root[data-theme-resolved="light"] .support-page .rounded-\[24px\],
+:root[data-theme-resolved="light"] .support-page .rounded-\[22px\],
+:root[data-theme-resolved="light"] .support-page .rounded-\[20px\],
+:root[data-theme-resolved="light"] .alerts-page .rounded-\[24px\],
+:root[data-theme-resolved="light"] .alerts-page .rounded-\[22px\],
+:root[data-theme-resolved="light"] .alerts-page .rounded-\[20px\],
+:root[data-theme-resolved="light"] .messages-page .rounded-\[24px\],
+:root[data-theme-resolved="light"] .messages-page .rounded-\[22px\],
+:root[data-theme-resolved="light"] .messages-page .rounded-\[20px\],
+:root[data-theme-resolved="light"] .squads-page .rounded-\[24px\],
+:root[data-theme-resolved="light"] .squads-page .rounded-\[22px\],
+:root[data-theme-resolved="light"] .squads-page .rounded-\[20px\],
 :root[data-theme-resolved="light"] .auth-page .rounded-\[24px\],
 :root[data-theme-resolved="light"] .auth-page .rounded-\[22px\],
 :root[data-theme-resolved="light"] .auth-page .rounded-\[20px\],
@@ -1426,6 +1690,10 @@ body {
 :root[data-theme-resolved="light"] .activity-page h1,
 :root[data-theme-resolved="light"] .leaderboards-page h1,
 :root[data-theme-resolved="light"] .profile-page h1,
+:root[data-theme-resolved="light"] .support-page h1,
+:root[data-theme-resolved="light"] .alerts-page h1,
+:root[data-theme-resolved="light"] .messages-page h1,
+:root[data-theme-resolved="light"] .squads-page h1,
 :root[data-theme-resolved="light"] .auth-page h1,
 :root[data-theme-resolved="light"] .admin-page h1 {
   letter-spacing: -0.045em;
@@ -1437,6 +1705,10 @@ body {
 :root[data-theme-resolved="light"] .activity-page .text-neutral-400,
 :root[data-theme-resolved="light"] .leaderboards-page .text-neutral-400,
 :root[data-theme-resolved="light"] .profile-page .text-neutral-400,
+:root[data-theme-resolved="light"] .support-page .text-neutral-400,
+:root[data-theme-resolved="light"] .alerts-page .text-neutral-400,
+:root[data-theme-resolved="light"] .messages-page .text-neutral-400,
+:root[data-theme-resolved="light"] .squads-page .text-neutral-400,
 :root[data-theme-resolved="light"] .auth-page .text-neutral-400,
 :root[data-theme-resolved="light"] .admin-page .text-neutral-400 {
   opacity: 0.92;

@@ -6,8 +6,8 @@ function getRoomMeta(room, isLight) {
     return {
       badge: "Battle arena",
       accent: isLight
-        ? "text-rose-800 border-rose-300 bg-white/80"
-        : "text-rose-200 border-rose-400/18 bg-rose-500/10",
+        ? "text-amber-900 border-amber-300 bg-white/80"
+        : "text-amber-200 border-amber-400/18 bg-amber-500/10",
       cta: "Enter arena",
     };
   }
@@ -101,6 +101,42 @@ function getMetaPills(room, isLive) {
   return items.slice(0, 3);
 }
 
+function getRoomVisual(room, isLight) {
+  if (room?.slug === "rapnometry-arena") {
+    return {
+      glyph: "🎙",
+      shellClassName: isLight
+        ? "border-amber-300 bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.28),transparent_64%),linear-gradient(180deg,#fff8ea,#f2ddb2)] text-amber-900"
+        : "border-amber-400/24 bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.24),transparent_60%),linear-gradient(180deg,rgba(84,57,13,0.96),rgba(16,12,8,0.98))] text-amber-200 shadow-[0_0_24px_rgba(251,191,36,0.14)]",
+    };
+  }
+
+  if (room?.slug === "battle-trivia" || room?.roomType === "trivia") {
+    return {
+      glyph: "🧠",
+      shellClassName: isLight
+        ? "border-sky-300 bg-[radial-gradient(circle_at_top,rgba(96,165,250,0.28),transparent_64%),linear-gradient(180deg,#f6fbff,#dcecff)] text-sky-900"
+        : "border-blue-400/24 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.28),transparent_60%),linear-gradient(180deg,rgba(14,34,74,0.96),rgba(8,12,20,0.98))] text-blue-200 shadow-[0_0_24px_rgba(59,130,246,0.16)]",
+    };
+  }
+
+  if (room?.slug === "word-scramble" || room?.roomType === "game") {
+    return {
+      glyph: "🔤",
+      shellClassName: isLight
+        ? "border-violet-300 bg-[radial-gradient(circle_at_top,rgba(167,139,250,0.28),transparent_64%),linear-gradient(180deg,#fbf7ff,#eadfff)] text-violet-900"
+        : "border-violet-400/24 bg-[radial-gradient(circle_at_top,rgba(139,92,246,0.28),transparent_60%),linear-gradient(180deg,rgba(51,22,86,0.96),rgba(10,8,18,0.98))] text-violet-200 shadow-[0_0_24px_rgba(139,92,246,0.16)]",
+    };
+  }
+
+  return {
+    glyph: "#",
+    shellClassName: isLight
+      ? "border-stone-200 bg-[linear-gradient(180deg,#ffffff,#f2ebe1)] text-stone-700"
+      : "border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] text-neutral-200",
+  };
+}
+
 export default function RoomCard({ room }) {
   const { resolvedTheme } = useTheme();
   const isLight = resolvedTheme === "light";
@@ -109,13 +145,14 @@ export default function RoomCard({ room }) {
   const description = getRoomDescription(room);
   const metaPills = getMetaPills(room, isLive);
   const statusLabel = isLive ? "Live now" : "Open";
+  const visual = getRoomVisual(room, isLight);
 
   const cardClassName = isLight
-    ? "group block rounded-[20px] border border-[#d8c3a0] bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.08),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(245,158,11,0.08),transparent_26%),linear-gradient(180deg,#fffaf1,#f2e4d1)] p-3.5 shadow-[0_18px_36px_rgba(122,84,37,0.12)] transition hover:-translate-y-[1px] hover:border-[#c69a57] hover:shadow-[0_22px_42px_rgba(122,84,37,0.16)] sm:rounded-[24px] sm:p-4"
-    : "group block rounded-[20px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.1),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-3.5 shadow-[0_16px_34px_rgba(0,0,0,0.14)] transition hover:-translate-y-[1px] hover:border-white/15 hover:bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.12),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.018))] sm:rounded-[24px] sm:p-4";
+    ? "group block rounded-[22px] border border-[#d8c3a0] bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.08),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(245,158,11,0.08),transparent_26%),linear-gradient(180deg,#fffaf1,#f2e4d1)] p-4 shadow-[0_18px_36px_rgba(122,84,37,0.12)] transition hover:-translate-y-[1px] hover:border-[#c69a57] hover:shadow-[0_22px_42px_rgba(122,84,37,0.16)] sm:rounded-[24px] sm:p-4"
+    : "group block rounded-[24px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.14),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(251,191,36,0.08),transparent_22%),linear-gradient(180deg,rgba(20,24,34,0.98),rgba(8,10,16,0.98))] p-4 shadow-[0_22px_46px_rgba(0,0,0,0.24)] transition hover:-translate-y-[1px] hover:border-white/16 hover:bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.18),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(251,191,36,0.1),transparent_24%),linear-gradient(180deg,rgba(24,30,42,1),rgba(8,10,16,1))] sm:rounded-[24px] sm:p-4";
   const titleClassName = isLight
-    ? "text-[18px] font-semibold tracking-[-0.04em] text-stone-900 sm:text-[20px]"
-    : "text-[18px] font-semibold tracking-[-0.04em] text-white sm:text-[20px]";
+    ? "text-[19px] font-semibold tracking-[-0.04em] text-stone-900 sm:text-[20px]"
+    : "text-[19px] font-semibold tracking-[-0.04em] text-white sm:text-[20px]";
   const descriptionClassName = isLight
     ? "mt-1.5 text-[12px] leading-5 text-stone-600 sm:text-[13px] sm:leading-6"
     : "mt-1.5 text-[12px] leading-5 text-neutral-400 sm:text-[13px] sm:leading-6";
@@ -136,8 +173,8 @@ export default function RoomCard({ room }) {
   return (
     <Link to={`/rooms/${room?.id}`} className={`${cardClassName} h-full`}>
       <div className="flex h-full flex-col">
-        <div>
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             <div
               className={`rounded-full border px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] ${meta.accent}`}
             >
@@ -150,25 +187,46 @@ export default function RoomCard({ room }) {
             </div>
           </div>
 
-          <div className="mt-3 min-w-0">
-            <h3 className={`${titleClassName} line-clamp-2`}>
-              {room?.name || "Room"}
-            </h3>
-            <p className={`${descriptionClassName} line-clamp-3`}>{description}</p>
+          <div
+            className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full border text-[24px] ${visual.shellClassName}`}
+          >
+            <span aria-hidden="true">{visual.glyph}</span>
           </div>
-
-          {metaPills.length > 0 ? (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {metaPills.map((item) => (
-                <div key={item} className={metaClassName}>
-                  {item}
-                </div>
-              ))}
-            </div>
-          ) : null}
         </div>
 
-        <div className={`mt-4 ${ctaClassName}`}>
+        <div className="mt-3 min-w-0">
+          <h3 className={`${titleClassName} line-clamp-2`}>{room?.name || "Room"}</h3>
+          <p className={`${descriptionClassName} line-clamp-3`}>{description}</p>
+        </div>
+
+        {metaPills.length > 0 ? (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {metaPills.map((item) => (
+              <div key={item} className={metaClassName}>
+                {item}
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        <div className="mt-4 sm:hidden">
+          <div className="flex items-center justify-between gap-3 rounded-[18px] border border-white/8 bg-black/20 px-3.5 py-3">
+            <div className="min-w-0">
+              <div className="text-[10px] uppercase tracking-[0.14em] text-neutral-500">
+                Ready to join
+              </div>
+              <div className="mt-1 truncate text-[13px] font-medium text-white">
+                {meta.cta}
+              </div>
+            </div>
+
+            <div className="inline-flex h-10 items-center rounded-[14px] border border-blue-400/18 bg-blue-500/10 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-100">
+              Open
+            </div>
+          </div>
+        </div>
+
+        <div className={`mt-4 hidden sm:inline-flex ${ctaClassName}`}>
           {meta.cta}
           <span aria-hidden="true">&rarr;</span>
         </div>
