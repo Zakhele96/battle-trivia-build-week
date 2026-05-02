@@ -7,6 +7,9 @@ public sealed class TriviaQuestion
     public Guid Id { get; set; }
     public string QuestionText { get; set; } = string.Empty;
     public string CorrectAnswer { get; set; } = string.Empty;
+    public string? QuestionImageUrl { get; set; }
+    public string? AnswerImageUrl { get; set; }
+    public string? AnswerExplanation { get; set; }
 
     // Selected from SQL as accepted_answers::text
     public string AcceptedAnswersJson { get; set; } = "[]";

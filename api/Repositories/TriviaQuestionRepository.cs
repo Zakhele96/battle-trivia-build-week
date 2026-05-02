@@ -27,6 +27,9 @@ public sealed class TriviaQuestionRepository : ITriviaQuestionRepository
                 question_text AS QuestionText,
                 correct_answer AS CorrectAnswer,
                 accepted_answers::text AS AcceptedAnswersJson,
+                question_image_url AS QuestionImageUrl,
+                answer_image_url AS AnswerImageUrl,
+                answer_explanation AS AnswerExplanation,
                 category,
                 difficulty,
                 is_active AS IsActive,
@@ -74,6 +77,9 @@ public sealed class TriviaQuestionRepository : ITriviaQuestionRepository
                 question_text AS QuestionText,
                 correct_answer AS CorrectAnswer,
                 accepted_answers::text AS AcceptedAnswersJson,
+                question_image_url AS QuestionImageUrl,
+                answer_image_url AS AnswerImageUrl,
+                answer_explanation AS AnswerExplanation,
                 category,
                 difficulty,
                 is_active AS IsActive,
@@ -102,6 +108,9 @@ public sealed class TriviaQuestionRepository : ITriviaQuestionRepository
                 question_text,
                 correct_answer,
                 accepted_answers,
+                question_image_url,
+                answer_image_url,
+                answer_explanation,
                 category,
                 difficulty,
                 is_active,
@@ -112,6 +121,9 @@ public sealed class TriviaQuestionRepository : ITriviaQuestionRepository
                 @QuestionText,
                 @CorrectAnswer,
                 CAST(@AcceptedAnswersJson AS jsonb),
+                @QuestionImageUrl,
+                @AnswerImageUrl,
+                @AnswerExplanation,
                 @Category,
                 @Difficulty,
                 @IsActive,
@@ -131,6 +143,9 @@ public sealed class TriviaQuestionRepository : ITriviaQuestionRepository
             SET question_text = @QuestionText,
                 correct_answer = @CorrectAnswer,
                 accepted_answers = CAST(@AcceptedAnswersJson AS jsonb),
+                question_image_url = @QuestionImageUrl,
+                answer_image_url = @AnswerImageUrl,
+                answer_explanation = @AnswerExplanation,
                 category = @Category,
                 difficulty = @Difficulty,
                 is_active = @IsActive
@@ -155,6 +170,33 @@ public sealed class TriviaQuestionRepository : ITriviaQuestionRepository
         InvalidateActiveQuestionCache();
     }
 
+    public async Task<int> SetActiveByFilterAsync(
+        bool isActive,
+        string? category = null,
+        string? difficulty = null,
+        bool? currentIsActive = null)
+    {
+        const string sql = """
+            UPDATE trivia_questions
+            SET is_active = @IsActive
+            WHERE (@Category IS NULL OR category = @Category)
+              AND (@Difficulty IS NULL OR difficulty = @Difficulty)
+              AND (@CurrentIsActive IS NULL OR is_active = @CurrentIsActive);
+            """;
+
+        using var connection = _context.CreateConnection();
+        var affected = await connection.ExecuteAsync(sql, new
+        {
+            IsActive = isActive,
+            Category = category,
+            Difficulty = difficulty,
+            CurrentIsActive = currentIsActive
+        });
+
+        InvalidateActiveQuestionCache();
+        return affected;
+    }
+
     private async Task<IReadOnlyList<TriviaQuestion>> GetActiveQuestionsAsync()
     {
         var rows = await _memoryCache.GetOrCreateAsync(
@@ -169,6 +211,9 @@ public sealed class TriviaQuestionRepository : ITriviaQuestionRepository
                         question_text AS QuestionText,
                         correct_answer AS CorrectAnswer,
                         accepted_answers::text AS AcceptedAnswersJson,
+                        question_image_url AS QuestionImageUrl,
+                        answer_image_url AS AnswerImageUrl,
+                        answer_explanation AS AnswerExplanation,
                         category,
                         difficulty,
                         is_active AS IsActive,

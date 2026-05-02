@@ -15,6 +15,7 @@ api/build-verify-timers
 api/build-verify-scale
 api/build-verify-arena
 api/build-verify-arena-flow
+api/tools
 web/node_modules/
 web/dist/
 web/.vite/

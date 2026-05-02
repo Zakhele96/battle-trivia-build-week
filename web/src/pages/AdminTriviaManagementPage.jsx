@@ -15,6 +15,7 @@ import {
   setAdminUserAccess,
   setAdminWordScrambleWordActive,
   setAdminTriviaQuestionActive,
+  setAdminTriviaQuestionsActiveBulk,
   updateAdminLeaderboardSponsor,
   updateAdminWordScrambleWord,
   updateAdminTriviaQuestion,
@@ -58,6 +59,9 @@ const emptyQuestionForm = {
   acceptedAnswersText: "",
   category: "",
   difficulty: "",
+  questionImageUrl: "",
+  answerImageUrl: "",
+  answerExplanation: "",
   isActive: true,
 };
 
@@ -333,6 +337,7 @@ export default function AdminTriviaManagementPage() {
   const [questionForm, setQuestionForm] = useState(emptyQuestionForm);
   const [editingQuestionId, setEditingQuestionId] = useState(null);
   const [savingQuestion, setSavingQuestion] = useState(false);
+  const [bulkQuestionAction, setBulkQuestionAction] = useState("");
 
   const [scrambleWords, setScrambleWords] = useState([]);
   const [scrambleWordsLoading, setScrambleWordsLoading] = useState(true);
@@ -352,6 +357,8 @@ export default function AdminTriviaManagementPage() {
     useState(20);
   const [battleTriviaRevealDelaySeconds, setBattleTriviaRevealDelaySeconds] =
     useState(5);
+  const [battleTriviaMediaEnabled, setBattleTriviaMediaEnabled] =
+    useState(false);
   const [wordScrambleRoundDurationSeconds, setWordScrambleRoundDurationSeconds] =
     useState(30);
   const [wordScrambleRevealDurationSeconds, setWordScrambleRevealDurationSeconds] =
@@ -558,6 +565,7 @@ export default function AdminTriviaManagementPage() {
       setBattleTriviaRevealDelaySeconds(
         Number(data.revealDelaySeconds) || 5
       );
+      setBattleTriviaMediaEnabled(!!data.mediaEnabled);
       setWordScrambleRoundDurationSeconds(
         Number(scrambleData.roundDurationSeconds) || 30
       );
@@ -733,6 +741,9 @@ export default function AdminTriviaManagementPage() {
       acceptedAnswersText: (question.acceptedAnswers || []).join("\n"),
       category: question.category || "",
       difficulty: question.difficulty || "",
+      questionImageUrl: question.questionImageUrl || "",
+      answerImageUrl: question.answerImageUrl || "",
+      answerExplanation: question.answerExplanation || "",
       isActive: !!question.isActive,
     });
   };
@@ -754,6 +765,9 @@ export default function AdminTriviaManagementPage() {
       acceptedAnswers: parseAcceptedAnswers(questionForm.acceptedAnswersText),
       category: questionForm.category.trim() || null,
       difficulty: questionForm.difficulty.trim() || null,
+      questionImageUrl: questionForm.questionImageUrl.trim() || null,
+      answerImageUrl: questionForm.answerImageUrl.trim() || null,
+      answerExplanation: questionForm.answerExplanation.trim() || null,
       isActive: questionForm.isActive,
     };
 
@@ -781,6 +795,32 @@ export default function AdminTriviaManagementPage() {
       await loadQuestions();
     } catch {
       setQuestionMessage("Failed to update question status.");
+    }
+  };
+
+  const handleBulkQuestionActiveChange = async (isActive) => {
+    setBulkQuestionAction(isActive ? "on" : "off");
+    setQuestionMessage("");
+
+    try {
+      const result = await setAdminTriviaQuestionsActiveBulk(isActive, {
+        category: filters.category.trim() || undefined,
+        difficulty: filters.difficulty.trim() || undefined,
+        isActive:
+          filters.isActive === "" ? undefined : filters.isActive === "true",
+      });
+
+      const affected = Number(result?.affected) || 0;
+      setQuestionMessage(
+        affected === 0
+          ? `No filtered questions were turned ${isActive ? "on" : "off"}.`
+          : `${affected} filtered question${affected === 1 ? "" : "s"} turned ${isActive ? "on" : "off"}.`
+      );
+      await loadQuestions();
+    } catch {
+      setQuestionMessage("Failed to update filtered questions.");
+    } finally {
+      setBulkQuestionAction("");
     }
   };
 
@@ -1047,6 +1087,7 @@ export default function AdminTriviaManagementPage() {
           windows,
           questionDurationSeconds: Number(battleTriviaQuestionDurationSeconds),
           revealDelaySeconds: Number(battleTriviaRevealDelaySeconds),
+          mediaEnabled: battleTriviaMediaEnabled,
         }),
         updateWordScrambleSettings({
           roundDurationSeconds: Number(wordScrambleRoundDurationSeconds),
@@ -1061,6 +1102,7 @@ export default function AdminTriviaManagementPage() {
       setBattleTriviaRevealDelaySeconds(
         Number(data.revealDelaySeconds) || 5
       );
+      setBattleTriviaMediaEnabled(!!data.mediaEnabled);
       setWordScrambleRoundDurationSeconds(
         Number(scrambleData.roundDurationSeconds) || 30
       );
@@ -1338,6 +1380,17 @@ export default function AdminTriviaManagementPage() {
                           />
                         </label>
                       </div>
+
+                      <label className="mt-3 flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-neutral-300">
+                        <input
+                          type="checkbox"
+                          checked={battleTriviaMediaEnabled}
+                          onChange={(e) =>
+                            setBattleTriviaMediaEnabled(e.target.checked)
+                          }
+                        />
+                        Enable question images and answer reveal media
+                      </label>
                     </div>
 
                     <div className="rounded-xl border border-white/8 bg-black/20 p-3">
@@ -1639,6 +1692,11 @@ export default function AdminTriviaManagementPage() {
                   <input name="correctAnswer" placeholder="Correct answer" value={questionForm.correctAnswer} onChange={handleQuestionFormChange} className={inputClass} />
                   <textarea name="acceptedAnswersText" rows="1" placeholder="Accepted answers, one per line" value={questionForm.acceptedAnswersText} onChange={handleQuestionFormChange} className={inputClass} />
                 </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <input name="questionImageUrl" placeholder="Question image URL (optional)" value={questionForm.questionImageUrl} onChange={handleQuestionFormChange} className={inputClass} />
+                  <input name="answerImageUrl" placeholder="Answer image URL (optional)" value={questionForm.answerImageUrl} onChange={handleQuestionFormChange} className={inputClass} />
+                </div>
+                <textarea name="answerExplanation" rows="2" placeholder="Answer explanation or fun fact (optional)" value={questionForm.answerExplanation} onChange={handleQuestionFormChange} className={inputClass} />
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <label className="flex items-center gap-2 text-sm text-neutral-300">
                     <input type="checkbox" name="isActive" checked={questionForm.isActive} onChange={handleQuestionFormChange} />
@@ -1673,6 +1731,30 @@ export default function AdminTriviaManagementPage() {
                 </select>
               </div>
 
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/8 bg-black/20 px-3 py-3">
+                <div className="text-xs text-neutral-400">
+                  Apply to the currently filtered Battle Trivia questions.
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    disabled={questionsLoading || bulkQuestionAction !== ""}
+                    onClick={() => handleBulkQuestionActiveChange(true)}
+                    className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-60"
+                  >
+                    {bulkQuestionAction === "on" ? "Turning on..." : "Turn filtered on"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={questionsLoading || bulkQuestionAction !== ""}
+                    onClick={() => handleBulkQuestionActiveChange(false)}
+                    className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-500 disabled:opacity-60"
+                  >
+                    {bulkQuestionAction === "off" ? "Turning off..." : "Turn filtered off"}
+                  </button>
+                </div>
+              </div>
+
               {questionsError ? (
                 <div className="mt-3 rounded-xl border border-red-900/40 bg-red-950/30 px-3 py-2 text-sm text-red-400">{questionsError}</div>
               ) : null}
@@ -1692,6 +1774,11 @@ export default function AdminTriviaManagementPage() {
                           </div>
                           <div className="mt-2 line-clamp-2 text-sm font-semibold text-white">{question.questionText}</div>
                           <div className="mt-1 truncate text-xs text-neutral-400">Answer: {question.correctAnswer}</div>
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {question.questionImageUrl ? <StatusPill tone="blue">Question image</StatusPill> : null}
+                            {question.answerImageUrl ? <StatusPill tone="amber">Answer image</StatusPill> : null}
+                            {question.answerExplanation ? <StatusPill tone="violet">Explanation</StatusPill> : null}
+                          </div>
                         </div>
                         <div className="flex shrink-0 gap-2">
                           <button type="button" onClick={() => handleEditQuestion(question)} className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-white hover:bg-white/[0.06]">

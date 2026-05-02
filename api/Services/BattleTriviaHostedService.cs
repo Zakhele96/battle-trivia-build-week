@@ -133,7 +133,9 @@ public sealed class BattleTriviaHostedService : BackgroundService
                     .SendAsync("RoundEnded", new
                     {
                         roundId = activeRound.RoundId,
-                        correctAnswer = activeRound.CorrectAnswer
+                        correctAnswer = activeRound.CorrectAnswer,
+                        answerImageUrl = room.BattleTriviaMediaEnabled ? activeRound.AnswerImageUrl : null,
+                        answerExplanation = room.BattleTriviaMediaEnabled ? activeRound.AnswerExplanation : null
                     }, stoppingToken);
             }
 
@@ -202,7 +204,9 @@ public sealed class BattleTriviaHostedService : BackgroundService
                     .SendAsync("RoundEnded", new
                     {
                         roundId = activeRound.RoundId,
-                        correctAnswer = activeRound.CorrectAnswer
+                        correctAnswer = activeRound.CorrectAnswer,
+                        answerImageUrl = room.BattleTriviaMediaEnabled ? activeRound.AnswerImageUrl : null,
+                        answerExplanation = room.BattleTriviaMediaEnabled ? activeRound.AnswerExplanation : null
                     }, stoppingToken);
 
                 var correctAnswerMessage = await chatService.CreateSystemMessageAsync(
@@ -287,6 +291,7 @@ public sealed class BattleTriviaHostedService : BackgroundService
             {
                 roundId = round.Id,
                 questionText = question.QuestionText,
+                questionImageUrl = room.BattleTriviaMediaEnabled ? question.QuestionImageUrl : null,
                 category = question.Category,
                 difficulty = question.Difficulty,
                 roundNumber = round.RoundNumber,

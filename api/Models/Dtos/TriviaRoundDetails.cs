@@ -14,5 +14,8 @@ public sealed class TriviaRoundDetails
 
     public string QuestionText { get; set; } = string.Empty;
     public string CorrectAnswer { get; set; } = string.Empty;
+    public string? QuestionImageUrl { get; set; }
+    public string? AnswerImageUrl { get; set; }
+    public string? AnswerExplanation { get; set; }
     public string AcceptedAnswersJson { get; set; } = "[]";
 }

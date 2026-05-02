@@ -105,6 +105,9 @@ public sealed class TriviaRoundRepository : ITriviaRoundRepository
             q.category AS Category,
             q.difficulty AS Difficulty,
             q.correct_answer AS CorrectAnswer,
+            q.question_image_url AS QuestionImageUrl,
+            q.answer_image_url AS AnswerImageUrl,
+            q.answer_explanation AS AnswerExplanation,
             q.accepted_answers::text AS AcceptedAnswersJson
         FROM trivia_rounds r
         INNER JOIN trivia_game_sessions s

@@ -17,6 +17,7 @@ public interface IRoomRepository
         Guid roomId,
         int? battleTriviaQuestionDurationSeconds = null,
         int? battleTriviaRevealDelaySeconds = null,
+        bool? battleTriviaMediaEnabled = null,
         int? wordScrambleRoundDurationSeconds = null,
         int? wordScrambleRevealDurationSeconds = null);
 }

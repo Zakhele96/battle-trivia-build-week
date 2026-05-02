@@ -26,6 +26,18 @@ export async function setAdminTriviaQuestionActive(id, isActive) {
   });
 }
 
+export async function setAdminTriviaQuestionsActiveBulk(isActive, params = {}) {
+  const { data } = await api.patch("/admin/trivia-questions/active/bulk", null, {
+    params: {
+      isActive,
+      category: params.category,
+      difficulty: params.difficulty,
+      currentIsActive: params.isActive,
+    },
+  });
+  return data;
+}
+
 export async function getAdminWordScrambleWords(params = {}) {
   const { data } = await api.get("/admin/word-scramble/words", { params });
   return data;

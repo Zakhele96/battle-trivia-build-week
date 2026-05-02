@@ -11,6 +11,7 @@ public sealed class Room
     public int SlowModeSeconds { get; set; }
     public int BattleTriviaQuestionDurationSeconds { get; set; } = 20;
     public int BattleTriviaRevealDelaySeconds { get; set; } = 5;
+    public bool BattleTriviaMediaEnabled { get; set; }
     public int WordScrambleRoundDurationSeconds { get; set; } = 30;
     public int WordScrambleRevealDurationSeconds { get; set; } = 5;
     public DateTime CreatedAt { get; set; }

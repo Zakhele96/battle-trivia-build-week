@@ -40,6 +40,9 @@ public sealed class AdminTriviaQuestionService
             AcceptedAnswersJson = BuildAcceptedAnswersJson(request.CorrectAnswer, request.AcceptedAnswers),
             Category = string.IsNullOrWhiteSpace(request.Category) ? null : request.Category.Trim(),
             Difficulty = string.IsNullOrWhiteSpace(request.Difficulty) ? null : request.Difficulty.Trim(),
+            QuestionImageUrl = CleanOptional(request.QuestionImageUrl),
+            AnswerImageUrl = CleanOptional(request.AnswerImageUrl),
+            AnswerExplanation = CleanOptional(request.AnswerExplanation),
             IsActive = request.IsActive,
             CreatedAt = DateTime.UtcNow
         };
@@ -58,6 +61,9 @@ public sealed class AdminTriviaQuestionService
         existing.AcceptedAnswersJson = BuildAcceptedAnswersJson(request.CorrectAnswer, request.AcceptedAnswers);
         existing.Category = string.IsNullOrWhiteSpace(request.Category) ? null : request.Category.Trim();
         existing.Difficulty = string.IsNullOrWhiteSpace(request.Difficulty) ? null : request.Difficulty.Trim();
+        existing.QuestionImageUrl = CleanOptional(request.QuestionImageUrl);
+        existing.AnswerImageUrl = CleanOptional(request.AnswerImageUrl);
+        existing.AnswerExplanation = CleanOptional(request.AnswerExplanation);
         existing.IsActive = request.IsActive;
 
         await _triviaQuestionRepository.UpdateAsync(existing);
@@ -71,6 +77,22 @@ public sealed class AdminTriviaQuestionService
 
         await _triviaQuestionRepository.SetActiveAsync(id, isActive);
         return true;
+    }
+
+    public Task<int> SetActiveByFilterAsync(
+        bool isActive,
+        string? category,
+        string? difficulty,
+        bool? currentIsActive)
+    {
+        var normalizedCategory = CleanOptional(category);
+        var normalizedDifficulty = CleanOptional(difficulty);
+
+        return _triviaQuestionRepository.SetActiveByFilterAsync(
+            isActive,
+            normalizedCategory,
+            normalizedDifficulty,
+            currentIsActive);
     }
 
     private static string BuildAcceptedAnswersJson(string correctAnswer, IEnumerable<string> acceptedAnswers)
@@ -99,8 +121,16 @@ public sealed class AdminTriviaQuestionService
             AcceptedAnswers = question.GetAcceptedAnswers().ToList(),
             Category = question.Category,
             Difficulty = question.Difficulty,
+            QuestionImageUrl = question.QuestionImageUrl,
+            AnswerImageUrl = question.AnswerImageUrl,
+            AnswerExplanation = question.AnswerExplanation,
             IsActive = question.IsActive,
             CreatedAt = question.CreatedAt
         };
+    }
+
+    private static string? CleanOptional(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 }

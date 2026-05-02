@@ -4,12 +4,18 @@ export default function TriviaRevealTray({
   correctAnswer,
   roundWinners = [],
   isRoundReveal,
+  answerImageUrl = "",
+  answerExplanation = "",
   maxVisibleWinners = 3,
   lastRoundPlacement = null,
 }) {
   const [isVisible, setIsVisible] = useState(false);
 
-  const hasContent = !!correctAnswer || roundWinners.length > 0;
+  const hasContent =
+    !!correctAnswer ||
+    !!answerImageUrl ||
+    !!answerExplanation ||
+    roundWinners.length > 0;
 
   useEffect(() => {
     if (!hasContent) {
@@ -84,6 +90,25 @@ export default function TriviaRevealTray({
               : "Result"}
           </div>
         </div>
+
+        {answerImageUrl || answerExplanation ? (
+          <div className="grid gap-2">
+            {answerImageUrl ? (
+              <img
+                src={answerImageUrl}
+                alt="Trivia answer"
+                className="max-h-44 w-full rounded-[14px] border border-white/8 bg-black/25 object-cover"
+                draggable={false}
+              />
+            ) : null}
+
+            {answerExplanation ? (
+              <div className="rounded-[14px] border border-white/8 bg-white/[0.04] px-3 py-2 text-[11px] leading-5 text-neutral-300">
+                {answerExplanation}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
 
         <div className="flex min-h-[24px] items-center gap-1.5 overflow-x-auto pb-0.5">
           {lastRoundPlacement?.wasCorrect && lastRoundPlacement?.placement ? (

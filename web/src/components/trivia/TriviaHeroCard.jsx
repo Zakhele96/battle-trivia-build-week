@@ -21,6 +21,9 @@ function normaliseQuestion(currentQuestion) {
   if (!currentQuestion) {
     return {
       text: "",
+      questionImageUrl: "",
+      answerImageUrl: "",
+      answerExplanation: "",
       category: "",
       difficulty: "",
     };
@@ -29,6 +32,9 @@ function normaliseQuestion(currentQuestion) {
   if (typeof currentQuestion === "string") {
     return {
       text: currentQuestion,
+      questionImageUrl: "",
+      answerImageUrl: "",
+      answerExplanation: "",
       category: "",
       difficulty: "",
     };
@@ -40,6 +46,12 @@ function normaliseQuestion(currentQuestion) {
       currentQuestion.text ||
       currentQuestion.prompt ||
       "",
+    questionImageUrl:
+      currentQuestion.questionImageUrl ||
+      currentQuestion.imageUrl ||
+      "",
+    answerImageUrl: currentQuestion.answerImageUrl || "",
+    answerExplanation: currentQuestion.answerExplanation || "",
     category:
       currentQuestion.category ||
       currentQuestion.questionCategory ||
@@ -166,6 +178,7 @@ export default function TriviaHeroCard({
 
   const question = normaliseQuestion(currentQuestion);
   const questionText = question.text || "Waiting for the next question...";
+  const questionImageUrl = question.questionImageUrl || "";
   const questionCategory = question.category;
   const questionDifficulty = formatDifficulty(question.difficulty);
 
@@ -258,25 +271,42 @@ export default function TriviaHeroCard({
 
           <div className={compact ? "mt-1.5 min-h-[44px] sm:min-h-[52px]" : "mt-2 min-h-[48px] sm:min-h-[64px]"}>
             {hasActiveRound ? (
-              <div
-                className={`font-semibold tracking-[-0.02em] text-white transition-all duration-500 ${
-                  compact ? "text-[14px] sm:text-[16px]" : "text-[17px] sm:text-[17px]"
-                } ${
-                  isQuestionFresh
-                    ? "translate-y-0 opacity-100 drop-shadow-[0_0_10px_rgba(96,165,250,0.16)]"
-                    : "translate-y-0 opacity-100"
-                }`}
-                style={{
-                  lineHeight: 1.34,
-                  overflowWrap: "anywhere",
-                  ...antiCopyProps.style,
-                }}
-                onCopy={antiCopyProps.onCopy}
-                onCut={antiCopyProps.onCut}
-                onContextMenu={antiCopyProps.onContextMenu}
-                onDragStart={antiCopyProps.onDragStart}
-              >
-                {questionText}
+              <div>
+                {questionImageUrl ? (
+                  <div className={compact ? "mb-2" : "mb-2.5"}>
+                    <img
+                      src={questionImageUrl}
+                      alt="Trivia question"
+                      className={`w-full rounded-[14px] border border-white/10 bg-black/30 object-cover ${
+                        compact ? "max-h-36" : "max-h-52"
+                      }`}
+                      draggable={false}
+                      onDragStart={antiCopyProps.onDragStart}
+                      onContextMenu={antiCopyProps.onContextMenu}
+                    />
+                  </div>
+                ) : null}
+
+                <div
+                  className={`font-semibold tracking-[-0.02em] text-white transition-all duration-500 ${
+                    compact ? "text-[14px] sm:text-[16px]" : "text-[17px] sm:text-[17px]"
+                  } ${
+                    isQuestionFresh
+                      ? "translate-y-0 opacity-100 drop-shadow-[0_0_10px_rgba(96,165,250,0.16)]"
+                      : "translate-y-0 opacity-100"
+                  }`}
+                  style={{
+                    lineHeight: 1.34,
+                    overflowWrap: "anywhere",
+                    ...antiCopyProps.style,
+                  }}
+                  onCopy={antiCopyProps.onCopy}
+                  onCut={antiCopyProps.onCut}
+                  onContextMenu={antiCopyProps.onContextMenu}
+                  onDragStart={antiCopyProps.onDragStart}
+                >
+                  {questionText}
+                </div>
               </div>
             ) : (
               <div
@@ -297,6 +327,8 @@ export default function TriviaHeroCard({
               correctAnswer={correctAnswer}
               roundWinners={roundWinners}
               isRoundReveal={isRoundReveal}
+              answerImageUrl={question.answerImageUrl}
+              answerExplanation={question.answerExplanation}
               maxVisibleWinners={3}
               lastRoundPlacement={lastRoundPlacement}
             />

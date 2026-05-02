@@ -21,8 +21,27 @@ public sealed class UpdateTriviaQuestionRequestValidator : AbstractValidator<Upd
         RuleFor(x => x.Difficulty)
             .MaximumLength(30);
 
+        RuleFor(x => x.QuestionImageUrl)
+            .MaximumLength(1000)
+            .Must(BeValidOptionalUrl)
+            .WithMessage("Question image URL must be a valid absolute URL.");
+
+        RuleFor(x => x.AnswerImageUrl)
+            .MaximumLength(1000)
+            .Must(BeValidOptionalUrl)
+            .WithMessage("Answer image URL must be a valid absolute URL.");
+
+        RuleFor(x => x.AnswerExplanation)
+            .MaximumLength(500);
+
         RuleForEach(x => x.AcceptedAnswers)
             .NotEmpty()
             .MaximumLength(200);
+    }
+
+    private static bool BeValidOptionalUrl(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ||
+               Uri.TryCreate(value, UriKind.Absolute, out _);
     }
 }

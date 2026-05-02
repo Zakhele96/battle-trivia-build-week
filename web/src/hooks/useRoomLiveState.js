@@ -425,6 +425,7 @@ export default function useRoomLiveState({
 
       setCurrentQuestion({
         questionText: payload.questionText,
+        questionImageUrl: payload.questionImageUrl || "",
         category: payload.category,
         difficulty: payload.difficulty,
       });
@@ -482,6 +483,15 @@ export default function useRoomLiveState({
       currentRoundIdRef.current = null;
 
       setCorrectAnswer(payload.correctAnswer || "");
+      setCurrentQuestion((prev) =>
+        prev
+          ? {
+              ...prev,
+              answerImageUrl: payload.answerImageUrl || "",
+              answerExplanation: payload.answerExplanation || "",
+            }
+          : prev
+      );
       setTimeLeft(0);
       setRoundEndsAt(null);
       setCurrentRoundId(null);

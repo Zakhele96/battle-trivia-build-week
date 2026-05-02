@@ -7,5 +7,8 @@ public sealed class UpdateTriviaQuestionRequest
     public List<string> AcceptedAnswers { get; set; } = new();
     public string? Category { get; set; }
     public string? Difficulty { get; set; }
+    public string? QuestionImageUrl { get; set; }
+    public string? AnswerImageUrl { get; set; }
+    public string? AnswerExplanation { get; set; }
     public bool IsActive { get; set; }
 }

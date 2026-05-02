@@ -15,4 +15,9 @@ public interface ITriviaQuestionRepository
     Task CreateAsync(TriviaQuestion question);
     Task UpdateAsync(TriviaQuestion question);
     Task SetActiveAsync(Guid id, bool isActive);
+    Task<int> SetActiveByFilterAsync(
+        bool isActive,
+        string? category = null,
+        string? difficulty = null,
+        bool? currentIsActive = null);
 }

@@ -22,6 +22,7 @@ public sealed class RoomRepository : IRoomRepository
                    slow_mode_seconds AS SlowModeSeconds,
                    battle_trivia_question_duration_seconds AS BattleTriviaQuestionDurationSeconds,
                    battle_trivia_reveal_delay_seconds AS BattleTriviaRevealDelaySeconds,
+                   battle_trivia_media_enabled AS BattleTriviaMediaEnabled,
                    word_scramble_round_duration_seconds AS WordScrambleRoundDurationSeconds,
                    word_scramble_reveal_duration_seconds AS WordScrambleRevealDurationSeconds,
                    created_at AS CreatedAt
@@ -43,6 +44,7 @@ public sealed class RoomRepository : IRoomRepository
                    slow_mode_seconds AS SlowModeSeconds,
                    battle_trivia_question_duration_seconds AS BattleTriviaQuestionDurationSeconds,
                    battle_trivia_reveal_delay_seconds AS BattleTriviaRevealDelaySeconds,
+                   battle_trivia_media_enabled AS BattleTriviaMediaEnabled,
                    word_scramble_round_duration_seconds AS WordScrambleRoundDurationSeconds,
                    word_scramble_reveal_duration_seconds AS WordScrambleRevealDurationSeconds,
                    created_at AS CreatedAt
@@ -63,6 +65,7 @@ public sealed class RoomRepository : IRoomRepository
                    slow_mode_seconds AS SlowModeSeconds,
                    battle_trivia_question_duration_seconds AS BattleTriviaQuestionDurationSeconds,
                    battle_trivia_reveal_delay_seconds AS BattleTriviaRevealDelaySeconds,
+                   battle_trivia_media_enabled AS BattleTriviaMediaEnabled,
                    word_scramble_round_duration_seconds AS WordScrambleRoundDurationSeconds,
                    word_scramble_reveal_duration_seconds AS WordScrambleRevealDurationSeconds,
                    created_at AS CreatedAt
@@ -83,6 +86,7 @@ public sealed class RoomRepository : IRoomRepository
                    slow_mode_seconds AS SlowModeSeconds,
                    battle_trivia_question_duration_seconds AS BattleTriviaQuestionDurationSeconds,
                    battle_trivia_reveal_delay_seconds AS BattleTriviaRevealDelaySeconds,
+                   battle_trivia_media_enabled AS BattleTriviaMediaEnabled,
                    word_scramble_round_duration_seconds AS WordScrambleRoundDurationSeconds,
                    word_scramble_reveal_duration_seconds AS WordScrambleRevealDurationSeconds,
                    created_at AS CreatedAt
@@ -104,6 +108,7 @@ public sealed class RoomRepository : IRoomRepository
                    slow_mode_seconds AS SlowModeSeconds,
                    battle_trivia_question_duration_seconds AS BattleTriviaQuestionDurationSeconds,
                    battle_trivia_reveal_delay_seconds AS BattleTriviaRevealDelaySeconds,
+                   battle_trivia_media_enabled AS BattleTriviaMediaEnabled,
                    word_scramble_round_duration_seconds AS WordScrambleRoundDurationSeconds,
                    word_scramble_reveal_duration_seconds AS WordScrambleRevealDurationSeconds,
                    created_at AS CreatedAt
@@ -125,6 +130,7 @@ public sealed class RoomRepository : IRoomRepository
                    slow_mode_seconds AS SlowModeSeconds,
                    battle_trivia_question_duration_seconds AS BattleTriviaQuestionDurationSeconds,
                    battle_trivia_reveal_delay_seconds AS BattleTriviaRevealDelaySeconds,
+                   battle_trivia_media_enabled AS BattleTriviaMediaEnabled,
                    word_scramble_round_duration_seconds AS WordScrambleRoundDurationSeconds,
                    word_scramble_reveal_duration_seconds AS WordScrambleRevealDurationSeconds,
                    created_at AS CreatedAt
@@ -150,6 +156,7 @@ public sealed class RoomRepository : IRoomRepository
                 slow_mode_seconds,
                 battle_trivia_question_duration_seconds,
                 battle_trivia_reveal_delay_seconds,
+                battle_trivia_media_enabled,
                 word_scramble_round_duration_seconds,
                 word_scramble_reveal_duration_seconds,
                 created_at
@@ -164,6 +171,7 @@ public sealed class RoomRepository : IRoomRepository
                 @SlowModeSeconds,
                 @BattleTriviaQuestionDurationSeconds,
                 @BattleTriviaRevealDelaySeconds,
+                @BattleTriviaMediaEnabled,
                 @WordScrambleRoundDurationSeconds,
                 @WordScrambleRevealDurationSeconds,
                 @CreatedAt
@@ -211,6 +219,7 @@ public sealed class RoomRepository : IRoomRepository
         Guid roomId,
         int? battleTriviaQuestionDurationSeconds = null,
         int? battleTriviaRevealDelaySeconds = null,
+        bool? battleTriviaMediaEnabled = null,
         int? wordScrambleRoundDurationSeconds = null,
         int? wordScrambleRevealDurationSeconds = null)
     {
@@ -218,6 +227,7 @@ public sealed class RoomRepository : IRoomRepository
             UPDATE rooms
             SET battle_trivia_question_duration_seconds = COALESCE(@BattleTriviaQuestionDurationSeconds, battle_trivia_question_duration_seconds),
                 battle_trivia_reveal_delay_seconds = COALESCE(@BattleTriviaRevealDelaySeconds, battle_trivia_reveal_delay_seconds),
+                battle_trivia_media_enabled = COALESCE(@BattleTriviaMediaEnabled, battle_trivia_media_enabled),
                 word_scramble_round_duration_seconds = COALESCE(@WordScrambleRoundDurationSeconds, word_scramble_round_duration_seconds),
                 word_scramble_reveal_duration_seconds = COALESCE(@WordScrambleRevealDurationSeconds, word_scramble_reveal_duration_seconds)
             WHERE id = @RoomId;
@@ -229,6 +239,7 @@ public sealed class RoomRepository : IRoomRepository
             RoomId = roomId,
             BattleTriviaQuestionDurationSeconds = battleTriviaQuestionDurationSeconds,
             BattleTriviaRevealDelaySeconds = battleTriviaRevealDelaySeconds,
+            BattleTriviaMediaEnabled = battleTriviaMediaEnabled,
             WordScrambleRoundDurationSeconds = wordScrambleRoundDurationSeconds,
             WordScrambleRevealDurationSeconds = wordScrambleRevealDurationSeconds
         });

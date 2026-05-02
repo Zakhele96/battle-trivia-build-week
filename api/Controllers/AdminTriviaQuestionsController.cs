@@ -72,6 +72,24 @@ public sealed class AdminTriviaQuestionsController : ControllerBase
         return NoContent();
     }
 
+    [HttpPatch("active/bulk")]
+    public async Task<IActionResult> SetActiveBulk(
+        [FromQuery] bool isActive,
+        [FromQuery] string? category,
+        [FromQuery] string? difficulty,
+        [FromQuery] bool? currentIsActive)
+    {
+        if (!IsAdmin()) return Forbid();
+
+        var affected = await _adminTriviaQuestionService.SetActiveByFilterAsync(
+            isActive,
+            category,
+            difficulty,
+            currentIsActive);
+
+        return Ok(new { affected });
+    }
+
     private bool IsAdmin()
     {
         var claim = User.FindFirstValue("isAdmin");

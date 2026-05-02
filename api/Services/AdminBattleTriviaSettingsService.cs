@@ -36,6 +36,7 @@ public sealed class AdminBattleTriviaSettingsService
             RunMode = session.RunMode,
             QuestionDurationSeconds = NormalizeBattleTriviaQuestionDurationSeconds(room.BattleTriviaQuestionDurationSeconds),
             RevealDelaySeconds = NormalizeBattleTriviaRevealDelaySeconds(room.BattleTriviaRevealDelaySeconds),
+            MediaEnabled = room.BattleTriviaMediaEnabled,
             PeriodStart = session.PeriodStart,
             PeriodEnd = session.PeriodEnd,
             Windows = BuildFullWeekWindows(windows)
@@ -63,7 +64,8 @@ public sealed class AdminBattleTriviaSettingsService
         await _roomRepository.UpdateGameTimingAsync(
             room.Id,
             battleTriviaQuestionDurationSeconds: request.QuestionDurationSeconds,
-            battleTriviaRevealDelaySeconds: request.RevealDelaySeconds);
+            battleTriviaRevealDelaySeconds: request.RevealDelaySeconds,
+            battleTriviaMediaEnabled: request.MediaEnabled);
 
         var windows = new List<TriviaSessionWindow>();
 

@@ -1,9 +1,14 @@
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { registerServiceWorker } from "../pwa/registerServiceWorker";
 
 const PwaContext = createContext(null);
 
 export function PwaProvider({ children }) {
   const [updateRegistration, setUpdateRegistration] = useState(null);
+
+  useEffect(() => {
+    registerServiceWorker(setUpdateRegistration);
+  }, []);
 
   const value = useMemo(
     () => ({

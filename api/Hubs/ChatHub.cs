@@ -241,6 +241,7 @@ public sealed class ChatHub : Hub
                 {
                     roundId = activeRound.RoundId,
                     questionText = activeRound.QuestionText,
+                    questionImageUrl = room.BattleTriviaMediaEnabled ? activeRound.QuestionImageUrl : null,
                     category = activeRound.Category,
                     difficulty = activeRound.Difficulty,
                     roundNumber = activeRound.RoundNumber,

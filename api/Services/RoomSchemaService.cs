@@ -22,10 +22,22 @@ public sealed class RoomSchemaService
                 ADD COLUMN IF NOT EXISTS battle_trivia_reveal_delay_seconds INT NOT NULL DEFAULT 5;
 
             ALTER TABLE rooms
+                ADD COLUMN IF NOT EXISTS battle_trivia_media_enabled BOOLEAN NOT NULL DEFAULT FALSE;
+
+            ALTER TABLE rooms
                 ADD COLUMN IF NOT EXISTS word_scramble_round_duration_seconds INT NOT NULL DEFAULT 30;
 
             ALTER TABLE rooms
                 ADD COLUMN IF NOT EXISTS word_scramble_reveal_duration_seconds INT NOT NULL DEFAULT 5;
+
+            ALTER TABLE trivia_questions
+                ADD COLUMN IF NOT EXISTS question_image_url TEXT NULL;
+
+            ALTER TABLE trivia_questions
+                ADD COLUMN IF NOT EXISTS answer_image_url TEXT NULL;
+
+            ALTER TABLE trivia_questions
+                ADD COLUMN IF NOT EXISTS answer_explanation TEXT NULL;
 
             INSERT INTO rooms (
                 id,

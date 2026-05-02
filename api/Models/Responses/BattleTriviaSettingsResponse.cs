@@ -7,6 +7,7 @@ public sealed class BattleTriviaSettingsResponse
     public string RunMode { get; set; } = "continuous";
     public int QuestionDurationSeconds { get; set; } = 20;
     public int RevealDelaySeconds { get; set; } = 5;
+    public bool MediaEnabled { get; set; }
     public DateTime? PeriodStart { get; set; }
     public DateTime? PeriodEnd { get; set; }
     public List<BattleTriviaWindowResponse> Windows { get; set; } = new();
