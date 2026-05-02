@@ -97,7 +97,7 @@ export default function TriviaRevealTray({
               <img
                 src={answerImageUrl}
                 alt="Trivia answer"
-                className="max-h-44 w-full rounded-[14px] border border-white/8 bg-black/25 object-cover"
+                className="max-h-56 w-full rounded-[14px] border border-white/8 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] object-contain p-2"
                 draggable={false}
               />
             ) : null}

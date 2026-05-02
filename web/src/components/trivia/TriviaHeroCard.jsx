@@ -277,8 +277,8 @@ export default function TriviaHeroCard({
                     <img
                       src={questionImageUrl}
                       alt="Trivia question"
-                      className={`w-full rounded-[14px] border border-white/10 bg-black/30 object-cover ${
-                        compact ? "max-h-36" : "max-h-52"
+                      className={`w-full rounded-[14px] border border-white/10 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] object-contain ${
+                        compact ? "max-h-40 p-2" : "max-h-60 p-2.5"
                       }`}
                       draggable={false}
                       onDragStart={antiCopyProps.onDragStart}
