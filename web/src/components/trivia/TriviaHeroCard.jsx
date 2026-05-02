@@ -91,6 +91,17 @@ function MetaPill({ children, className = "" }) {
   );
 }
 
+const antiCopyProps = {
+  onCopy: (event) => event.preventDefault(),
+  onCut: (event) => event.preventDefault(),
+  onContextMenu: (event) => event.preventDefault(),
+  onDragStart: (event) => event.preventDefault(),
+  style: {
+    WebkitUserSelect: "none",
+    userSelect: "none",
+  },
+};
+
 function TimerChip({ hasActiveRound, timeLeft, isWarning, isDanger }) {
   const shellClass = hasActiveRound
     ? isDanger
@@ -258,7 +269,12 @@ export default function TriviaHeroCard({
                 style={{
                   lineHeight: 1.34,
                   overflowWrap: "anywhere",
+                  ...antiCopyProps.style,
                 }}
+                onCopy={antiCopyProps.onCopy}
+                onCut={antiCopyProps.onCut}
+                onContextMenu={antiCopyProps.onContextMenu}
+                onDragStart={antiCopyProps.onDragStart}
               >
                 {questionText}
               </div>

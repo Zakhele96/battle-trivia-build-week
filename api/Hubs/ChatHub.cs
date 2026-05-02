@@ -21,6 +21,7 @@ public sealed class ChatHub : Hub
     private readonly IUserRepository _userRepository;
     private readonly IRoomRepository _roomRepository;
     private readonly UserPresenceService _userPresenceService;
+    private readonly IRoomOccupancyTracker _roomOccupancyTracker;
     private readonly DirectMessageService _directMessageService;
     private readonly DirectMessageNotificationQueue _directMessageNotificationQueue;
 
@@ -36,6 +37,7 @@ public sealed class ChatHub : Hub
         IUserRepository userRepository,
         IRoomRepository roomRepository,
         UserPresenceService userPresenceService,
+        IRoomOccupancyTracker roomOccupancyTracker,
         DirectMessageService directMessageService,
         DirectMessageNotificationQueue directMessageNotificationQueue)
     {
@@ -50,6 +52,7 @@ public sealed class ChatHub : Hub
         _userRepository = userRepository;
         _roomRepository = roomRepository;
         _userPresenceService = userPresenceService;
+        _roomOccupancyTracker = roomOccupancyTracker;
         _directMessageService = directMessageService;
         _directMessageNotificationQueue = directMessageNotificationQueue;
     }
@@ -90,6 +93,8 @@ public sealed class ChatHub : Hub
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
+        await _roomOccupancyTracker.ClearConnectionAsync(Context.ConnectionId);
+
         if (Guid.TryParse(Context.UserIdentifier, out var userId))
         {
             var lastSeenAt = await _userPresenceService.MarkOfflineAsync(userId);
@@ -196,6 +201,7 @@ public sealed class ChatHub : Hub
     public async Task JoinRoom(Guid roomId)
     {
         await Groups.AddToGroupAsync(Context.ConnectionId, roomId.ToString());
+        await _roomOccupancyTracker.MarkJoinedAsync(Context.ConnectionId, roomId);
         var room = await _roomRepository.GetByIdAsync(roomId);
 
         var displayName = Context.User?.FindFirstValue("displayName") ?? "Someone";
@@ -279,6 +285,7 @@ public sealed class ChatHub : Hub
             .SendAsync("ReceiveMessage", systemMessage);
 
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId.ToString());
+        await _roomOccupancyTracker.MarkLeftAsync(Context.ConnectionId, roomId);
     }
 
     public async Task<object> SendMessage(Guid roomId, string messageText, Guid? replyToMessageId = null)

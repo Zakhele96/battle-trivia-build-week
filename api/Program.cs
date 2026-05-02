@@ -148,6 +148,7 @@ builder.Services.AddScoped<BattleTriviaSessionStatusService>();
 builder.Services.AddScoped<AdminTriviaQuestionService>();
 builder.Services.AddScoped<AdminWordScrambleWordService>();
 builder.Services.AddScoped<AdminUserService>();
+builder.Services.AddScoped<AdminRoomService>();
 builder.Services.AddScoped<AdminBattleTriviaSettingsService>();
 builder.Services.AddScoped<AdminWordScrambleSettingsService>();
 builder.Services.AddScoped<AdminLeaderboardSponsorService>();
@@ -186,10 +187,12 @@ if (redisOptions.Enabled &&
     !string.IsNullOrWhiteSpace(redisOptions.ConnectionString))
 {
     builder.Services.AddSingleton<IOnlinePresenceTracker, RedisOnlinePresenceTracker>();
+    builder.Services.AddSingleton<IRoomOccupancyTracker, RedisRoomOccupancyTracker>();
 }
 else
 {
     builder.Services.AddSingleton<IOnlinePresenceTracker, InMemoryOnlinePresenceTracker>();
+    builder.Services.AddSingleton<IRoomOccupancyTracker, InMemoryRoomOccupancyTracker>();
 }
 
 if (redisOptions.Enabled &&

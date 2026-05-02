@@ -41,7 +41,7 @@ public sealed class RoomSchemaService
                 'rapnometry-arena',
                 'Creative open mic battles for rap, poetry, spoken word, and community challenges.',
                 'chat',
-                TRUE
+                FALSE
             WHERE NOT EXISTS (
                 SELECT 1
                 FROM rooms

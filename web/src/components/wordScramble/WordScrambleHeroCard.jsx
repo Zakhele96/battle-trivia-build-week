@@ -29,6 +29,17 @@ function getTimerShellClass(timeLeft, phase) {
   return "border-violet-400/20 bg-violet-500/10 ring-1 ring-violet-400/15 shadow-[0_0_28px_rgba(168,85,247,0.14)]";
 }
 
+const antiCopyProps = {
+  onCopy: (event) => event.preventDefault(),
+  onCut: (event) => event.preventDefault(),
+  onContextMenu: (event) => event.preventDefault(),
+  onDragStart: (event) => event.preventDefault(),
+  style: {
+    WebkitUserSelect: "none",
+    userSelect: "none",
+  },
+};
+
 export default function WordScrambleHeroCard({
   roundNumber,
   maskedWord,
@@ -167,6 +178,11 @@ export default function WordScrambleHeroCard({
               } ${isReveal ? "text-emerald-100" : "text-white"} ${
                 shouldBlinkWord ? "animate-pulse" : ""
               }`}
+              onCopy={antiCopyProps.onCopy}
+              onCut={antiCopyProps.onCut}
+              onContextMenu={antiCopyProps.onContextMenu}
+              onDragStart={antiCopyProps.onDragStart}
+              style={antiCopyProps.style}
             >
               {formatMaskedWord(isReveal ? answerWord || maskedWord : maskedWord)}
             </div>
@@ -185,6 +201,11 @@ export default function WordScrambleHeroCard({
             className={`mt-1 font-medium ${
               compact ? "text-[12px]" : "text-[12px]"
             } ${liveStateBodyClass}`}
+            onCopy={showHint ? antiCopyProps.onCopy : undefined}
+            onCut={showHint ? antiCopyProps.onCut : undefined}
+            onContextMenu={showHint ? antiCopyProps.onContextMenu : undefined}
+            onDragStart={showHint ? antiCopyProps.onDragStart : undefined}
+            style={showHint ? antiCopyProps.style : undefined}
           >
             {showHint && !isReveal ? (
               <>

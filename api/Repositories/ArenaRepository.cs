@@ -502,19 +502,31 @@ public sealed class ArenaRepository : IArenaRepository
                 SELECT
                     EntryId,
                     VoteCount,
+                    SubmittedAt,
                     DENSE_RANK() OVER (ORDER BY VoteCount DESC) AS VoteRank
                 FROM scores
+            ),
+            top_ranked AS (
+                SELECT EntryId, VoteCount, SubmittedAt
+                FROM ranked
+                WHERE VoteRank = 1
             )
             SELECT
-                CASE WHEN COUNT(*) FILTER (WHERE VoteRank = 1) = 1
-                    THEN MIN(EntryId) FILTER (WHERE VoteRank = 1)
+                CASE WHEN (SELECT COUNT(*) FROM top_ranked) = 1
+                    THEN (
+                        SELECT EntryId
+                        FROM top_ranked
+                        ORDER BY VoteCount DESC, SubmittedAt ASC, EntryId
+                        LIMIT 1
+                    )
                     ELSE NULL
                 END AS WinnerEntryId,
-                CASE WHEN COUNT(*) FILTER (WHERE VoteRank = 1) > 1
+                CASE WHEN (SELECT COUNT(*) FROM top_ranked) > 1
                     THEN TRUE
                     ELSE FALSE
                 END AS IsDraw
-            FROM ranked;
+            FROM top_ranked
+            LIMIT 1;
             """;
 
         using var connection = _context.CreateConnection();

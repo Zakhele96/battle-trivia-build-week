@@ -1,5 +1,22 @@
 import api from "./axios";
 
+export async function getAdminRooms() {
+  const { data } = await api.get("/admin/rooms");
+  return data;
+}
+
+export async function createAdminRoom(payload) {
+  const { data } = await api.post("/admin/rooms", payload);
+  return data;
+}
+
+export async function setAdminRoomActive(roomId, isActive) {
+  const { data } = await api.patch(`/admin/rooms/${roomId}/active`, null, {
+    params: { isActive },
+  });
+  return data;
+}
+
 export async function deleteRoomMessage(messageId, reason = "") {
   const { data } = await api.delete(`/admin/messages/${messageId}`, {
     params: reason ? { reason } : undefined,

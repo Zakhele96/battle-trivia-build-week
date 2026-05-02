@@ -14,6 +14,7 @@ namespace Bts.Api.Controllers;
 [Authorize]
 public sealed class AdminRoomModerationController : ControllerBase
 {
+    private readonly AdminRoomService _adminRoomService;
     private readonly RoomModerationService _roomModerationService;
     private readonly IRoomModerationRepository _roomModerationRepository;
     private readonly IUserRepository _userRepository;
@@ -21,17 +22,59 @@ public sealed class AdminRoomModerationController : ControllerBase
     private readonly IHubContext<ChatHub> _hubContext;
 
     public AdminRoomModerationController(
+        AdminRoomService adminRoomService,
         RoomModerationService roomModerationService,
         IRoomModerationRepository roomModerationRepository,
         IUserRepository userRepository,
         ChatService chatService,
         IHubContext<ChatHub> hubContext)
     {
+        _adminRoomService = adminRoomService;
         _roomModerationService = roomModerationService;
         _roomModerationRepository = roomModerationRepository;
         _userRepository = userRepository;
         _chatService = chatService;
         _hubContext = hubContext;
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetRooms()
+    {
+        if (!IsAdmin())
+            return Forbid();
+
+        var rooms = await _adminRoomService.GetAllAsync();
+        return Ok(rooms);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateRoom([FromBody] CreateAdminRoomRequest request)
+    {
+        if (!IsAdmin())
+            return Forbid();
+
+        try
+        {
+            var room = await _adminRoomService.CreateAsync(GetRequiredUserId(), request);
+            return Ok(room);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPatch("{roomId:guid}/active")]
+    public async Task<IActionResult> SetActive(Guid roomId, [FromQuery] bool isActive)
+    {
+        if (!IsAdmin())
+            return Forbid();
+
+        var room = await _adminRoomService.SetActiveAsync(GetRequiredUserId(), roomId, isActive);
+        if (room is null)
+            return NotFound();
+
+        return Ok(room);
     }
 
     [HttpPost("{roomId:guid}/mute")]

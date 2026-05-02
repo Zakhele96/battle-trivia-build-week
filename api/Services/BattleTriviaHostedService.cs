@@ -84,6 +84,7 @@ public sealed class BattleTriviaHostedService : BackgroundService
         var leaderboardService = scope.ServiceProvider.GetRequiredService<TriviaLeaderboardService>();
         var sessionFinalizerService = scope.ServiceProvider.GetRequiredService<TriviaSessionFinalizerService>();
         var chatService = scope.ServiceProvider.GetRequiredService<ChatService>();
+        var roomOccupancyTracker = scope.ServiceProvider.GetRequiredService<IRoomOccupancyTracker>();
 
         var room = await roomRepository.GetBySlugAsync(BattleTriviaSlug);
         if (room is null || !room.IsActive)
@@ -246,6 +247,10 @@ public sealed class BattleTriviaHostedService : BackgroundService
         }
 
         if (nowUtc < _nextRoundNotBeforeUtc)
+            return;
+
+        var hasOccupants = await roomOccupancyTracker.HasOccupantsAsync(room.Id);
+        if (!hasOccupants)
             return;
 
         var canRunNow = await CanRunRoundsNowAsync(session, sessionWindowRepository, nowUtc);

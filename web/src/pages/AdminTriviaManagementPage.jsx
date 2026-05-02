@@ -23,12 +23,14 @@ import {
 } from "../api/adminTriviaApi";
 import { getLeaderboard } from "../api/leaderboardsApi";
 import {
-  getRooms,
   getRoomSessionStatus,
   getWordScrambleSessionStatus,
 } from "../api/roomsApi";
 import {
+  createAdminRoom,
+  getAdminRooms,
   getRoomModerationActions,
+  setAdminRoomActive,
   updateRoomSlowMode,
 } from "../api/roomModerationApi";
 import {
@@ -65,6 +67,21 @@ const emptyScrambleWordForm = {
   hint: "",
   isActive: true,
 };
+
+const emptyRoomForm = {
+  name: "",
+  slug: "",
+  description: "",
+  roomType: "chat",
+  isActive: true,
+  slowModeSeconds: 0,
+};
+
+const roomTypeOptions = [
+  { value: "chat", label: "Chat" },
+  { value: "trivia", label: "Trivia" },
+  { value: "game", label: "Game" },
+];
 
 const sponsorPlacementOptions = [
   { key: "leaderboard-header", label: "Leaderboard header" },
@@ -346,6 +363,10 @@ export default function AdminTriviaManagementPage() {
   const [moderationActions, setModerationActions] = useState([]);
   const [slowModeDraft, setSlowModeDraft] = useState(0);
   const [moderationMessage, setModerationMessage] = useState("");
+  const [roomForm, setRoomForm] = useState(emptyRoomForm);
+  const [roomMessage, setRoomMessage] = useState("");
+  const [savingRoom, setSavingRoom] = useState(false);
+  const [updatingRoomId, setUpdatingRoomId] = useState("");
 
   const [leaderboards, setLeaderboards] = useState({
     combined: [],
@@ -415,9 +436,11 @@ export default function AdminTriviaManagementPage() {
 
   const selectedRoom = rooms.find((room) => room.id === selectedRoomId) || null;
   const featuredBattleRoom =
-    rooms.find((room) => room.slug === "battle-trivia") ||
-    rooms.find((room) => room.roomType === "trivia") ||
+    rooms.find((room) => room.isActive && room.slug === "battle-trivia") ||
+    rooms.find((room) => room.isActive && room.roomType === "trivia") ||
     null;
+  const activeRoomCount = rooms.filter((room) => room.isActive).length;
+  const inactiveRoomCount = Math.max(0, rooms.length - activeRoomCount);
   const activeQuestions = questions.filter((q) => q.isActive).length;
   const inactiveQuestions = Math.max(0, questions.length - activeQuestions);
   const activeScrambleWords = scrambleWords.filter((word) => word.isActive).length;
@@ -556,13 +579,17 @@ export default function AdminTriviaManagementPage() {
 
   async function loadRoomsAndStatuses() {
     try {
-      const nextRooms = await getRooms();
+      const nextRooms = await getAdminRooms();
       setRooms(nextRooms);
       setSelectedRoomId((current) => current || nextRooms[0]?.id || "");
 
       const entries = await Promise.all(
         nextRooms.map(async (room) => {
           try {
+            if (!room.isActive) {
+              return [room.id, { mode: "room", statusText: "Inactive" }];
+            }
+
             if (room.slug === "battle-trivia" || room.roomType === "trivia") {
               const status = await getRoomSessionStatus(room.id);
               return [room.id, { ...status, mode: "battle" }];
@@ -844,6 +871,63 @@ export default function AdminTriviaManagementPage() {
     }
   };
 
+  const handleRoomFormChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setRoomForm((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const handleCreateRoom = async (e) => {
+    e.preventDefault();
+    setSavingRoom(true);
+    setRoomMessage("");
+
+    try {
+      const created = await createAdminRoom({
+        name: roomForm.name.trim(),
+        slug: roomForm.slug.trim().toLowerCase(),
+        description: roomForm.description.trim() || null,
+        roomType: roomForm.roomType,
+        isActive: roomForm.isActive,
+        slowModeSeconds: Number(roomForm.slowModeSeconds) || 0,
+      });
+
+      setRoomForm(emptyRoomForm);
+      setRoomMessage(`Room created: ${created.name}.`);
+      await loadRoomsAndStatuses();
+      setSelectedRoomId(created.id);
+    } catch (error) {
+      setRoomMessage(
+        error?.response?.data?.message || "Failed to create room."
+      );
+    } finally {
+      setSavingRoom(false);
+    }
+  };
+
+  const handleToggleRoomActive = async (room) => {
+    setUpdatingRoomId(room.id);
+    setRoomMessage("");
+
+    try {
+      const updated = await setAdminRoomActive(room.id, !room.isActive);
+      setRoomMessage(
+        updated.isActive
+          ? `${updated.name} is now live.`
+          : `${updated.name} is now disabled.`
+      );
+      await loadRoomsAndStatuses();
+    } catch (error) {
+      setRoomMessage(
+        error?.response?.data?.message || "Failed to update room status."
+      );
+    } finally {
+      setUpdatingRoomId("");
+    }
+  };
+
   const handleSponsorFormChange = (e) => {
     const { name, value, type, checked } = e.target;
     setSponsorForm((prev) => ({
@@ -1097,12 +1181,12 @@ export default function AdminTriviaManagementPage() {
         </header>
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard
-            label="Rooms"
-            value={rooms.length}
-            detail={`${rooms.filter((room) => room.roomType !== "chat").length} game rooms`}
-            tone="blue"
-          />
+            <StatCard
+              label="Rooms"
+              value={rooms.length}
+              detail={`${activeRoomCount} active • ${inactiveRoomCount} inactive`}
+              tone="blue"
+            />
           <StatCard
             label="Trivia bank"
             value={`${activeQuestions}/${questions.length}`}
@@ -1315,49 +1399,171 @@ export default function AdminTriviaManagementPage() {
 
             <Panel
               eyebrow="Rooms"
-              title="Moderation"
-              description="Select a room, adjust slow mode, and scan recent actions."
+              title="Room controls"
+              description="Create rooms, switch them on or off, then adjust slow mode and inspect moderation history."
               action={<StatusPill tone="amber">Live</StatusPill>}
             >
+              <form onSubmit={handleCreateRoom} className="space-y-3">
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <input
+                    name="name"
+                    placeholder="Room name"
+                    value={roomForm.name}
+                    onChange={handleRoomFormChange}
+                    className={inputClass}
+                  />
+                  <input
+                    name="slug"
+                    placeholder="room-slug"
+                    value={roomForm.slug}
+                    onChange={handleRoomFormChange}
+                    className={inputClass}
+                  />
+                </div>
+                <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_9rem_9rem]">
+                  <textarea
+                    name="description"
+                    rows="2"
+                    placeholder="What the room is for"
+                    value={roomForm.description}
+                    onChange={handleRoomFormChange}
+                    className={inputClass}
+                  />
+                  <select
+                    name="roomType"
+                    value={roomForm.roomType}
+                    onChange={handleRoomFormChange}
+                    className={inputClass}
+                  >
+                    {roomTypeOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="number"
+                    min="0"
+                    max="120"
+                    name="slowModeSeconds"
+                    placeholder="Slow mode"
+                    value={roomForm.slowModeSeconds}
+                    onChange={handleRoomFormChange}
+                    className={inputClass}
+                  />
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <label className="flex items-center gap-2 text-sm text-neutral-300">
+                    <input
+                      type="checkbox"
+                      name="isActive"
+                      checked={roomForm.isActive}
+                      onChange={handleRoomFormChange}
+                    />
+                    Start active
+                  </label>
+                  <button
+                    type="submit"
+                    disabled={savingRoom}
+                    className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-neutral-950 transition hover:bg-blue-100 disabled:opacity-60"
+                  >
+                    {savingRoom ? "Creating..." : "Create room"}
+                  </button>
+                </div>
+              </form>
+
+              {roomMessage ? (
+                <div className="mt-3 rounded-xl border border-white/8 bg-white/[0.03] px-3 py-2 text-sm text-blue-300">
+                  {roomMessage}
+                </div>
+              ) : null}
+
               <div className="max-h-[19rem] divide-y divide-white/6 overflow-y-auto rounded-xl border border-white/8 bg-black/20">
                 {rooms.map((room) => {
                   const status = roomStatuses[room.id];
                   const selected = room.id === selectedRoomId;
                   return (
-                    <button
+                    <div
                       key={room.id}
-                      type="button"
-                      onClick={() => setSelectedRoomId(room.id)}
                       className={`flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition ${
                         selected ? "bg-blue-500/10" : "hover:bg-white/[0.04]"
                       }`}
                     >
-                      <div className="min-w-0">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedRoomId(room.id)}
+                        className="min-w-0 flex-1 text-left"
+                      >
                         <div className="truncate text-sm font-semibold text-white">
                           {room.name}
                         </div>
-                        <div className="mt-0.5 text-[11px] text-neutral-500">
-                          {room.roomType} - {room.slowModeSeconds}s slow mode
+                        <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] text-neutral-500">
+                          <span>{room.slug}</span>
+                          <span>•</span>
+                          <span>{room.roomType}</span>
+                          <span>•</span>
+                          <span>{room.slowModeSeconds}s slow mode</span>
                         </div>
+                      </button>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <StatusPill tone={room.isActive ? "green" : "neutral"}>
+                          {room.isActive ? "Active" : "Inactive"}
+                        </StatusPill>
+                        <StatusPill
+                          tone={
+                            !room.isActive
+                              ? "neutral"
+                              : status?.hasActiveRound || status?.isLiveNow
+                              ? "green"
+                              : status?.mode === "scramble"
+                              ? "violet"
+                              : "neutral"
+                          }
+                        >
+                          {status?.statusText || "Ready"}
+                        </StatusPill>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleRoomActive(room)}
+                          disabled={updatingRoomId === room.id}
+                          className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                            room.isActive
+                              ? "bg-red-500/12 text-red-200 hover:bg-red-500/18"
+                              : "bg-emerald-500/12 text-emerald-200 hover:bg-emerald-500/18"
+                          } disabled:opacity-60`}
+                        >
+                          {updatingRoomId === room.id
+                            ? "Saving..."
+                            : room.isActive
+                            ? "Disable"
+                            : "Enable"}
+                        </button>
                       </div>
-                      <StatusPill
-                        tone={
-                          status?.hasActiveRound || status?.isLiveNow
-                            ? "green"
-                            : status?.mode === "scramble"
-                            ? "violet"
-                            : "neutral"
-                        }
-                      >
-                        {status?.statusText || "Ready"}
-                      </StatusPill>
-                    </button>
+                    </div>
                   );
                 })}
               </div>
 
               {selectedRoom ? (
                 <div className="mt-3 space-y-3">
+                  <div className="rounded-xl border border-white/8 bg-black/20 px-3 py-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <div className="text-sm font-semibold text-white">
+                          {selectedRoom.name}
+                        </div>
+                        <div className="mt-0.5 text-[12px] text-neutral-400">
+                          {selectedRoom.description || "No room description yet."}
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        <StatusPill tone={selectedRoom.isActive ? "green" : "neutral"}>
+                          {selectedRoom.isActive ? "Live" : "Disabled"}
+                        </StatusPill>
+                        <StatusPill tone="blue">{selectedRoom.roomType}</StatusPill>
+                      </div>
+                    </div>
+                  </div>
                   <div className="grid gap-2 sm:grid-cols-[1fr_auto_auto]">
                     <input
                       type="number"
@@ -1374,12 +1580,18 @@ export default function AdminTriviaManagementPage() {
                     >
                       Save
                     </button>
-                    <Link
-                      to={`/rooms/${selectedRoom.id}`}
-                      className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-center text-sm text-white transition hover:bg-white/[0.07]"
-                    >
-                      Open
-                    </Link>
+                    {selectedRoom.isActive ? (
+                      <Link
+                        to={`/rooms/${selectedRoom.id}`}
+                        className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-center text-sm text-white transition hover:bg-white/[0.07]"
+                      >
+                        Open
+                      </Link>
+                    ) : (
+                      <div className="rounded-xl border border-white/8 bg-black/20 px-4 py-2 text-center text-sm text-neutral-500">
+                        Disabled
+                      </div>
+                    )}
                   </div>
                   {moderationMessage ? (
                     <div className="rounded-xl border border-white/8 bg-white/[0.03] px-3 py-2 text-sm text-blue-300">
