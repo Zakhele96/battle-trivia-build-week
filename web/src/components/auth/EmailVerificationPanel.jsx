@@ -24,16 +24,20 @@ export default function EmailVerificationPanel({
       </div>
       <div className="mt-2 break-all text-sm font-medium text-blue-100">{email}</div>
 
-      <form onSubmit={onVerify} className="mt-4 space-y-4">
+      <form onSubmit={onVerify} autoComplete="off" className="mt-4 space-y-4">
         <div>
           <label className="mb-2 block text-[11px] uppercase tracking-[0.14em] text-neutral-500">
             Verification code
           </label>
           <input
+            name="otp"
             value={otp}
             onChange={(event) => onOtpChange(event.target.value.replace(/\D/g, "").slice(0, 6))}
             inputMode="numeric"
             autoComplete="one-time-code"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
             placeholder="Enter 6-digit code"
             disabled={isSubmitting}
             className="block w-full min-w-0 rounded-[18px] border border-white/10 bg-black/20 px-4 py-3 text-sm tracking-[0.3em] text-white outline-none transition focus:border-blue-400/20 disabled:opacity-60"

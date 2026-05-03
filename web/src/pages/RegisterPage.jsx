@@ -171,6 +171,10 @@ export default function RegisterPage() {
       });
 
       if (data?.requiresEmailVerification) {
+        setForm((previous) => ({
+          ...previous,
+          password: "",
+        }));
         setIsVerificationStep(true);
         setVerificationEmail(data.pendingEmail || form.email.trim());
         setVerificationOtp("");
@@ -309,13 +313,17 @@ export default function RegisterPage() {
               <div className="h-px min-w-0 flex-1 bg-white/10" />
             </div>
 
-            <form onSubmit={handleSubmit} className="min-w-0 space-y-4">
+            <form onSubmit={handleSubmit} autoComplete="on" className="min-w-0 space-y-4">
           <div className="min-w-0">
             <label className="mb-2 block text-[11px] uppercase tracking-[0.14em] text-neutral-500">
               Username
             </label>
             <input
               name="username"
+              autoComplete="username"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               placeholder="Choose a username"
               value={form.username}
               onChange={handleChange}
@@ -330,6 +338,7 @@ export default function RegisterPage() {
             </label>
             <input
               name="displayName"
+              autoComplete="nickname"
               placeholder="How your name should appear"
               value={form.displayName}
               onChange={handleChange}
@@ -345,6 +354,11 @@ export default function RegisterPage() {
             <input
               name="email"
               type="email"
+              autoComplete="email"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              inputMode="email"
               placeholder="you@example.com"
               value={form.email}
               onChange={handleChange}
@@ -359,6 +373,9 @@ export default function RegisterPage() {
             </label>
             <input
               name="phoneNumber"
+              type="tel"
+              autoComplete="tel"
+              inputMode="tel"
               placeholder="Optional"
               value={form.phoneNumber}
               onChange={handleChange}
@@ -374,6 +391,10 @@ export default function RegisterPage() {
             <input
               name="password"
               type="password"
+              autoComplete="new-password"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               placeholder="Create a password"
               value={form.password}
               onChange={handleChange}

@@ -308,13 +308,17 @@ export default function LoginPage() {
               <div className="h-px min-w-0 flex-1 bg-white/10" />
             </div>
 
-            <form onSubmit={handleSubmit} className="min-w-0 space-y-4">
+            <form onSubmit={handleSubmit} autoComplete="on" className="min-w-0 space-y-4">
               <div className="min-w-0">
                 <label className="mb-2 block text-[11px] uppercase tracking-[0.14em] text-neutral-500">
                   Email or username
                 </label>
                 <input
                   name="emailOrUsername"
+                  autoComplete="username"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
                   placeholder="you@example.com or username"
                   value={form.emailOrUsername}
                   onChange={handleChange}
@@ -330,6 +334,10 @@ export default function LoginPage() {
                 <input
                   name="password"
                   type="password"
+                  autoComplete="current-password"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
                   placeholder="Your password"
                   value={form.password}
                   onChange={handleChange}
