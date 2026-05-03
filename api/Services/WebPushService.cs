@@ -134,6 +134,7 @@ public sealed class WebPushService
         var payload = JsonSerializer.Serialize(new
         {
             type = "direct-message",
+            messageId = message.Id,
             title = message.SenderDisplayName ?? message.SenderUsername,
             body = message.MessageText,
             conversationId = message.ConversationId,

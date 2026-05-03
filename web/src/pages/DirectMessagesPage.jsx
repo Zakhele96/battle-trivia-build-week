@@ -12,13 +12,6 @@ import { createChatConnection } from "../services/chatConnection";
 import { useDirectMessages } from "../context/DirectMessagesContext";
 import { useAuth } from "../hooks/useAuth";
 import { useTheme } from "../hooks/useTheme";
-import {
-  disablePushNotifications,
-  enablePushNotifications,
-  getPushConfig,
-  isPushSupported,
-  syncPushSubscriptionIfEnabled,
-} from "../pwa/pushNotifications";
 
 function applyOptimisticReaction(messages, messageId, emoji) {
   return messages.map((message) => {
@@ -336,10 +329,6 @@ export default function DirectMessagesPage() {
   const [sendError, setSendError] = useState("");
   const [friendSearch, setFriendSearch] = useState("");
   const [liveConnectionStatus, setLiveConnectionStatus] = useState("connecting");
-  const [pushStatus, setPushStatus] = useState("checking");
-  const [isPushConfigured, setIsPushConfigured] = useState(false);
-  const [pushError, setPushError] = useState("");
-  const [isUpdatingPush, setIsUpdatingPush] = useState(false);
 
   const containerRef = useRef(null);
   const connectionRef = useRef(null);
@@ -489,55 +478,6 @@ export default function DirectMessagesPage() {
       isMounted = false;
     };
   }, [refreshConversations, selectedConversationId, setSearchParams]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function syncPushState() {
-      if (!isPushSupported()) {
-        if (isMounted) {
-          setPushStatus("unsupported");
-          setIsPushConfigured(false);
-        }
-        return;
-      }
-
-      try {
-        const config = await getPushConfig();
-        if (!isMounted) return;
-
-        setIsPushConfigured(Boolean(config?.isConfigured));
-
-        if (!config?.isConfigured) {
-          setPushStatus("unavailable");
-          return;
-        }
-
-        if (Notification.permission === "granted") {
-          await syncPushSubscriptionIfEnabled();
-          if (!isMounted) return;
-          setPushStatus("enabled");
-          return;
-        }
-
-        if (Notification.permission === "denied") {
-          setPushStatus("blocked");
-          return;
-        }
-
-        setPushStatus("prompt");
-      } catch {
-        if (!isMounted) return;
-        setPushStatus("error");
-      }
-    }
-
-    syncPushState().catch(() => null);
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   useEffect(() => {
     loadMessages(selectedConversationId).catch(() => null);
@@ -754,41 +694,6 @@ export default function DirectMessagesPage() {
     }
   };
 
-  const handleEnablePush = useCallback(async () => {
-    setPushError("");
-    setIsUpdatingPush(true);
-
-    try {
-      const result = await enablePushNotifications();
-      if (result.enabled) {
-        setPushStatus("enabled");
-        return;
-      }
-
-      setPushStatus(result.reason === "denied" ? "blocked" : "prompt");
-    } catch (error) {
-      setPushError(error?.response?.data?.message || "Could not enable notifications.");
-      setPushStatus("error");
-    } finally {
-      setIsUpdatingPush(false);
-    }
-  }, []);
-
-  const handleDisablePush = useCallback(async () => {
-    setPushError("");
-    setIsUpdatingPush(true);
-
-    try {
-      await disablePushNotifications();
-      setPushStatus("prompt");
-    } catch (error) {
-      setPushError(error?.response?.data?.message || "Could not disable notifications.");
-      setPushStatus("error");
-    } finally {
-      setIsUpdatingPush(false);
-    }
-  }, []);
-
   const dmMessages = useMemo(
     () => {
       const latestOwnMessageId = [...messages]
@@ -848,59 +753,6 @@ export default function DirectMessagesPage() {
           </div>
         ) : null}
 
-        {isPushConfigured && pushStatus !== "enabled" ? (
-          <div className="mb-4 rounded-[20px] border border-blue-900/30 bg-blue-950/20 px-4 py-3">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <div className="text-sm font-semibold text-white">
-                  Turn on offline DM notifications
-                </div>
-                <div className="mt-1 text-[12px] text-blue-100/75">
-                  New direct messages can alert you even when BTS is closed.
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={handleEnablePush}
-                disabled={isUpdatingPush || pushStatus === "blocked"}
-                className="rounded-[14px] bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isUpdatingPush ? "Enabling..." : "Enable notifications"}
-              </button>
-            </div>
-            {pushStatus === "blocked" ? (
-              <div className="mt-2 text-[12px] text-amber-200/85">
-                Browser notifications are blocked for this site right now.
-              </div>
-            ) : null}
-            {pushError ? (
-              <div className="mt-2 text-[12px] text-red-300/90">{pushError}</div>
-            ) : null}
-          </div>
-        ) : null}
-
-        {pushStatus === "enabled" ? (
-          <div className="mb-4 rounded-[20px] border border-emerald-900/25 bg-emerald-950/15 px-4 py-3">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <div className="text-sm font-semibold text-white">
-                  Offline DM notifications are on
-                </div>
-                <div className="mt-1 text-[12px] text-emerald-100/75">
-                  We’ll alert you when a friend messages you and you’re not in the app.
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={handleDisablePush}
-                disabled={isUpdatingPush}
-                className="rounded-[14px] border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.08] disabled:opacity-60"
-              >
-                {isUpdatingPush ? "Updating..." : "Turn off"}
-              </button>
-            </div>
-          </div>
-        ) : null}
 
         <div className="grid min-h-0 gap-4 lg:grid-cols-[22rem_minmax(0,1fr)]">
           <section className={`space-y-4 lg:hidden ${selectedConversation ? "hidden" : ""}`}>

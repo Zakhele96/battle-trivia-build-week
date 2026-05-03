@@ -52,14 +52,21 @@ self.addEventListener("push", (event) => {
   }
 
   const title = payload.title || "New message";
+  const notificationTag =
+    payload.messageId
+      ? `dm:${payload.messageId}`
+      : payload.conversationId
+        ? `dm:${payload.conversationId}:${Date.now()}`
+        : `direct-message:${Date.now()}`;
   const options = {
     body: payload.body || "You have a new direct message.",
     icon: payload.icon || "/icons/icon-192.svg",
     badge: payload.badge || "/icons/icon-192.svg",
-    tag: payload.conversationId ? `dm:${payload.conversationId}` : "direct-message",
-    renotify: true,
+    tag: notificationTag,
+    renotify: false,
     data: {
       url: payload.url || "/messages",
+      messageId: payload.messageId || "",
       conversationId: payload.conversationId || "",
       senderUserId: payload.senderUserId || "",
     },
