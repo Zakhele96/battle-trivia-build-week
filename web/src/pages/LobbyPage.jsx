@@ -443,7 +443,7 @@ function DashboardHero({
         : "BTS sign-in";
   const summary = isFirstTimeUser
     ? "Jump into Battle Trivia, lock in your first result, and start giving yourself something worth chasing."
-    : "Keep pressure on the board, jump back into live rooms, and see if your momentum is actually holding.";
+    : "Keep pressure on the Battle Trivia board, jump back into live rooms, and see if your momentum is actually holding.";
   const momentumLabel = currentStanding
     ? `Board spot #${currentStanding.rank}`
     : "Fresh start";
@@ -451,7 +451,7 @@ function DashboardHero({
     {
       label: "Current rank",
       value: currentStanding ? `#${currentStanding.rank}` : "Unranked",
-      helper: currentStanding ? `${currentStanding.score} pts` : "Get on the board",
+      helper: currentStanding ? `${currentStanding.score} pts` : "Get on the Battle Trivia board",
     },
     {
       label: "Best streak",
@@ -804,8 +804,8 @@ function SnapshotOverviewCard({
           </div>
           <div className={`mt-1 text-[12px] ${isLight ? "text-stone-600" : "text-neutral-400"}`}>
             {currentStanding
-              ? `${currentStanding.score} pts in the combined race.`
-              : "No placement in the current combined board yet."}
+              ? `${currentStanding.score} pts in current-week Battle Trivia.`
+              : "No placement in the current Battle Trivia board yet."}
           </div>
         </div>
       </div>
@@ -1224,7 +1224,7 @@ export default function LobbyPage() {
   const [sessionPodium, setSessionPodium] = useState(null);
   const [currentLeaders, setCurrentLeaders] = useState([]);
   const [wordScrambleLeaders, setWordScrambleLeaders] = useState([]);
-  const [combinedBoardRows, setCombinedBoardRows] = useState([]);
+  const [battleTriviaBoardRows, setBattleTriviaBoardRows] = useState([]);
   const [battleTriviaSponsor, setBattleTriviaSponsor] = useState(null);
   const [profileOverview, setProfileOverview] = useState(null);
   const [recentResult, setRecentResult] = useState(null);
@@ -1265,7 +1265,7 @@ export default function LobbyPage() {
           status,
           podium,
           leaders,
-          combinedBoard,
+          battleTriviaBoard,
           sponsorData,
           profileData,
           historyData,
@@ -1275,7 +1275,7 @@ export default function LobbyPage() {
             : Promise.resolve(null),
           getBattleTriviaSessionPodium().catch(() => null),
           getCurrentBattleTriviaLeaderboard(3).catch(() => []),
-          getLeaderboard("combined", "current", 100).catch(() => ({
+          getLeaderboard("battle-trivia", "current", 100).catch(() => ({
             rows: [],
           })),
           getActiveSponsor("battle-trivia").catch(() => null),
@@ -1289,8 +1289,8 @@ export default function LobbyPage() {
           setFeaturedRoomStatus(status || null);
           setSessionPodium(podium || null);
           setCurrentLeaders(Array.isArray(leaders) ? leaders : []);
-          setCombinedBoardRows(
-            Array.isArray(combinedBoard?.rows) ? combinedBoard.rows : []
+          setBattleTriviaBoardRows(
+            Array.isArray(battleTriviaBoard?.rows) ? battleTriviaBoard.rows : []
           );
           setBattleTriviaSponsor(sponsorData || null);
           setProfileOverview(profileData || null);
@@ -1395,8 +1395,8 @@ export default function LobbyPage() {
 
   const currentStanding = useMemo(() => {
     if (!user?.id) return null;
-    return combinedBoardRows.find((row) => row.userId === user.id) || null;
-  }, [combinedBoardRows, user?.id]);
+    return battleTriviaBoardRows.find((row) => row.userId === user.id) || null;
+  }, [battleTriviaBoardRows, user?.id]);
 
   const totalCorrectAnswers = profileOverview?.stats?.totalCorrectAnswers ?? 0;
   const bestStreak = profileOverview?.stats?.bestStreak ?? 0;
@@ -1621,8 +1621,8 @@ export default function LobbyPage() {
                       title={currentStanding ? `#${currentStanding.rank}` : "Unranked"}
                       description={
                         currentStanding
-                          ? `${currentStanding.score} pts in the current combined standings.`
-                          : "You are not placed in the current combined standings yet."
+                          ? `${currentStanding.score} pts in current-week Battle Trivia.`
+                          : "You are not placed in the current Battle Trivia standings yet."
                       }
                       accent="emerald"
                       isLight={isLight}
