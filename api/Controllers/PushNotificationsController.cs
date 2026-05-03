@@ -12,10 +12,14 @@ namespace Bts.Api.Controllers;
 public sealed class PushNotificationsController : ControllerBase
 {
     private readonly WebPushService _webPushService;
+    private readonly ILogger<PushNotificationsController> _logger;
 
-    public PushNotificationsController(WebPushService webPushService)
+    public PushNotificationsController(
+        WebPushService webPushService,
+        ILogger<PushNotificationsController> logger)
     {
         _webPushService = webPushService;
+        _logger = logger;
     }
 
     [HttpGet("config")]
@@ -37,6 +41,9 @@ public sealed class PushNotificationsController : ControllerBase
 
         try
         {
+            _logger.LogInformation(
+                "Received push subscription save request for user {UserId}.",
+                userId.Value);
             await _webPushService.SaveSubscriptionAsync(
                 userId.Value,
                 request,
@@ -57,6 +64,9 @@ public sealed class PushNotificationsController : ControllerBase
             return Unauthorized();
 
         await _webPushService.DeleteSubscriptionAsync(userId.Value, request.Endpoint);
+        _logger.LogInformation(
+            "Received push subscription delete request for user {UserId}.",
+            userId.Value);
         return Ok(new { message = "Push subscription removed." });
     }
 

@@ -16,15 +16,18 @@ public sealed class DirectMessagesController : ControllerBase
     private readonly DirectMessageService _directMessageService;
     private readonly IHubContext<ChatHub> _chatHubContext;
     private readonly WebPushService _webPushService;
+    private readonly ILogger<DirectMessagesController> _logger;
 
     public DirectMessagesController(
         DirectMessageService directMessageService,
         IHubContext<ChatHub> chatHubContext,
-        WebPushService webPushService)
+        WebPushService webPushService,
+        ILogger<DirectMessagesController> logger)
     {
         _directMessageService = directMessageService;
         _chatHubContext = chatHubContext;
         _webPushService = webPushService;
+        _logger = logger;
     }
 
     [HttpGet("conversations")]
@@ -114,6 +117,11 @@ public sealed class DirectMessagesController : ControllerBase
         try
         {
             var message = await _directMessageService.SendMessageAsync(userId.Value, request.RecipientUserId, request.MessageText, request.ReplyToMessageId);
+            _logger.LogInformation(
+                "Direct message {MessageId} created from {SenderUserId} to {RecipientUserId}. Triggering live delivery and push.",
+                message.Id,
+                userId.Value,
+                request.RecipientUserId);
             await _chatHubContext.Clients.Users(userId.Value.ToString(), request.RecipientUserId.ToString())
                 .SendAsync("DirectMessageReceived", message);
             await _webPushService.SendDirectMessageNotificationAsync(message);

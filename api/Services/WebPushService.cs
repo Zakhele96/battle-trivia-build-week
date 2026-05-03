@@ -47,6 +47,12 @@ public sealed class WebPushService
             throw new InvalidOperationException("Push subscription is incomplete.");
         }
 
+        _logger.LogInformation(
+            "Saving push subscription for user {UserId}. Endpoint suffix: {EndpointSuffix}. User agent present: {HasUserAgent}.",
+            userId,
+            GetEndpointSuffix(request.Endpoint),
+            !string.IsNullOrWhiteSpace(userAgent));
+
         var now = DateTime.UtcNow;
         var subscription = new UserPushSubscription
         {
@@ -61,6 +67,11 @@ public sealed class WebPushService
         };
 
         await _subscriptionRepository.UpsertAsync(subscription);
+
+        _logger.LogInformation(
+            "Saved push subscription for user {UserId}. Endpoint suffix: {EndpointSuffix}.",
+            userId,
+            GetEndpointSuffix(subscription.Endpoint));
     }
 
     public async Task DeleteSubscriptionAsync(Guid userId, string endpoint)
@@ -69,19 +80,56 @@ public sealed class WebPushService
             return;
 
         await _subscriptionRepository.DeleteByEndpointAsync(userId, endpoint.Trim());
+
+        _logger.LogInformation(
+            "Deleted push subscription for user {UserId}. Endpoint suffix: {EndpointSuffix}.",
+            userId,
+            GetEndpointSuffix(endpoint));
     }
 
     public async Task SendDirectMessageNotificationAsync(DirectMessageResponse message)
     {
-        if (!IsConfigured || message.RecipientUserId == Guid.Empty)
+        if (!IsConfigured)
+        {
+            _logger.LogWarning(
+                "Skipping DM push for message {MessageId} because Web Push is not configured.",
+                message.Id);
             return;
+        }
 
-        if (await _userPresenceService.IsOnlineAsync(message.RecipientUserId))
+        if (message.RecipientUserId == Guid.Empty)
+        {
+            _logger.LogWarning(
+                "Skipping DM push for message {MessageId} because the recipient user id is empty.",
+                message.Id);
             return;
+        }
+
+        var isRecipientOnline = await _userPresenceService.IsOnlineAsync(message.RecipientUserId);
+        if (isRecipientOnline)
+        {
+            _logger.LogInformation(
+                "Skipping DM push for message {MessageId} because recipient {RecipientUserId} is currently online.",
+                message.Id,
+                message.RecipientUserId);
+            return;
+        }
 
         var subscriptions = await _subscriptionRepository.GetByUserIdAsync(message.RecipientUserId);
         if (subscriptions.Count == 0)
+        {
+            _logger.LogInformation(
+                "Skipping DM push for message {MessageId} because recipient {RecipientUserId} has no saved push subscriptions.",
+                message.Id,
+                message.RecipientUserId);
             return;
+        }
+
+        _logger.LogInformation(
+            "Attempting DM push for message {MessageId} to recipient {RecipientUserId}. Subscription count: {SubscriptionCount}.",
+            message.Id,
+            message.RecipientUserId,
+            subscriptions.Count);
 
         var payload = JsonSerializer.Serialize(new
         {
@@ -109,20 +157,46 @@ public sealed class WebPushService
 
                 await client.SendNotificationAsync(pushSubscription, payload, vapidDetails);
                 await _subscriptionRepository.TouchLastNotifiedAsync(subscription.Id, DateTime.UtcNow);
+                _logger.LogInformation(
+                    "DM push sent for message {MessageId} to recipient {RecipientUserId}. Subscription {SubscriptionId}. Endpoint suffix: {EndpointSuffix}.",
+                    message.Id,
+                    message.RecipientUserId,
+                    subscription.Id,
+                    GetEndpointSuffix(subscription.Endpoint));
             }
             catch (WebPushException ex) when (
                 ex.StatusCode == System.Net.HttpStatusCode.Gone ||
                 ex.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
                 await _subscriptionRepository.DeleteByEndpointAsync(subscription.UserId, subscription.Endpoint);
+                _logger.LogWarning(
+                    ex,
+                    "Removing expired push subscription {SubscriptionId} for user {UserId}. Endpoint suffix: {EndpointSuffix}.",
+                    subscription.Id,
+                    subscription.UserId,
+                    GetEndpointSuffix(subscription.Endpoint));
             }
             catch (Exception ex)
             {
                 _logger.LogWarning(
                     ex,
-                    "Failed to send DM push notification for user {UserId}.",
-                    message.RecipientUserId);
+                    "Failed to send DM push notification for message {MessageId}, recipient {RecipientUserId}, subscription {SubscriptionId}. Endpoint suffix: {EndpointSuffix}.",
+                    message.Id,
+                    message.RecipientUserId,
+                    subscription.Id,
+                    GetEndpointSuffix(subscription.Endpoint));
             }
         }
+    }
+
+    private static string GetEndpointSuffix(string? endpoint)
+    {
+        if (string.IsNullOrWhiteSpace(endpoint))
+            return "(empty)";
+
+        const int visibleChars = 16;
+        return endpoint.Length <= visibleChars
+            ? endpoint
+            : endpoint[^visibleChars..];
     }
 }

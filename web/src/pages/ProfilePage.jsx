@@ -26,6 +26,13 @@ import { useSoundPreferences } from "../hooks/useSoundPreferences";
 import { useAuth } from "../hooks/useAuth";
 import { useTheme } from "../hooks/useTheme";
 import {
+  disablePushNotifications,
+  enablePushNotifications,
+  getPushConfig,
+  isPushSupported,
+  syncPushSubscriptionIfEnabled,
+} from "../pwa/pushNotifications";
+import {
   buildPlayerRecapImageUrl,
   buildPlayerRecapUrl,
   buildShareUrl,
@@ -869,6 +876,110 @@ function SoundCard({
   );
 }
 
+function NotificationCard({
+  pushStatus,
+  isPushConfigured,
+  pushError,
+  isUpdatingPush,
+  onTogglePush,
+  isLight = false,
+}) {
+  const isEnabled = pushStatus === "enabled";
+  const isBlocked = pushStatus === "blocked";
+  const isUnsupported = pushStatus === "unsupported";
+  const isUnavailable = pushStatus === "unavailable";
+  const isBusy = isUpdatingPush || isUnsupported || isUnavailable;
+
+  let statusTitle = "Push notifications are ready to turn on";
+  let statusDescription =
+    "Default BTS behavior is to keep message notifications on when your browser permission allows it.";
+
+  if (isEnabled) {
+    statusTitle = "Push notifications are on";
+    statusDescription =
+      "Direct messages can reach this device while BTS is closed.";
+  } else if (isBlocked) {
+    statusTitle = "Browser notifications are blocked";
+    statusDescription =
+      "This device denied the browser permission, so BTS cannot turn notifications on until that is changed in browser settings.";
+  } else if (isUnsupported) {
+    statusTitle = "Push notifications are not supported here";
+    statusDescription =
+      "This browser or device does not expose the web-push features BTS needs.";
+  } else if (isUnavailable) {
+    statusTitle = "Push notifications are not configured on the server";
+    statusDescription =
+      "The BTS push service is not available yet for this environment.";
+  }
+
+  return (
+    <Panel>
+      <div className="mb-4">
+        <div className="text-sm font-semibold text-white">Notifications</div>
+        <div className="mt-1 text-sm text-neutral-400">
+          Manage browser notifications for direct messages on this device.
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <PreferenceToggle
+          label="Direct message notifications"
+          description="When browser permission is granted, BTS keeps DM push notifications on by default for this device."
+          active={isEnabled}
+          onToggle={onTogglePush}
+          isLight={isLight}
+          accentClass="border-emerald-300/22 bg-emerald-500/10"
+        />
+
+        <div
+          className={`rounded-[16px] border px-4 py-3 ${
+            isEnabled
+              ? "border-emerald-300/18 bg-emerald-500/10"
+              : "border-white/10 bg-white/[0.03]"
+          }`}
+        >
+          <div className="text-sm font-medium text-white">{statusTitle}</div>
+          <div className="mt-1 text-[12px] leading-5 text-neutral-400">
+            {statusDescription}
+          </div>
+          {!isPushConfigured ? (
+            <div className="mt-2 text-[12px] text-amber-200/85">
+              BTS push is not configured for this environment yet.
+            </div>
+          ) : null}
+          {pushStatus === "prompt" ? (
+            <div className="mt-2 text-[12px] text-blue-100/75">
+              The browser still needs your permission before BTS can subscribe this device.
+            </div>
+          ) : null}
+          {pushError ? (
+            <div className="mt-2 text-[12px] text-red-300/90">{pushError}</div>
+          ) : null}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => onTogglePush(!isEnabled)}
+          disabled={isBusy}
+          className={`w-full rounded-[16px] px-4 py-3 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60 ${
+            isEnabled
+              ? "border border-white/10 bg-white/[0.04] hover:bg-white/[0.08]"
+              : "bg-blue-600 hover:bg-blue-500"
+          }`}
+        >
+          {isUpdatingPush
+            ? isEnabled
+              ? "Turning off..."
+              : "Turning on..."
+            : isEnabled
+              ? "Turn off notifications"
+              : "Turn on notifications"}
+        </button>
+      </div>
+    </Panel>
+  );
+}
+
 function SignInMethodCard({ authProvider }) {
   const providerLabel =
     authProvider === "google"
@@ -949,6 +1060,10 @@ export default function ProfilePage() {
   const [friendNetwork, setFriendNetwork] = useState(null);
   const [friendSearchQuery, setFriendSearchQuery] = useState("");
   const [friendSearchResults, setFriendSearchResults] = useState([]);
+  const [pushStatus, setPushStatus] = useState("checking");
+  const [isPushConfigured, setIsPushConfigured] = useState(false);
+  const [pushError, setPushError] = useState("");
+  const [isUpdatingPush, setIsUpdatingPush] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -973,6 +1088,55 @@ export default function ProfilePage() {
     }
 
     loadProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function syncPushState() {
+      if (!isPushSupported()) {
+        if (isMounted) {
+          setPushStatus("unsupported");
+          setIsPushConfigured(false);
+        }
+        return;
+      }
+
+      try {
+        const config = await getPushConfig();
+        if (!isMounted) return;
+
+        setIsPushConfigured(Boolean(config?.isConfigured));
+
+        if (!config?.isConfigured) {
+          setPushStatus("unavailable");
+          return;
+        }
+
+        if (Notification.permission === "granted") {
+          await syncPushSubscriptionIfEnabled();
+          if (!isMounted) return;
+          setPushStatus("enabled");
+          return;
+        }
+
+        if (Notification.permission === "denied") {
+          setPushStatus("blocked");
+          return;
+        }
+
+        setPushStatus("prompt");
+      } catch {
+        if (!isMounted) return;
+        setPushStatus("error");
+      }
+    }
+
+    syncPushState().catch(() => null);
 
     return () => {
       isMounted = false;
@@ -1153,6 +1317,30 @@ export default function ProfilePage() {
           "invert(1) hue-rotate(180deg) saturate(1.08) contrast(1.08) brightness(0.97)",
       }
     : undefined;
+
+  async function handleTogglePush(nextActive) {
+    setPushError("");
+    setIsUpdatingPush(true);
+
+    try {
+      if (nextActive) {
+        const result = await enablePushNotifications();
+        if (result.enabled) {
+          setPushStatus("enabled");
+        } else {
+          setPushStatus(result.reason === "denied" ? "blocked" : "prompt");
+        }
+      } else {
+        await disablePushNotifications();
+        setPushStatus("prompt");
+      }
+    } catch (err) {
+      setPushError(err?.response?.data?.message || "Could not update notifications.");
+      setPushStatus("error");
+    } finally {
+      setIsUpdatingPush(false);
+    }
+  }
 
   async function handleSaveProfile(event) {
     event.preventDefault();
@@ -1882,6 +2070,23 @@ export default function ProfilePage() {
 
             <section className="hidden sm:block">
               <SectionTitle
+                eyebrow="Notifications"
+                title="Browser notifications"
+                description="Keep direct-message notifications on for this device when the browser allows them."
+              />
+
+              <NotificationCard
+                pushStatus={pushStatus}
+                isPushConfigured={isPushConfigured}
+                pushError={pushError}
+                isUpdatingPush={isUpdatingPush}
+                onTogglePush={handleTogglePush}
+                isLight={isLight}
+              />
+            </section>
+
+            <section className="hidden sm:block">
+              <SectionTitle
                 eyebrow="Theme"
                 title="Theme"
                 description="Dark is the default for everyone, but you can still switch it here."
@@ -1961,6 +2166,26 @@ export default function ProfilePage() {
           </div>
 
           <div className="space-y-6">
+            <section>
+              <div className="hidden sm:block" />
+
+              <MobileSectionShell
+                eyebrow="Notifications"
+                title="Browser notifications"
+                description="Keep direct-message notifications on for this device when the browser allows them."
+                accent="blue"
+              >
+                <NotificationCard
+                  pushStatus={pushStatus}
+                  isPushConfigured={isPushConfigured}
+                  pushError={pushError}
+                  isUpdatingPush={isUpdatingPush}
+                  onTogglePush={handleTogglePush}
+                  isLight={isLight}
+                />
+              </MobileSectionShell>
+            </section>
+
             <section>
               <SectionTitle
                 eyebrow="Achievements"
