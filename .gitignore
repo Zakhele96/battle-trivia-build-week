@@ -15,6 +15,9 @@ api/build-verify-timers
 api/build-verify-scale
 api/build-verify-arena
 api/build-verify-arena-flow
+api/build-verify-arena-flow/build-verify
+api/build-verify-ios-auth
+
 api/tools
 web/node_modules/
 web/dist/

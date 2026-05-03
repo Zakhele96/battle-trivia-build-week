@@ -16,6 +16,21 @@ function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(trimmed);
 }
 
+function isIosDevice() {
+  if (typeof navigator === "undefined") {
+    return false;
+  }
+
+  return /iPad|iPhone|iPod/i.test(navigator.userAgent)
+    || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+
+const IOS_PASSWORD_MANAGER_IGNORE = {
+  "data-1p-ignore": "true",
+  "data-lpignore": "true",
+  "data-bwignore": "true",
+};
+
 function AuthShell({ title, description, children, footer, isLight }) {
   const lightModeUndoFilter = isLight
     ? {
@@ -118,6 +133,7 @@ export default function RegisterPage() {
   const [searchParams] = useSearchParams();
   const { login } = useAuth();
   const { resolvedTheme } = useTheme();
+  const usePasswordlessSignup = isIosDevice();
 
   const [form, setForm] = useState({
     username: "",
@@ -167,6 +183,7 @@ export default function RegisterPage() {
         email: form.email.trim(),
         phoneNumber: form.phoneNumber.trim(),
         password: form.password,
+        usePasswordless: usePasswordlessSignup,
         ...referralPayload,
       });
 
@@ -259,7 +276,9 @@ export default function RegisterPage() {
       description={
         isVerificationStep
           ? "One last step: confirm your email with the code we sent before you enter BTS."
-          : "Start with BTS details or continue instantly with Google."
+          : usePasswordlessSignup
+            ? "Create your BTS account with an email code on iPhone, or continue instantly with Google."
+            : "Start with BTS details or continue instantly with Google."
       }
       footer={
         <p className="text-sm text-neutral-400">
@@ -308,19 +327,19 @@ export default function RegisterPage() {
             <div className="flex min-w-0 items-center gap-3">
               <div className="h-px min-w-0 flex-1 bg-white/10" />
               <span className="shrink-0 text-[10px] uppercase tracking-[0.18em] text-neutral-500">
-                or create a BTS account
+                {usePasswordlessSignup ? "or create with email code" : "or create a BTS account"}
               </span>
               <div className="h-px min-w-0 flex-1 bg-white/10" />
             </div>
 
-            <form onSubmit={handleSubmit} autoComplete="on" className="min-w-0 space-y-4">
+            <form onSubmit={handleSubmit} autoComplete="off" className="min-w-0 space-y-4">
           <div className="min-w-0">
             <label className="mb-2 block text-[11px] uppercase tracking-[0.14em] text-neutral-500">
               Username
             </label>
             <input
               name="username"
-              autoComplete="username"
+              autoComplete="off"
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}
@@ -338,7 +357,7 @@ export default function RegisterPage() {
             </label>
             <input
               name="displayName"
-              autoComplete="nickname"
+              autoComplete="off"
               placeholder="How your name should appear"
               value={form.displayName}
               onChange={handleChange}
@@ -354,7 +373,7 @@ export default function RegisterPage() {
             <input
               name="email"
               type="email"
-              autoComplete="email"
+              autoComplete="off"
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}
@@ -374,7 +393,7 @@ export default function RegisterPage() {
             <input
               name="phoneNumber"
               type="tel"
-              autoComplete="tel"
+              autoComplete="off"
               inputMode="tel"
               placeholder="Optional"
               value={form.phoneNumber}
@@ -384,24 +403,37 @@ export default function RegisterPage() {
             />
           </div>
 
-          <div className="min-w-0">
-            <label className="mb-2 block text-[11px] uppercase tracking-[0.14em] text-neutral-500">
-              Password
-            </label>
-            <input
-              name="password"
-              type="password"
-              autoComplete="new-password"
-              autoCapitalize="none"
-              autoCorrect="off"
-              spellCheck={false}
-              placeholder="Create a password"
-              value={form.password}
-              onChange={handleChange}
-              disabled={isSubmitting}
-              className="block w-full min-w-0 rounded-[18px] border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400/20 disabled:opacity-60"
-            />
-          </div>
+          {!usePasswordlessSignup ? (
+            <div className="min-w-0">
+              <label className="mb-2 block text-[11px] uppercase tracking-[0.14em] text-neutral-500">
+                Password
+              </label>
+              <input
+                name="accountPassword"
+                id="bts-account-passcode"
+                type="password"
+                autoComplete="off"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                {...IOS_PASSWORD_MANAGER_IGNORE}
+                placeholder="Create a password"
+                value={form.password}
+                onChange={(event) =>
+                  setForm((previous) => ({
+                    ...previous,
+                    password: event.target.value,
+                  }))
+                }
+                disabled={isSubmitting}
+                className="block w-full min-w-0 rounded-[18px] border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400/20 disabled:opacity-60"
+              />
+            </div>
+          ) : (
+            <div className="rounded-[16px] border border-blue-400/18 bg-blue-500/10 px-4 py-3 text-sm text-blue-100">
+              iPhone sign-up uses an email code instead of a password, so Safari will not keep prompting to save one.
+            </div>
+          )}
 
           {error ? (
             <div className="rounded-[16px] border border-red-900/35 bg-red-950/25 px-4 py-3 text-sm text-red-300/90">
@@ -414,7 +446,11 @@ export default function RegisterPage() {
             disabled={isSubmitting}
             className="w-full rounded-[18px] bg-[linear-gradient(180deg,rgba(64,156,255,1)_0%,rgba(10,132,255,1)_100%)] px-4 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(37,99,235,0.24)] transition hover:-translate-y-[1px] hover:shadow-[0_18px_34px_rgba(37,99,235,0.3)] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isSubmitting ? "Creating account..." : "Create account"}
+            {isSubmitting
+              ? "Creating account..."
+              : usePasswordlessSignup
+                ? "Send email code"
+                : "Create account"}
           </button>
             </form>
           </>

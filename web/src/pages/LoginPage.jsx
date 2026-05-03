@@ -3,13 +3,24 @@ import { Link, useLocation, useNavigate, useSearchParams } from "react-router-do
 import {
   googleLogin,
   login as loginRequest,
+  requestLoginCode,
   resendVerification,
+  verifyLoginCode,
   verifyEmail,
 } from "../api/authApi";
 import EmailVerificationPanel from "../components/auth/EmailVerificationPanel";
 import GoogleAuthButton from "../components/auth/GoogleAuthButton";
 import { useAuth } from "../hooks/useAuth";
 import { useTheme } from "../hooks/useTheme";
+
+function isIosDevice() {
+  if (typeof navigator === "undefined") {
+    return false;
+  }
+
+  return /iPad|iPhone|iPod/i.test(navigator.userAgent)
+    || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
 
 function AuthShell({ title, description, children, footer, isLight }) {
   const lightModeUndoFilter = isLight
@@ -126,6 +137,13 @@ export default function LoginPage() {
   const [showVerificationPanel, setShowVerificationPanel] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState("");
   const [verificationOtp, setVerificationOtp] = useState("");
+  const [loginMode, setLoginMode] = useState(isIosDevice() ? "code" : "password");
+  const [showCodeLoginPanel, setShowCodeLoginPanel] = useState(false);
+  const [codeLoginIdentity, setCodeLoginIdentity] = useState("");
+  const [codeLoginOtp, setCodeLoginOtp] = useState("");
+  const [codeLoginError, setCodeLoginError] = useState("");
+  const [codeLoginMessage, setCodeLoginMessage] = useState("");
+  const iosDevice = isIosDevice();
 
   const from = location.state?.from?.pathname || "/";
   const referralQuery = useMemo(() => {
@@ -199,6 +217,48 @@ export default function LoginPage() {
     }
   };
 
+  const handleRequestLoginCode = async (event) => {
+    event.preventDefault();
+    setError("");
+    setCodeLoginError("");
+    setCodeLoginMessage("");
+    setIsSubmitting(true);
+
+    try {
+      const data = await requestLoginCode({
+        emailOrUsername: form.emailOrUsername.trim(),
+      });
+      setCodeLoginIdentity(form.emailOrUsername.trim());
+      setCodeLoginOtp("");
+      setShowCodeLoginPanel(true);
+      setCodeLoginMessage(data?.message || "We sent a login code to your email.");
+    } catch (err) {
+      setCodeLoginError(err?.response?.data?.message || "Could not send a login code.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleVerifyLoginCode = async (event) => {
+    event.preventDefault();
+    setCodeLoginError("");
+    setCodeLoginMessage("");
+    setIsSubmitting(true);
+
+    try {
+      const data = await verifyLoginCode({
+        emailOrUsername: codeLoginIdentity,
+        otp: codeLoginOtp,
+      });
+      login(data, "local");
+      navigate(from, { replace: true });
+    } catch (err) {
+      setCodeLoginError(err?.response?.data?.message || "Could not verify that login code.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleVerifyEmail = async (event) => {
     event.preventDefault();
     setVerificationError("");
@@ -247,7 +307,11 @@ export default function LoginPage() {
       description={
         showVerificationPanel
           ? "Your local account still needs email verification. Enter the code we sent, then you'll be logged straight in."
-          : "Sign in with your BTS account or continue with Google."
+          : showCodeLoginPanel
+            ? "Enter the email code we sent, then BTS will log you straight in."
+            : loginMode === "code"
+              ? "Sign in with an email code or continue with Google."
+              : "Sign in with your BTS account or continue with Google."
       }
       footer={
         <p className="text-sm text-neutral-400">
@@ -292,6 +356,48 @@ export default function LoginPage() {
               Once the code is accepted, BTS signs you in immediately.
             </div>
           </>
+        ) : showCodeLoginPanel ? (
+          <>
+            <EmailVerificationPanel
+              email={codeLoginIdentity}
+              otp={codeLoginOtp}
+              onOtpChange={setCodeLoginOtp}
+              onVerify={handleVerifyLoginCode}
+              onResend={async () => {
+                setCodeLoginError("");
+                setCodeLoginMessage("");
+                setIsSubmitting(true);
+
+                try {
+                  const data = await requestLoginCode({
+                    emailOrUsername: codeLoginIdentity,
+                  });
+                  setCodeLoginMessage(data?.message || "A fresh login code has been sent.");
+                } catch (err) {
+                  setCodeLoginError(
+                    err?.response?.data?.message || "Could not resend that login code."
+                  );
+                } finally {
+                  setIsSubmitting(false);
+                }
+              }}
+              onBack={() => {
+                setShowCodeLoginPanel(false);
+                setCodeLoginError("");
+                setCodeLoginMessage("");
+              }}
+              isSubmitting={isSubmitting}
+              message={codeLoginMessage}
+              error={codeLoginError}
+              title="Enter your login code"
+              description="We sent a 6-digit code to your email. Enter it and BTS will sign you in."
+              submitLabel="Sign in with code"
+            />
+
+            <div className="text-sm text-neutral-500">
+              This works for iPhone-friendly passwordless accounts too.
+            </div>
+          </>
         ) : (
           <>
             <GoogleAuthButton
@@ -300,15 +406,50 @@ export default function LoginPage() {
               label="Continue with Google"
             />
 
+            <div className="grid grid-cols-2 gap-2 rounded-[18px] border border-white/10 bg-white/[0.03] p-1">
+              <button
+                type="button"
+                onClick={() => setLoginMode("password")}
+                className={`rounded-[14px] px-3 py-2 text-sm font-semibold transition ${
+                  loginMode === "password"
+                    ? "bg-blue-600 text-white"
+                    : "text-neutral-300 hover:bg-white/[0.04]"
+                }`}
+              >
+                Password
+              </button>
+              <button
+                type="button"
+                onClick={() => setLoginMode("code")}
+                className={`rounded-[14px] px-3 py-2 text-sm font-semibold transition ${
+                  loginMode === "code"
+                    ? "bg-blue-600 text-white"
+                    : "text-neutral-300 hover:bg-white/[0.04]"
+                }`}
+              >
+                Email code
+              </button>
+            </div>
+
+            {iosDevice && loginMode === "code" ? (
+              <div className="rounded-[18px] border border-blue-400/18 bg-blue-500/10 px-4 py-3 text-sm text-blue-100">
+                iPhone sign-in can use a one-time email code instead of a saved password.
+              </div>
+            ) : null}
+
             <div className="flex min-w-0 items-center gap-3">
               <div className="h-px min-w-0 flex-1 bg-white/10" />
               <span className="shrink-0 text-[10px] uppercase tracking-[0.18em] text-neutral-500">
-                or sign in with BTS
+                {loginMode === "code" ? "or get a login code" : "or sign in with BTS"}
               </span>
               <div className="h-px min-w-0 flex-1 bg-white/10" />
             </div>
 
-            <form onSubmit={handleSubmit} autoComplete="on" className="min-w-0 space-y-4">
+            <form
+              onSubmit={loginMode === "code" ? handleRequestLoginCode : handleSubmit}
+              autoComplete={loginMode === "code" ? "off" : "on"}
+              className="min-w-0 space-y-4"
+            >
               <div className="min-w-0">
                 <label className="mb-2 block text-[11px] uppercase tracking-[0.14em] text-neutral-500">
                   Email or username
@@ -327,28 +468,34 @@ export default function LoginPage() {
                 />
               </div>
 
-              <div className="min-w-0">
-                <label className="mb-2 block text-[11px] uppercase tracking-[0.14em] text-neutral-500">
-                  Password
-                </label>
-                <input
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  placeholder="Your password"
-                  value={form.password}
-                  onChange={handleChange}
-                  disabled={isSubmitting}
-                  className="block w-full min-w-0 rounded-[18px] border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400/20 disabled:opacity-60"
-                />
-              </div>
+              {loginMode === "password" ? (
+                <div className="min-w-0">
+                  <label className="mb-2 block text-[11px] uppercase tracking-[0.14em] text-neutral-500">
+                    Password
+                  </label>
+                  <input
+                    name="password"
+                    type="password"
+                    autoComplete="current-password"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    placeholder="Your password"
+                    value={form.password}
+                    onChange={handleChange}
+                    disabled={isSubmitting}
+                    className="block w-full min-w-0 rounded-[18px] border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none transition focus:border-blue-400/20 disabled:opacity-60"
+                  />
+                </div>
+              ) : (
+                <div className="rounded-[16px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-neutral-300">
+                  BTS will email a 6-digit code to the address on this local account.
+                </div>
+              )}
 
-              {error ? (
+              {(loginMode === "code" ? codeLoginError : error) ? (
                 <div className="rounded-[16px] border border-red-900/35 bg-red-950/25 px-4 py-3 text-sm text-red-300/90">
-                  {error}
+                  {loginMode === "code" ? codeLoginError : error}
                 </div>
               ) : null}
 
@@ -357,7 +504,13 @@ export default function LoginPage() {
                 disabled={isSubmitting}
                 className="w-full rounded-[18px] bg-[linear-gradient(180deg,rgba(64,156,255,1)_0%,rgba(10,132,255,1)_100%)] px-4 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(37,99,235,0.24)] transition hover:-translate-y-[1px] hover:shadow-[0_18px_34px_rgba(37,99,235,0.3)] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isSubmitting ? "Logging in..." : "Login"}
+                {isSubmitting
+                  ? loginMode === "code"
+                    ? "Sending code..."
+                    : "Logging in..."
+                  : loginMode === "code"
+                    ? "Send login code"
+                    : "Login"}
               </button>
             </form>
           </>

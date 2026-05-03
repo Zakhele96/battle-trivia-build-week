@@ -10,6 +10,7 @@ export default function EmailVerificationPanel({
   error = "",
   title = "Verify your email",
   description = "We sent a 6-digit code to your inbox.",
+  submitLabel = "Verify email",
 }) {
   return (
     <div className="rounded-[22px] border border-blue-400/18 bg-blue-500/8 p-4 sm:p-5">
@@ -62,7 +63,7 @@ export default function EmailVerificationPanel({
             disabled={isSubmitting || otp.length !== 6}
             className="rounded-[18px] bg-[linear-gradient(180deg,rgba(64,156,255,1)_0%,rgba(10,132,255,1)_100%)] px-4 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(37,99,235,0.24)] transition hover:-translate-y-[1px] hover:shadow-[0_18px_34px_rgba(37,99,235,0.3)] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isSubmitting ? "Checking..." : "Verify email"}
+            {isSubmitting ? "Checking..." : submitLabel}
           </button>
 
           <button

@@ -138,6 +138,44 @@ public sealed class AuthController : ControllerBase
         }
     }
 
+    [AllowAnonymous]
+    [HttpPost("request-login-code")]
+    public async Task<IActionResult> RequestLoginCode([FromBody] RequestLoginCodeRequest request)
+    {
+        try
+        {
+            var result = await _authService.RequestLoginCodeAsync(request.EmailOrUsername);
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+    }
+
+    [AllowAnonymous]
+    [HttpPost("verify-login-code")]
+    public async Task<IActionResult> VerifyLoginCode([FromBody] VerifyLoginCodeRequest request)
+    {
+        try
+        {
+            var result = await _authService.VerifyLoginCodeAsync(request.EmailOrUsername, request.Otp);
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+    }
+
     [Authorize]
     [HttpGet("me")]
     public async Task<IActionResult> Me()

@@ -42,3 +42,13 @@ export async function resendVerification(payload) {
   const { data } = await api.post("/auth/resend-verification", payload);
   return data;
 }
+
+export async function requestLoginCode(payload) {
+  const { data } = await api.post("/auth/request-login-code", payload);
+  return data;
+}
+
+export async function verifyLoginCode(payload) {
+  const { data } = await api.post("/auth/verify-login-code", payload);
+  return data;
+}

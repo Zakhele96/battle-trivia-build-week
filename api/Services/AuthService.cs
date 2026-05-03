@@ -71,7 +71,9 @@ public sealed class AuthService
             PhoneNumber = string.IsNullOrWhiteSpace(request.PhoneNumber)
                 ? null
                 : request.PhoneNumber.Trim(),
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+            PasswordHash = request.UsePasswordless
+                ? null
+                : BCrypt.Net.BCrypt.HashPassword(request.Password),
             GoogleSub = null,
             FacebookUserId = null,
             AuthProvider = "local",
@@ -101,6 +103,30 @@ public sealed class AuthService
             RequiresEmailVerification = true,
             PendingEmail = user.Email,
             Message = "We sent a verification code to your email. Enter it to finish your BTS account setup."
+        };
+    }
+
+    public async Task<AuthResponse> RequestLoginCodeAsync(string emailOrUsername)
+    {
+        if (string.IsNullOrWhiteSpace(emailOrUsername))
+            throw new InvalidOperationException("Enter your email or username.");
+
+        var user = await _userRepository.GetByEmailOrUsernameAsync(emailOrUsername.Trim());
+        if (user is null || !user.IsActive)
+            throw new UnauthorizedAccessException("Account not found.");
+
+        if (!string.Equals(user.AuthProvider, "local", StringComparison.OrdinalIgnoreCase))
+            throw new UnauthorizedAccessException($"This account uses {GetAuthProviderLabel(user.AuthProvider)} sign-in.");
+
+        await IssueEmailVerificationAsync(user);
+
+        return new AuthResponse
+        {
+            RequiresEmailVerification = true,
+            PendingEmail = user.Email,
+            Message = user.EmailVerified
+                ? "We sent a login code to your email."
+                : "We sent a verification code to your email. Enter it to finish your BTS account setup."
         };
     }
 
@@ -273,6 +299,51 @@ public sealed class AuthService
             Token = token,
             User = MapUser(user),
             Message = "Email verified."
+        };
+    }
+
+    public async Task<AuthResponse> VerifyLoginCodeAsync(string emailOrUsername, string otp)
+    {
+        if (string.IsNullOrWhiteSpace(emailOrUsername))
+            throw new InvalidOperationException("Enter your email or username.");
+
+        if (string.IsNullOrWhiteSpace(otp))
+            throw new InvalidOperationException("Enter the verification code.");
+
+        var user = await _userRepository.GetByEmailOrUsernameAsync(emailOrUsername.Trim());
+        if (user is null || !user.IsActive)
+            throw new UnauthorizedAccessException("Account not found.");
+
+        if (!string.Equals(user.AuthProvider, "local", StringComparison.OrdinalIgnoreCase))
+            throw new UnauthorizedAccessException($"This account uses {GetAuthProviderLabel(user.AuthProvider)} sign-in.");
+
+        if (user.EmailVerificationExpiresAt is null || user.EmailVerificationExpiresAt <= DateTime.UtcNow)
+            throw new InvalidOperationException("That code expired. Request a new one.");
+
+        var submittedHash = HashVerificationCode(otp.Trim());
+        if (!string.Equals(submittedHash, user.EmailVerificationCodeHash, StringComparison.Ordinal))
+            throw new InvalidOperationException("That code is not correct.");
+
+        var shouldMarkVerified = user.EmailVerified || !string.IsNullOrWhiteSpace(user.PasswordHash)
+            ? user.EmailVerified
+            : false;
+
+        if (!user.EmailVerified)
+        {
+            shouldMarkVerified = true;
+        }
+
+        await _userRepository.UpdateEmailVerificationAsync(user.Id, null, null, user.EmailVerificationSentAt, shouldMarkVerified);
+        user.EmailVerified = shouldMarkVerified;
+        user.EmailVerificationCodeHash = null;
+        user.EmailVerificationExpiresAt = null;
+
+        var token = _jwtTokenGenerator.Generate(user);
+        return new AuthResponse
+        {
+            Token = token,
+            User = MapUser(user),
+            Message = "Email login verified."
         };
     }
 

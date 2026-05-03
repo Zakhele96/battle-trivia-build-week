@@ -21,9 +21,14 @@ public sealed class RegisterRequestValidator : AbstractValidator<RegisterRequest
             .EmailAddress()
             .MaximumLength(120);
 
-        RuleFor(x => x.Password)
-            .NotEmpty()
-            .MinimumLength(8);
+        When(
+            x => !x.UsePasswordless,
+            () =>
+            {
+                RuleFor(x => x.Password)
+                    .NotEmpty()
+                    .MinimumLength(8);
+            });
 
         RuleFor(x => x.PhoneNumber)
             .MaximumLength(20);
