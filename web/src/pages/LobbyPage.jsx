@@ -15,6 +15,10 @@ import { getMyProfile, getMyProfileHistory } from "../api/profileApi";
 import { useAuth } from "../hooks/useAuth";
 import { useTheme } from "../hooks/useTheme";
 import { useMentions } from "../context/MentionContext";
+import {
+  readLobbyDashboardSlice,
+  writeLobbyDashboardSlice,
+} from "../services/lobbyDashboardCache";
 import MentionInboxCard from "../components/mentions/MentionInboxCard";
 import { getUnreadMentions } from "../api/roomsApi";
 import { getActiveSponsor } from "../api/sponsorApi";
@@ -1242,7 +1246,24 @@ export default function LobbyPage() {
 
     async function loadDashboard() {
       setError("");
-      setIsLoading(true);
+      const cachedBoard = readLobbyDashboardSlice(user?.id, "battleTriviaBoardRows");
+      const cachedProfile = readLobbyDashboardSlice(user?.id, "profileOverview");
+      const cachedRecentResult = readLobbyDashboardSlice(user?.id, "recentResult");
+      const hasCachedPersonalSlice =
+        cachedBoard.payload || cachedProfile.payload || cachedRecentResult.payload;
+
+      if (hasCachedPersonalSlice) {
+        setBattleTriviaBoardRows(
+          Array.isArray(cachedBoard.payload)
+            ? cachedBoard.payload
+            : []
+        );
+        setProfileOverview(cachedProfile.payload || null);
+        setRecentResult(cachedRecentResult.payload || null);
+        setIsLoading(false);
+      } else {
+        setIsLoading(true);
+      }
 
       try {
         const [roomsData, mentionsData] = await Promise.all([
@@ -1275,29 +1296,55 @@ export default function LobbyPage() {
             : Promise.resolve(null),
           getBattleTriviaSessionPodium().catch(() => null),
           getCurrentBattleTriviaLeaderboard(3).catch(() => []),
-          getLeaderboard("battle-trivia", "current", 100).catch(() => ({
-            rows: [],
-          })),
+          cachedBoard.isFresh
+            ? Promise.resolve({
+                rows: Array.isArray(cachedBoard.payload) ? cachedBoard.payload : [],
+              })
+            : getLeaderboard("battle-trivia", "current", 100).catch(() => ({
+                rows: [],
+              })),
           getActiveSponsor("battle-trivia").catch(() => null),
-          getMyProfile().catch(() => null),
-          getMyProfileHistory(1, 1).catch(() => ({
-            items: [],
-          })),
+          cachedProfile.isFresh
+            ? Promise.resolve(cachedProfile.payload || null)
+            : getMyProfile().catch(() => null),
+          cachedRecentResult.isFresh
+            ? Promise.resolve({
+                items: cachedRecentResult.payload ? [cachedRecentResult.payload] : [],
+              })
+            : getMyProfileHistory(1, 1).catch(() => ({
+                items: [],
+              })),
         ]);
 
         if (isMounted) {
+          const nextBattleTriviaBoardRows = Array.isArray(battleTriviaBoard?.rows)
+            ? battleTriviaBoard.rows
+            : [];
+          const nextRecentResult = Array.isArray(historyData?.items)
+            ? historyData.items[0] || null
+            : null;
+
           setFeaturedRoomStatus(status || null);
           setSessionPodium(podium || null);
           setCurrentLeaders(Array.isArray(leaders) ? leaders : []);
-          setBattleTriviaBoardRows(
-            Array.isArray(battleTriviaBoard?.rows) ? battleTriviaBoard.rows : []
-          );
+          setBattleTriviaBoardRows(nextBattleTriviaBoardRows);
           setBattleTriviaSponsor(sponsorData || null);
           setProfileOverview(profileData || null);
-          setRecentResult(
-            Array.isArray(historyData?.items)
-              ? historyData.items[0] || null
-              : null
+          setRecentResult(nextRecentResult);
+          writeLobbyDashboardSlice(
+            user?.id,
+            "battleTriviaBoardRows",
+            nextBattleTriviaBoardRows
+          );
+          writeLobbyDashboardSlice(
+            user?.id,
+            "profileOverview",
+            profileData || null
+          );
+          writeLobbyDashboardSlice(
+            user?.id,
+            "recentResult",
+            nextRecentResult
           );
         }
       } catch {
@@ -1316,7 +1363,7 @@ export default function LobbyPage() {
     return () => {
       isMounted = false;
     };
-  }, [syncRoomsFromPayload]);
+  }, [syncRoomsFromPayload, user?.id]);
 
   useEffect(() => {
     if (!shouldLoadStandingsSection || hasLoadedStandingsSection) {
