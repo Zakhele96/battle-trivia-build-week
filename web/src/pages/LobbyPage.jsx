@@ -1246,13 +1246,18 @@ export default function LobbyPage() {
 
     async function loadDashboard() {
       setError("");
+      const cachedPodium = readLobbyDashboardSlice(user?.id, "sessionPodium");
       const cachedBoard = readLobbyDashboardSlice(user?.id, "battleTriviaBoardRows");
       const cachedProfile = readLobbyDashboardSlice(user?.id, "profileOverview");
       const cachedRecentResult = readLobbyDashboardSlice(user?.id, "recentResult");
       const hasCachedPersonalSlice =
-        cachedBoard.payload || cachedProfile.payload || cachedRecentResult.payload;
+        cachedPodium.payload ||
+        cachedBoard.payload ||
+        cachedProfile.payload ||
+        cachedRecentResult.payload;
 
       if (hasCachedPersonalSlice) {
+        setSessionPodium(cachedPodium.payload || null);
         setBattleTriviaBoardRows(
           Array.isArray(cachedBoard.payload)
             ? cachedBoard.payload
@@ -1294,7 +1299,9 @@ export default function LobbyPage() {
           battleTriviaRoom
             ? getRoomSessionStatus(battleTriviaRoom.id).catch(() => null)
             : Promise.resolve(null),
-          getBattleTriviaSessionPodium().catch(() => null),
+          cachedPodium.isFresh
+            ? Promise.resolve(cachedPodium.payload || null)
+            : getBattleTriviaSessionPodium().catch(() => null),
           getCurrentBattleTriviaLeaderboard(3).catch(() => []),
           cachedBoard.isFresh
             ? Promise.resolve({
@@ -1320,17 +1327,23 @@ export default function LobbyPage() {
           const nextBattleTriviaBoardRows = Array.isArray(battleTriviaBoard?.rows)
             ? battleTriviaBoard.rows
             : [];
+          const nextSessionPodium = podium || null;
           const nextRecentResult = Array.isArray(historyData?.items)
             ? historyData.items[0] || null
             : null;
 
           setFeaturedRoomStatus(status || null);
-          setSessionPodium(podium || null);
+          setSessionPodium(nextSessionPodium);
           setCurrentLeaders(Array.isArray(leaders) ? leaders : []);
           setBattleTriviaBoardRows(nextBattleTriviaBoardRows);
           setBattleTriviaSponsor(sponsorData || null);
           setProfileOverview(profileData || null);
           setRecentResult(nextRecentResult);
+          writeLobbyDashboardSlice(
+            user?.id,
+            "sessionPodium",
+            nextSessionPodium
+          );
           writeLobbyDashboardSlice(
             user?.id,
             "battleTriviaBoardRows",

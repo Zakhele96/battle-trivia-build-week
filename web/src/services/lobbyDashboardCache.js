@@ -1,6 +1,7 @@
 const CACHE_PREFIX = "bts_lobby_dashboard_v2_";
 
 const SLICE_MAX_AGE_MS = {
+  sessionPodium: 24 * 60 * 60 * 1000,
   battleTriviaBoardRows: 20 * 1000,
   profileOverview: 5 * 60 * 1000,
   recentResult: 2 * 60 * 1000,
