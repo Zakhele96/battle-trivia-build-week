@@ -3,6 +3,18 @@ export function registerServiceWorker(onUpdateReady) {
     return;
   }
 
+  if (import.meta.env.DEV) {
+    window.addEventListener("load", async () => {
+      try {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map((registration) => registration.unregister()));
+      } catch {
+        // ignore cleanup errors in local development
+      }
+    });
+    return;
+  }
+
   window.addEventListener("load", async () => {
     try {
       const registration = await navigator.serviceWorker.register("/sw.js");

@@ -28,14 +28,14 @@ public sealed class ProfileMissionService
                 FROM trivia_answers
                 WHERE user_id = @UserId
                   AND is_correct = TRUE
-                  AND created_at >= date_trunc('day', NOW())
+                  AND submitted_at >= date_trunc('day', NOW())
             ),
             scramble_correct AS (
                 SELECT COUNT(*)::int AS value
                 FROM word_scramble_answers
                 WHERE user_id = @UserId
                   AND is_correct = TRUE
-                  AND created_at >= date_trunc('day', NOW())
+                  AND submitted_at >= date_trunc('day', NOW())
             ),
             trivia_sessions AS (
                 SELECT COUNT(*)::int AS value
