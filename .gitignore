@@ -21,6 +21,7 @@ api/build-verify-ios-auth/build-verify-arena/build-verify
 
 api/build-verify-mail-alias
 
+api/build-verify-gmail-sender
 
 api/tools
 web/node_modules/
