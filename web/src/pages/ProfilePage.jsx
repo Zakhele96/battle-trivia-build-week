@@ -43,6 +43,7 @@ import {
   downloadShareCardPng,
 } from "../services/leaderboardShare";
 import {
+  applyPodiumProfileUpdate,
   updateLobbyDashboardSlice,
   writeLobbyDashboardSlice,
 } from "../services/lobbyDashboardCache";
@@ -88,37 +89,14 @@ function syncLobbyProfileCaches(userId, updatedProfile) {
   if (!userId) return;
 
   writeLobbyDashboardSlice(userId, "profileOverview", updatedProfile || null);
-  updateLobbyDashboardSlice(userId, "sessionPodium", (currentPodium) => {
-    if (
-      !currentPodium ||
-      !Array.isArray(currentPodium.winners) ||
-      currentPodium.winners.length === 0
-    ) {
-      return currentPodium;
-    }
-
-    let changed = false;
-    const nextWinners = currentPodium.winners.map((winner) => {
-      if (winner?.userId !== userId) {
-        return winner;
-      }
-
-      changed = true;
-      return {
-        ...winner,
-        avatarUrl: updatedProfile?.avatarUrl ?? null,
-        displayName: updatedProfile?.displayName || winner.displayName,
-        username: updatedProfile?.username || winner.username,
-      };
-    });
-
-    return changed
-      ? {
-          ...currentPodium,
-          winners: nextWinners,
-        }
-      : currentPodium;
-  });
+  updateLobbyDashboardSlice(userId, "sessionPodium", (currentPodium) =>
+    applyPodiumProfileUpdate(currentPodium, {
+      userId,
+      avatarUrl: updatedProfile?.avatarUrl ?? null,
+      displayName: updatedProfile?.displayName || "",
+      username: updatedProfile?.username || "",
+    })
+  );
 }
 
 function getAvatarCropMetrics(pendingAvatar, crop, frameSize) {

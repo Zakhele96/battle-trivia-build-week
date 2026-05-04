@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { createChallengeInvite } from "../api/challengeInvitesApi";
 import { getFriendsLeaderboard, getHeadToHead } from "../api/friendsApi";
@@ -10,6 +10,7 @@ import SponsorSpotlightCard, {
   hasSponsorPlacement,
 } from "../components/sponsor/SponsorSpotlightCard";
 import { useAuth } from "../hooks/useAuth";
+import useLeaderboardRefreshSignal from "../hooks/useLeaderboardRefreshSignal";
 import { useTheme } from "../hooks/useTheme";
 import {
   buildRivalryCardSvg,
@@ -573,7 +574,7 @@ function RivalryPanel({
 }
 
 export default function LeaderboardsPage() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const { resolvedTheme } = useTheme();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -625,6 +626,22 @@ export default function LeaderboardsPage() {
   const [isLoadingHeadToHead, setIsLoadingHeadToHead] = useState(false);
   const [isMobileRivalryOpen, setIsMobileRivalryOpen] = useState(false);
   const [page, setPage] = useState(1);
+  const [refreshNonce, setRefreshNonce] = useState(0);
+
+  const handleLeaderboardRefreshSignal = useCallback(
+    (payload) => {
+      if (scope !== "all" || period !== "current") {
+        return;
+      }
+
+      if (payload?.mode === mode && payload?.period === period) {
+        setRefreshNonce((value) => value + 1);
+      }
+    },
+    [mode, period, scope]
+  );
+
+  useLeaderboardRefreshSignal(token, handleLeaderboardRefreshSignal);
 
   useEffect(() => {
     let isMounted = true;
@@ -664,7 +681,7 @@ export default function LeaderboardsPage() {
     return () => {
       isMounted = false;
     };
-  }, [mode, period, scope]);
+  }, [mode, period, refreshNonce, scope]);
 
   useEffect(() => {
     setPage(1);

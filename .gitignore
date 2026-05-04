@@ -20,9 +20,9 @@ api/build-verify-ios-auth
 api/build-verify-ios-auth/build-verify-arena/build-verify
 
 api/build-verify-mail-alias
-
+build-verify-*
 api/build-verify-gmail-sender
-
+api/build-verify-global-leaderboard-refresh
 api/tools
 web/node_modules/
 web/dist/

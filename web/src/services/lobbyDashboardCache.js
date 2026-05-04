@@ -21,6 +21,39 @@ function safeParse(raw) {
   }
 }
 
+export function applyPodiumProfileUpdate(currentPodium, profileUpdate) {
+  if (
+    !currentPodium ||
+    !Array.isArray(currentPodium.winners) ||
+    currentPodium.winners.length === 0 ||
+    !profileUpdate?.userId
+  ) {
+    return currentPodium;
+  }
+
+  let changed = false;
+  const nextWinners = currentPodium.winners.map((winner) => {
+    if (winner?.userId !== profileUpdate.userId) {
+      return winner;
+    }
+
+    changed = true;
+    return {
+      ...winner,
+      avatarUrl: profileUpdate.avatarUrl ?? null,
+      displayName: profileUpdate.displayName || winner.displayName,
+      username: profileUpdate.username || winner.username,
+    };
+  });
+
+  return changed
+    ? {
+        ...currentPodium,
+        winners: nextWinners,
+      }
+    : currentPodium;
+}
+
 function getBattleTriviaWeekBoundsUtcMs(value) {
   const utcMs = new Date(value).getTime();
   if (!Number.isFinite(utcMs)) {

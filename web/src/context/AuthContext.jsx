@@ -1,5 +1,10 @@
 import { createContext, useCallback, useEffect, useMemo, useState } from "react";
 import { getMe } from "../api/authApi";
+import { createChatConnection } from "../services/chatConnection";
+import {
+  applyPodiumProfileUpdate,
+  updateLobbyDashboardSlice,
+} from "../services/lobbyDashboardCache";
 
 export const AuthContext = createContext(null);
 
@@ -106,6 +111,53 @@ export function AuthProvider({ children }) {
 
     localStorage.removeItem(USER_KEY);
   }, [user]);
+
+  useEffect(() => {
+    if (!token || !user?.id) {
+      return undefined;
+    }
+
+    let isDisposed = false;
+    const connection = createChatConnection(token);
+
+    connection.on("PodiumProfileUpdated", (payload) => {
+      if (isDisposed || !payload?.userId) {
+        return;
+      }
+
+      updateLobbyDashboardSlice(user.id, "sessionPodium", (currentPodium) =>
+        applyPodiumProfileUpdate(currentPodium, payload)
+      );
+
+      if (payload.userId === user.id) {
+        updateLobbyDashboardSlice(user.id, "profileOverview", (previous) => ({
+          ...(previous || {}),
+          avatarUrl: payload.avatarUrl ?? null,
+          displayName:
+            payload.displayName || previous?.displayName || user.displayName,
+          username: payload.username || previous?.username || user.username,
+        }));
+      }
+
+      window.dispatchEvent(
+        new CustomEvent("bts:podium-profile-updated", {
+          detail: payload,
+        })
+      );
+    });
+
+    connection.start().catch(() => {
+      // ignore background profile sync connection failures
+    });
+
+    return () => {
+      isDisposed = true;
+      connection.off("PodiumProfileUpdated");
+      connection.stop().catch(() => {
+        // ignore shutdown failures
+      });
+    };
+  }, [token, user]);
 
   const value = useMemo(
     () => ({

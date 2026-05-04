@@ -1,9 +1,11 @@
 ﻿using System.Security.Claims;
+using Bts.Api.Hubs;
 using Bts.Api.Models.Requests;
 using Bts.Api.Repositories;
 using Bts.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 
 namespace Bts.Api.Controllers;
 
@@ -16,17 +18,20 @@ public sealed class ProfileController : ControllerBase
     private readonly ProfileService _profileService;
     private readonly ProgressionService _progressionService;
     private readonly ProfileMissionService _profileMissionService;
+    private readonly IHubContext<ChatHub> _hubContext;
 
     public ProfileController(
         IUserRepository userRepository,
         ProfileService profileService,
         ProgressionService progressionService,
-        ProfileMissionService profileMissionService)
+        ProfileMissionService profileMissionService,
+        IHubContext<ChatHub> hubContext)
     {
         _userRepository = userRepository;
         _profileService = profileService;
         _progressionService = progressionService;
         _profileMissionService = profileMissionService;
+        _hubContext = hubContext;
     }
 
     [HttpGet("me")]
@@ -87,6 +92,14 @@ public sealed class ProfileController : ControllerBase
             var updated = await _profileService.UpdateAsync(userId.Value, request);
             if (updated is null)
                 return NotFound();
+
+            await _hubContext.Clients.All.SendAsync("PodiumProfileUpdated", new
+            {
+                userId = userId.Value,
+                username = updated.Username,
+                displayName = updated.DisplayName,
+                avatarUrl = updated.AvatarUrl
+            });
 
             return Ok(updated);
         }

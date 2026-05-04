@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import FeaturedTriviaCard from "../components/lobby/FeaturedTriviaCard";
 import LeaderboardPreviewCard from "../components/lobby/LeaderboardPreviewCard";
@@ -13,9 +13,11 @@ import {
 import { getLeaderboard } from "../api/leaderboardsApi";
 import { getMyProfile, getMyProfileHistory } from "../api/profileApi";
 import { useAuth } from "../hooks/useAuth";
+import useLeaderboardRefreshSignal from "../hooks/useLeaderboardRefreshSignal";
 import { useTheme } from "../hooks/useTheme";
 import { useMentions } from "../context/MentionContext";
 import {
+  applyPodiumProfileUpdate,
   readLobbyDashboardSlice,
   writeLobbyDashboardSlice,
 } from "../services/lobbyDashboardCache";
@@ -1219,7 +1221,7 @@ function NextUpCard({ isFirstTimeUser, featuredRoom, isLight = false }) {
 // }
 
 export default function LobbyPage() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const { resolvedTheme } = useTheme();
   const { syncRoomsFromPayload, mergeRooms } = useMentions();
 
@@ -1240,6 +1242,47 @@ export default function LobbyPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [unreadMentions, setUnreadMentions] = useState([]);
+  const [battleTriviaRefreshNonce, setBattleTriviaRefreshNonce] = useState(0);
+  const [wordScrambleRefreshNonce, setWordScrambleRefreshNonce] = useState(0);
+
+  const handleLeaderboardRefreshSignal = useCallback((payload) => {
+    if (payload?.period !== "current") {
+      return;
+    }
+
+    if (payload?.mode === "battle-trivia") {
+      setBattleTriviaRefreshNonce((value) => value + 1);
+    }
+
+    if (payload?.mode === "word-scramble") {
+      setWordScrambleRefreshNonce((value) => value + 1);
+    }
+  }, []);
+
+  useLeaderboardRefreshSignal(token, handleLeaderboardRefreshSignal);
+
+  useEffect(() => {
+    function handlePodiumProfileUpdated(event) {
+      const payload = event?.detail;
+      if (!payload?.userId) return;
+
+      setSessionPodium((currentPodium) =>
+        applyPodiumProfileUpdate(currentPodium, payload)
+      );
+    }
+
+    window.addEventListener(
+      "bts:podium-profile-updated",
+      handlePodiumProfileUpdated
+    );
+
+    return () => {
+      window.removeEventListener(
+        "bts:podium-profile-updated",
+        handlePodiumProfileUpdated
+      );
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -1303,7 +1346,7 @@ export default function LobbyPage() {
             ? Promise.resolve(cachedPodium.payload || null)
             : getBattleTriviaSessionPodium().catch(() => null),
           getCurrentBattleTriviaLeaderboard(3).catch(() => []),
-          cachedBoard.isFresh
+          battleTriviaRefreshNonce === 0 && cachedBoard.isFresh
             ? Promise.resolve({
                 rows: Array.isArray(cachedBoard.payload) ? cachedBoard.payload : [],
               })
@@ -1376,7 +1419,7 @@ export default function LobbyPage() {
     return () => {
       isMounted = false;
     };
-  }, [syncRoomsFromPayload, user?.id]);
+  }, [battleTriviaRefreshNonce, syncRoomsFromPayload, user?.id]);
 
   useEffect(() => {
     if (!shouldLoadStandingsSection || hasLoadedStandingsSection) {
@@ -1407,7 +1450,11 @@ export default function LobbyPage() {
     return () => {
       isMounted = false;
     };
-  }, [hasLoadedStandingsSection, shouldLoadStandingsSection]);
+  }, [
+    hasLoadedStandingsSection,
+    shouldLoadStandingsSection,
+    wordScrambleRefreshNonce,
+  ]);
 
   const rooms = useMemo(() => mergeRooms(rawRooms), [rawRooms, mergeRooms]);
 

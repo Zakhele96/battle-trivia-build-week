@@ -504,6 +504,14 @@ public sealed class ChatHub : Hub
             await Clients.Group(roomId.ToString())
                 .SendAsync("LeaderboardUpdated", leaderboard);
 
+            await Clients.All
+                .SendAsync("GlobalLeaderboardChanged", new
+                {
+                    mode = "battle-trivia",
+                    period = "current",
+                    roomId
+                });
+
             var playerRank = await _triviaLeaderboardService.GetPlayerRankAsync(
                 result.SessionId.Value,
                 result.UserId);
@@ -654,6 +662,14 @@ public sealed class ChatHub : Hub
         var updatedStatus = await _wordScrambleSessionStatusService.GetRoomStatusAsync(roomId);
         await Clients.Group(roomId.ToString())
             .SendAsync("WordScrambleSessionStatusChanged", updatedStatus);
+
+        await Clients.All
+            .SendAsync("GlobalLeaderboardChanged", new
+            {
+                mode = "word-scramble",
+                period = "current",
+                roomId
+            });
 
         return new
         {
