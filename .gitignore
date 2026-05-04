@@ -17,6 +17,10 @@ api/build-verify-arena
 api/build-verify-arena-flow
 api/build-verify-arena-flow/build-verify
 api/build-verify-ios-auth
+api/build-verify-ios-auth/build-verify-arena/build-verify
+
+api/build-verify-mail-alias
+
 
 api/tools
 web/node_modules/
