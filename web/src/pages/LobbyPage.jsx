@@ -1228,6 +1228,7 @@ export default function LobbyPage() {
   const [rawRooms, setRawRooms] = useState([]);
   const [featuredRoomStatus, setFeaturedRoomStatus] = useState(null);
   const [sessionPodium, setSessionPodium] = useState(null);
+  const [isPodiumLoading, setIsPodiumLoading] = useState(true);
   const [currentLeaders, setCurrentLeaders] = useState([]);
   const [wordScrambleLeaders, setWordScrambleLeaders] = useState([]);
   const [battleTriviaBoardRows, setBattleTriviaBoardRows] = useState([]);
@@ -1289,6 +1290,7 @@ export default function LobbyPage() {
 
     async function loadDashboard() {
       setError("");
+      setIsPodiumLoading(true);
       const cachedBoard = readLobbyDashboardSlice(user?.id, "battleTriviaBoardRows");
       const cachedProfile = readLobbyDashboardSlice(user?.id, "profileOverview");
       const cachedRecentResult = readLobbyDashboardSlice(user?.id, "recentResult");
@@ -1399,6 +1401,7 @@ export default function LobbyPage() {
         }
       } finally {
         if (isMounted) {
+          setIsPodiumLoading(false);
           setIsLoading(false);
         }
       }
@@ -1548,7 +1551,11 @@ export default function LobbyPage() {
                 isLight={isLight}
               >
                 <div className="sm:hidden">
-                  {showPodium ? (
+                  {isPodiumLoading && !sessionPodium ? (
+                    <div className="mt-3 rounded-[24px] border border-white/10 bg-white/[0.03] px-4 py-8 text-center text-sm text-neutral-400">
+                      Loading latest winners...
+                    </div>
+                  ) : showPodium ? (
                     <WinnersPodiumCard
                       title="Latest Battle Trivia winners"
                       subtitle={`Finished ${formatEndedAt(
@@ -1567,11 +1574,17 @@ export default function LobbyPage() {
                 </div>
 
                 <div className="hidden sm:block">
-                  <WinnerSpotlightCard
-                    winner={latestWinner}
-                    sessionPodium={sessionPodium}
-                    isLight={isLight}
-                  />
+                  {isPodiumLoading && !sessionPodium ? (
+                    <div className="mt-3 rounded-[24px] border border-white/10 bg-white/[0.03] px-4 py-8 text-center text-sm text-neutral-400">
+                      Loading latest winners...
+                    </div>
+                  ) : (
+                    <WinnerSpotlightCard
+                      winner={latestWinner}
+                      sessionPodium={sessionPodium}
+                      isLight={isLight}
+                    />
+                  )}
                 </div>
 
                 {hasSponsorPlacement(battleTriviaSponsor, "lobby-featured") ? (
