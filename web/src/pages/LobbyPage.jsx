@@ -1289,18 +1289,15 @@ export default function LobbyPage() {
 
     async function loadDashboard() {
       setError("");
-      const cachedPodium = readLobbyDashboardSlice(user?.id, "sessionPodium");
       const cachedBoard = readLobbyDashboardSlice(user?.id, "battleTriviaBoardRows");
       const cachedProfile = readLobbyDashboardSlice(user?.id, "profileOverview");
       const cachedRecentResult = readLobbyDashboardSlice(user?.id, "recentResult");
       const hasCachedPersonalSlice =
-        cachedPodium.payload ||
         cachedBoard.payload ||
         cachedProfile.payload ||
         cachedRecentResult.payload;
 
       if (hasCachedPersonalSlice) {
-        setSessionPodium(cachedPodium.payload || null);
         setBattleTriviaBoardRows(
           Array.isArray(cachedBoard.payload)
             ? cachedBoard.payload
@@ -1342,9 +1339,7 @@ export default function LobbyPage() {
           battleTriviaRoom
             ? getRoomSessionStatus(battleTriviaRoom.id).catch(() => null)
             : Promise.resolve(null),
-          cachedPodium.isFresh
-            ? Promise.resolve(cachedPodium.payload || null)
-            : getBattleTriviaSessionPodium().catch(() => null),
+          getBattleTriviaSessionPodium().catch(() => null),
           getCurrentBattleTriviaLeaderboard(3).catch(() => []),
           battleTriviaRefreshNonce === 0 && cachedBoard.isFresh
             ? Promise.resolve({
@@ -1382,11 +1377,6 @@ export default function LobbyPage() {
           setBattleTriviaSponsor(sponsorData || null);
           setProfileOverview(profileData || null);
           setRecentResult(nextRecentResult);
-          writeLobbyDashboardSlice(
-            user?.id,
-            "sessionPodium",
-            nextSessionPodium
-          );
           writeLobbyDashboardSlice(
             user?.id,
             "battleTriviaBoardRows",
