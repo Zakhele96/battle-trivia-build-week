@@ -42,6 +42,10 @@ import {
   downloadImageUrlPng,
   downloadShareCardPng,
 } from "../services/leaderboardShare";
+import {
+  updateLobbyDashboardSlice,
+  writeLobbyDashboardSlice,
+} from "../services/lobbyDashboardCache";
 
 function formatFastest(ms) {
   if (typeof ms !== "number") return "-";
@@ -78,6 +82,43 @@ function getAuthProviderLabel(provider) {
     : provider === "facebook"
       ? "Facebook account"
       : "BTS account";
+}
+
+function syncLobbyProfileCaches(userId, updatedProfile) {
+  if (!userId) return;
+
+  writeLobbyDashboardSlice(userId, "profileOverview", updatedProfile || null);
+  updateLobbyDashboardSlice(userId, "sessionPodium", (currentPodium) => {
+    if (
+      !currentPodium ||
+      !Array.isArray(currentPodium.winners) ||
+      currentPodium.winners.length === 0
+    ) {
+      return currentPodium;
+    }
+
+    let changed = false;
+    const nextWinners = currentPodium.winners.map((winner) => {
+      if (winner?.userId !== userId) {
+        return winner;
+      }
+
+      changed = true;
+      return {
+        ...winner,
+        avatarUrl: updatedProfile?.avatarUrl ?? null,
+        displayName: updatedProfile?.displayName || winner.displayName,
+        username: updatedProfile?.username || winner.username,
+      };
+    });
+
+    return changed
+      ? {
+          ...currentPodium,
+          winners: nextWinners,
+        }
+      : currentPodium;
+  });
 }
 
 function getAvatarCropMetrics(pendingAvatar, crop, frameSize) {
@@ -1360,6 +1401,7 @@ export default function ProfilePage() {
       setProfile(updated);
       setAvatarUrl(updated?.avatarUrl || "");
       setStatusMessage(updated?.statusMessage || "");
+      syncLobbyProfileCaches(authUser?.id, updated);
       setUser((previous) =>
         previous
           ? {
@@ -1485,6 +1527,7 @@ export default function ProfilePage() {
       setProfile(updated);
       setAvatarUrl(updated?.avatarUrl || "");
       setStatusMessage(updated?.statusMessage || "");
+      syncLobbyProfileCaches(authUser?.id, updated);
       setUser((previous) =>
         previous
           ? {

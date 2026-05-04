@@ -115,3 +115,24 @@ export function writeLobbyDashboardSlice(userId, slice, payload) {
     // ignore cache write errors
   }
 }
+
+export function updateLobbyDashboardSlice(userId, slice, updater) {
+  if (!userId || !slice || typeof updater !== "function") return;
+
+  try {
+    const key = getCacheKey(userId, slice);
+    const currentRaw = localStorage.getItem(key);
+    const currentParsed = currentRaw ? safeParse(currentRaw) : null;
+    const currentPayload =
+      currentParsed && "payload" in currentParsed ? currentParsed.payload ?? null : null;
+    const nextPayload = updater(currentPayload);
+
+    if (typeof nextPayload === "undefined") {
+      return;
+    }
+
+    writeLobbyDashboardSlice(userId, slice, nextPayload);
+  } catch {
+    // ignore cache update errors
+  }
+}
