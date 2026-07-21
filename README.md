@@ -162,6 +162,20 @@ npm run dev -- --host 0.0.0.0
 
 Open `http://localhost:5173`.
 
+### Sample notes for a quick Battle It test
+
+Paste the following text into **Battle It** to generate a small, source-grounded question pack without preparing separate test data:
+
+```text
+SignalR is a library for adding real-time server-to-client communication to web applications.
+WebSockets provide a persistent, two-way connection between a browser and a server.
+JWTs are signed tokens commonly used to carry authentication claims between a client and an API.
+PostgreSQL is a relational database system, while Dapper is a lightweight object mapper for .NET.
+Battle Trivia keeps answer validation and scoring on the server so clients cannot award their own points.
+```
+
+Use **Easy** difficulty and the minimum question count supported by the generated pack. Review the draft, open the lobby, and join from a second authenticated browser session before starting the battle.
+
 ## Build Week Demo Script
 
 1. Register or log in as the battle creator.
