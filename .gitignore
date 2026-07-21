@@ -8,6 +8,7 @@ api/.vs/
 api/.vscode/
 api/*.user
 api/*.suo
+api/appsettings.Local.json
 api/build-verify
 api/build-verify-dm
 api/build-verify-redis

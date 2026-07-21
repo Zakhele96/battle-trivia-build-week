@@ -5,12 +5,16 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>bts-api-local-secrets</UserSecretsId>
+    <DefaultItemExcludes>$(DefaultItemExcludes);build-verify*/**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Remove="tools\**\*.cs" />
     <EmbeddedResource Remove="tools\**" />
     <None Remove="tools\**" />
+    <Content Update="appsettings.Local.json"
+             CopyToOutputDirectory="Never"
+             CopyToPublishDirectory="Never" />
   </ItemGroup>
 
   <ItemGroup>

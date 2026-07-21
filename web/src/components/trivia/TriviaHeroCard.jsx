@@ -20,6 +20,7 @@ function formatWindowTime(value) {
 function normaliseQuestion(currentQuestion) {
   if (!currentQuestion) {
     return {
+      roundId: "",
       text: "",
       questionImageUrl: "",
       answerImageUrl: "",
@@ -31,6 +32,7 @@ function normaliseQuestion(currentQuestion) {
 
   if (typeof currentQuestion === "string") {
     return {
+      roundId: "",
       text: currentQuestion,
       questionImageUrl: "",
       answerImageUrl: "",
@@ -41,6 +43,7 @@ function normaliseQuestion(currentQuestion) {
   }
 
   return {
+    roundId: currentQuestion.roundId || "",
     text:
       currentQuestion.questionText ||
       currentQuestion.text ||
@@ -324,6 +327,8 @@ export default function TriviaHeroCard({
         <div className={compact ? "mt-2 min-h-[40px] sm:min-h-[46px]" : "mt-2 min-h-[44px] sm:mt-3 sm:min-h-[58px]"}>
           {hasRevealContent ? (
             <TriviaRevealTray
+              key={question.roundId || correctAnswer}
+              roundId={question.roundId}
               correctAnswer={correctAnswer}
               roundWinners={roundWinners}
               isRoundReveal={isRoundReveal}

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { getTriviaExplanation } from "../../api/aiTriviaApi";
 
 export default function TriviaRevealTray({
+  roundId = "",
   correctAnswer,
   roundWinners = [],
   isRoundReveal,
@@ -10,11 +12,15 @@ export default function TriviaRevealTray({
   lastRoundPlacement = null,
 }) {
   const [isVisible, setIsVisible] = useState(false);
+  const [aiExplanation, setAiExplanation] = useState("");
+  const [isExplaining, setIsExplaining] = useState(false);
+  const [explanationError, setExplanationError] = useState("");
+  const displayedExplanation = answerExplanation || aiExplanation;
 
   const hasContent =
     !!correctAnswer ||
     !!answerImageUrl ||
-    !!answerExplanation ||
+    !!displayedExplanation ||
     roundWinners.length > 0;
 
   useEffect(() => {
@@ -29,6 +35,25 @@ export default function TriviaRevealTray({
 
     return () => cancelAnimationFrame(id);
   }, [hasContent, correctAnswer, roundWinners.length]);
+
+  async function handleExplainAnswer() {
+    if (!roundId || isExplaining) return;
+
+    setIsExplaining(true);
+    setExplanationError("");
+
+    try {
+      const result = await getTriviaExplanation(roundId);
+      setAiExplanation(result?.explanation || "");
+    } catch (error) {
+      setExplanationError(
+        error?.response?.data?.message ||
+          "Battle Coach could not explain this answer right now."
+      );
+    } finally {
+      setIsExplaining(false);
+    }
+  }
 
   if (!hasContent) {
     return null;
@@ -91,7 +116,7 @@ export default function TriviaRevealTray({
           </div>
         </div>
 
-        {answerImageUrl || answerExplanation ? (
+        {answerImageUrl || displayedExplanation || (roundId && correctAnswer) ? (
           <div className="grid gap-2">
             {answerImageUrl ? (
               <img
@@ -102,9 +127,35 @@ export default function TriviaRevealTray({
               />
             ) : null}
 
-            {answerExplanation ? (
-              <div className="rounded-[14px] border border-white/8 bg-white/[0.04] px-3 py-2 text-[11px] leading-5 text-neutral-300">
-                {answerExplanation}
+            {displayedExplanation ? (
+              <div className="rounded-[14px] border border-violet-400/15 bg-violet-500/[0.06] px-3 py-2 text-[11px] leading-5 text-neutral-200">
+                {aiExplanation ? (
+                  <div className="mb-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-violet-300">
+                    GPT-5.6 Battle Coach
+                  </div>
+                ) : null}
+                {displayedExplanation}
+              </div>
+            ) : null}
+
+            {!displayedExplanation && roundId && correctAnswer ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleExplainAnswer}
+                  disabled={isExplaining}
+                  className="rounded-full border border-violet-400/25 bg-violet-500/10 px-3 py-1.5 text-[10px] font-semibold text-violet-200 transition hover:border-violet-300/40 hover:bg-violet-500/15 disabled:cursor-wait disabled:opacity-60"
+                >
+                  {isExplaining
+                    ? "Battle Coach is thinking..."
+                    : "Why is this correct? Ask GPT-5.6"}
+                </button>
+
+                {explanationError ? (
+                  <span className="text-[10px] text-rose-300">
+                    {explanationError}
+                  </span>
+                ) : null}
               </div>
             ) : null}
           </div>

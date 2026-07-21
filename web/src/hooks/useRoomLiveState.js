@@ -424,6 +424,7 @@ export default function useRoomLiveState({
       lastRoundPlacementRef.current = null;
 
       setCurrentQuestion({
+        roundId: payload.roundId,
         questionText: payload.questionText,
         questionImageUrl: payload.questionImageUrl || "",
         category: payload.category,
@@ -487,6 +488,7 @@ export default function useRoomLiveState({
         prev
           ? {
               ...prev,
+              roundId: payload.roundId || prev.roundId,
               answerImageUrl: payload.answerImageUrl || "",
               answerExplanation: payload.answerExplanation || "",
             }
