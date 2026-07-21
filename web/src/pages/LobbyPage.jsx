@@ -1482,6 +1482,11 @@ export default function LobbyPage() {
     };
   }, [rooms, featuredRoomStatus]);
 
+  const battleItRoom = useMemo(
+    () => rooms.find((room) => room.slug === "battle-it") || null,
+    [rooms]
+  );
+
   // const roomsWithUnreadMentions = useMemo(() => {
   //   return [...rooms]
   //     .filter((room) => (Number(room?.unreadMentionCount) || 0) > 0)
@@ -1789,6 +1794,16 @@ export default function LobbyPage() {
 
               <div className="grid gap-3 lg:grid-cols-[1.02fr_0.98fr]">
                 <div className="grid gap-3 sm:grid-cols-2">
+                  {battleItRoom ? (
+                    <QuickDestinationCard
+                      to={`/rooms/${battleItRoom.id}`}
+                      eyebrow="AI Battle Creator"
+                      title="Battle your own notes"
+                      description="Paste notes or upload pages, review GPT-5.6's questions, then launch a private live trivia battle."
+                      isLight={isLight}
+                    />
+                  ) : null}
+
                   <QuickDestinationCard
                     to="/rooms"
                     eyebrow="Rooms"

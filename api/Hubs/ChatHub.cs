@@ -218,6 +218,7 @@ public sealed class ChatHub : Hub
 
         var isBattleTriviaRoom =
             string.Equals(room.Slug, "battle-trivia", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(room.Slug, "battle-it", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(room.RoomType, "trivia", StringComparison.OrdinalIgnoreCase);
         var isWordScrambleRoom =
             string.Equals(room.Slug, "word-scramble", StringComparison.OrdinalIgnoreCase);

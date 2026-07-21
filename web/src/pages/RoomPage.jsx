@@ -6,6 +6,7 @@ import MentionToastStack from "../components/chat/MentionToastStack";
 import AchievementToastStack from "../components/profile/AchievementToastStack";
 import ArenaCreateChallengeModal from "../components/arena/ArenaCreateChallengeModal";
 import ArenaRoomPanel from "../components/arena/ArenaRoomPanel";
+import BattleItPanel from "../components/battleIt/BattleItPanel";
 import RoomFooterBar from "../components/room/RoomFooterBar";
 import RoomModerationControlCard from "../components/room/RoomModerationControlCard";
 import RoomShell from "../components/room/RoomShell";
@@ -137,6 +138,14 @@ function getViewportState() {
 }
 
 function getRoomModeMeta(room, isBattleTrivia, isWordScramble) {
+  if (room?.slug === "battle-it") {
+    return {
+      eyebrow: "AI Battle Creator",
+      badgeLabel: "Battle It",
+      badgeClass: "text-cyan-200 border-cyan-400/20 bg-cyan-500/10",
+    };
+  }
+
   if (isBattleTrivia) {
     return {
       eyebrow: "Battle Trivia",
@@ -448,6 +457,9 @@ const {
     return room.slug === "battle-trivia" || room.roomType === "trivia";
   }, [room]);
 
+  const isBattleIt = room?.slug === "battle-it";
+  const isTriviaAnswerRoom = isBattleTrivia || isBattleIt;
+
   const isWordScramble = useMemo(() => {
     if (!room) return false;
     return room.slug === "word-scramble";
@@ -464,7 +476,7 @@ const {
     arenaTab !== "rankings" &&
     !!arenaSelectedChallengeId;
 
-  const showGameSidebar = isBattleTrivia || isWordScramble;
+  const showGameSidebar = isTriviaAnswerRoom || isWordScramble;
   const isChatRoom = room?.roomType === "chat";
   const isLight = resolvedTheme === "light";
   const lightModeUndoFilter = isLight
@@ -692,6 +704,9 @@ const {
     wordScrambleGuessFeedback,
     arenaActivityVersion,
     arenaNotice,
+    battleItState,
+    battleItHalftime,
+    setBattleItState,
     sendRoomPayload,
     editRoomMessage,
     toggleRoomMessageReaction,
@@ -711,7 +726,7 @@ const {
 
   useRoomSoundEffects({
     isChatRoom,
-    isBattleTrivia,
+    isBattleTrivia: isTriviaAnswerRoom,
     isWordScramble,
     currentRoundId,
     roundEndsAt,
@@ -764,6 +779,16 @@ const {
 
   const effectiveSessionLabel = isWordScramble
     ? wordScrambleStatus?.statusText || "Word Scramble"
+    : isBattleIt
+    ? battleItState?.status === "active"
+      ? "Live battle"
+      : battleItState?.status === "lobby"
+      ? "Players joining"
+      : battleItState?.status === "draft"
+      ? "Creator review"
+      : battleItState?.status === "completed"
+      ? "Battle complete"
+      : "Create from notes"
     : getSessionLabel(sessionStatus);
 
   const effectiveLeaderboard = isWordScramble
@@ -1365,7 +1390,7 @@ const {
   const handleSend = async (text, options = {}) => {
     setLocalError("");
 
-    const mode = isBattleTrivia
+    const mode = isTriviaAnswerRoom
       ? "battle-trivia"
       : isWordScramble
       ? "word-scramble"
@@ -1606,7 +1631,7 @@ const {
     }
   };
 
-  const sidebar = isArenaRoom ? null : (
+  const sidebar = isArenaRoom || isBattleIt ? null : (
     <aside className="hidden xl:flex xl:w-[17.25rem] xl:shrink-0 xl:flex-col xl:border-r xl:border-white/5 xl:bg-neutral-900/95">
       <div className="room-panel-scroll min-h-0 flex-1 overflow-y-auto px-2.5 py-2.5">
         <div className="space-y-2.5">
@@ -1802,12 +1827,22 @@ const {
           )
         ) : null}
 
-        {isBattleTrivia ? (
+        {isBattleTrivia || (isBattleIt && battleItState?.status === "active") ? (
           <TriviaHeroCard
             currentRoundNumber={currentRoundNumber}
             sessionStatus={sessionStatus}
             timeLeft={timeLeft}
-            currentQuestion={currentQuestion}
+            currentQuestion={
+              isBattleIt && currentQuestion
+                ? {
+                    ...currentQuestion,
+                    totalQuestions:
+                      currentQuestion.totalQuestions ?? battleItState?.questionCount,
+                    sessionTitle:
+                      currentQuestion.sessionTitle || battleItState?.title || "Battle It",
+                  }
+                : currentQuestion
+            }
             correctAnswer={correctAnswer}
             roundWinners={roundWinners}
             isQuestionFresh={isQuestionFresh}
@@ -1828,6 +1863,19 @@ const {
             winners={wordScrambleState?.winners || []}
             compact={shouldCompactGameChrome}
           />
+        ) : null}
+
+        {isBattleIt && battleItState?.status === "active" ? (
+          <div className="mt-2">
+            <BattleItPanel
+              roomId={roomId}
+              state={battleItState}
+              onStateChange={setBattleItState}
+              halftime={battleItHalftime}
+              leaderboard={leaderboard}
+              currentRoundNumber={currentRoundNumber}
+            />
+          </div>
         ) : null}
       </div>
     </div>
@@ -1866,7 +1914,20 @@ const {
   );
 
   const stream =
-    isArenaRoom && arenaTab !== "chat" ? (
+    isBattleIt && battleItState?.status !== "active" ? (
+      <div className="room-panel-scroll min-h-0 flex-1 overflow-y-auto p-3 sm:p-4">
+        <div className="mx-auto w-full max-w-[68rem]">
+          <BattleItPanel
+            roomId={roomId}
+            state={battleItState}
+            onStateChange={setBattleItState}
+            halftime={battleItHalftime}
+            leaderboard={leaderboard}
+            currentRoundNumber={currentRoundNumber}
+          />
+        </div>
+      </div>
+    ) : isArenaRoom && arenaTab !== "chat" ? (
       <ArenaRoomPanel
         activeTab={arenaTab}
         onTabChange={setArenaTab}
@@ -1894,7 +1955,7 @@ const {
   const chatFooter = (
     <RoomFooterBar
       whisper={
-        isBattleTrivia ? (
+        isTriviaAnswerRoom ? (
           <TriviaWhisperStatus
             answerFeedback={answerFeedback}
             attemptsInfo={attemptsInfo}
@@ -1929,7 +1990,7 @@ const {
           onCancelReply={!showGameSidebar ? handleCancelReply : undefined}
           mentionUsers={!showGameSidebar ? mentionUsers : []}
           placeholder={
-            isBattleTrivia
+            isTriviaAnswerRoom
               ? currentRoundId
                 ? "Type your answer..."
                 : "Waiting for next round..."
@@ -1947,7 +2008,7 @@ const {
               : "Type a message..."
           }
           buttonLabel={
-            isBattleTrivia
+            isTriviaAnswerRoom
               ? currentRoundId
                 ? "Answer"
                 : "Waiting..."
@@ -1961,7 +2022,7 @@ const {
               : "Send"
           }
           busyLabel={
-            isBattleTrivia
+            isTriviaAnswerRoom
               ? "Answering..."
               : isWordScramble
               ? "Guessing..."
@@ -1972,7 +2033,7 @@ const {
           disabled={
             status !== "connected" ||
             isLoadingRoom ||
-            (isBattleTrivia && !currentRoundId) ||
+            (isTriviaAnswerRoom && !currentRoundId) ||
             (isWordScramble &&
               (!wordScrambleState?.roundId ||
                 wordScrambleState?.phase !== "active")) ||
@@ -1985,7 +2046,8 @@ const {
   );
 
   const footer =
-    isArenaRoom && arenaTab !== "chat"
+    (isArenaRoom && arenaTab !== "chat") ||
+    (isBattleIt && battleItState?.status !== "active")
       ? null
       : chatFooter;
 

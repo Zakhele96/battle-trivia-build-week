@@ -199,6 +199,8 @@ export default function RoomsPage() {
       const isGameLike =
         room.roomType === "game" ||
         room.roomType === "trivia" ||
+        room.roomType === "battle-it" ||
+        room.slug === "battle-it" ||
         room.slug === "word-scramble";
 
       if (!isGameLike) return false;

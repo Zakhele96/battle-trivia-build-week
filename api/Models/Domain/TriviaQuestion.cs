@@ -17,6 +17,8 @@ public sealed class TriviaQuestion
     public string? Category { get; set; }
     public string? Difficulty { get; set; }
     public bool IsActive { get; set; }
+    public string Origin { get; set; } = "public";
+    public Guid? CreatedByUserId { get; set; }
     public DateTime CreatedAt { get; set; }
 
     public IReadOnlyList<string> GetAcceptedAnswers()

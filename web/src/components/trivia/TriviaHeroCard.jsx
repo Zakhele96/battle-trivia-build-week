@@ -25,6 +25,10 @@ function normaliseQuestion(currentQuestion) {
       questionImageUrl: "",
       answerImageUrl: "",
       answerExplanation: "",
+      sourceExcerpt: "",
+      concept: "",
+      totalQuestions: null,
+      sessionTitle: "",
       category: "",
       difficulty: "",
     };
@@ -37,6 +41,10 @@ function normaliseQuestion(currentQuestion) {
       questionImageUrl: "",
       answerImageUrl: "",
       answerExplanation: "",
+      sourceExcerpt: "",
+      concept: "",
+      totalQuestions: null,
+      sessionTitle: "",
       category: "",
       difficulty: "",
     };
@@ -55,6 +63,10 @@ function normaliseQuestion(currentQuestion) {
       "",
     answerImageUrl: currentQuestion.answerImageUrl || "",
     answerExplanation: currentQuestion.answerExplanation || "",
+    sourceExcerpt: currentQuestion.sourceExcerpt || "",
+    concept: currentQuestion.concept || "",
+    totalQuestions: currentQuestion.totalQuestions ?? null,
+    sessionTitle: currentQuestion.sessionTitle || "",
     category:
       currentQuestion.category ||
       currentQuestion.questionCategory ||
@@ -172,14 +184,18 @@ export default function TriviaHeroCard({
   compact = false,
 }) {
   const isLive = !!sessionStatus?.isLiveNow;
-  const runModeLabel =
-    sessionStatus?.runMode === "scheduled" ? "Scheduled" : "Continuous";
+  const question = normaliseQuestion(currentQuestion);
+  const isFiniteBattle = Number(question.totalQuestions) > 0;
+  const runModeLabel = isFiniteBattle
+    ? "Battle It"
+    : sessionStatus?.runMode === "scheduled"
+    ? "Scheduled"
+    : "Continuous";
   const hasRevealContent = !!correctAnswer || roundWinners.length > 0;
 
   const isWarning = !!hasActiveRound && timeLeft <= 10 && timeLeft > 5;
   const isDanger = !!hasActiveRound && timeLeft <= 5;
 
-  const question = normaliseQuestion(currentQuestion);
   const questionText = question.text || "Waiting for the next question...";
   const questionImageUrl = question.questionImageUrl || "";
   const questionCategory = question.category;
@@ -218,7 +234,11 @@ export default function TriviaHeroCard({
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-1.5">
               <MetaPill className="border-white/10 bg-white/[0.05] text-neutral-300">
-                {currentRoundNumber ? `Round ${currentRoundNumber}` : "Waiting"}
+                {currentRoundNumber
+                  ? isFiniteBattle
+                    ? `Question ${currentRoundNumber} of ${question.totalQuestions}`
+                    : `Round ${currentRoundNumber}`
+                  : "Waiting"}
               </MetaPill>
 
               <MetaPill
@@ -247,6 +267,12 @@ export default function TriviaHeroCard({
                 </MetaPill>
               ) : null}
             </div>
+
+            {question.sessionTitle ? (
+              <div className="mt-2 truncate text-xs font-medium text-cyan-100/80">
+                {question.sessionTitle}
+              </div>
+            ) : null}
           </div>
 
           <TimerChip
@@ -326,17 +352,30 @@ export default function TriviaHeroCard({
 
         <div className={compact ? "mt-2 min-h-[40px] sm:min-h-[46px]" : "mt-2 min-h-[44px] sm:mt-3 sm:min-h-[58px]"}>
           {hasRevealContent ? (
-            <TriviaRevealTray
-              key={question.roundId || correctAnswer}
-              roundId={question.roundId}
-              correctAnswer={correctAnswer}
-              roundWinners={roundWinners}
-              isRoundReveal={isRoundReveal}
-              answerImageUrl={question.answerImageUrl}
-              answerExplanation={question.answerExplanation}
-              maxVisibleWinners={3}
-              lastRoundPlacement={lastRoundPlacement}
-            />
+            <div className="space-y-2">
+              <TriviaRevealTray
+                key={question.roundId || correctAnswer}
+                roundId={question.roundId}
+                correctAnswer={correctAnswer}
+                roundWinners={roundWinners}
+                isRoundReveal={isRoundReveal}
+                answerImageUrl={question.answerImageUrl}
+                answerExplanation={question.answerExplanation}
+                maxVisibleWinners={3}
+                lastRoundPlacement={lastRoundPlacement}
+              />
+
+              {correctAnswer && question.sourceExcerpt ? (
+                <div className="rounded-[14px] border border-cyan-400/15 bg-cyan-500/[0.06] px-3 py-2.5">
+                  <div className="text-[8px] font-semibold uppercase tracking-[0.16em] text-cyan-200/75">
+                    Proof from the notes{question.concept ? ` · ${question.concept}` : ""}
+                  </div>
+                  <div className="mt-1.5 text-[11px] leading-5 text-neutral-300 sm:text-[12px]">
+                    {question.sourceExcerpt}
+                  </div>
+                </div>
+              ) : null}
+            </div>
           ) : (
             <div
               className={`flex items-center justify-between rounded-[14px] border border-white/8 bg-black/20 ${

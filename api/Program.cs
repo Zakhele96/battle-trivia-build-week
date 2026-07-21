@@ -60,6 +60,23 @@ builder.Services.AddRateLimiter(options =>
                 AutoReplenishment = true
             });
     });
+    options.AddPolicy("ai-battle-it-generation", context =>
+    {
+        var partitionKey =
+            context.User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+            context.Connection.RemoteIpAddress?.ToString() ??
+            "anonymous";
+
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey,
+            static _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 3,
+                Window = TimeSpan.FromHours(1),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            });
+    });
 });
 
 builder.Services.Configure<RedisOptions>(redisSection);
@@ -74,6 +91,11 @@ builder.Services.AddHttpClient<AiTriviaQuestionStudioService>(client =>
 {
     client.BaseAddress = new Uri("https://api.openai.com/v1/");
     client.Timeout = TimeSpan.FromSeconds(45);
+});
+builder.Services.AddHttpClient<BattleItGenerationService>(client =>
+{
+    client.BaseAddress = new Uri("https://api.openai.com/v1/");
+    client.Timeout = TimeSpan.FromSeconds(60);
 });
 
 var signalRBuilder = builder.Services.AddSignalR();
@@ -169,6 +191,7 @@ builder.Services.AddScoped<IDirectMessageRepository, DirectMessageRepository>();
 builder.Services.AddScoped<IUserPresenceRepository, UserPresenceRepository>();
 builder.Services.AddScoped<ISupportRepository, SupportRepository>();
 builder.Services.AddScoped<IUserPushSubscriptionRepository, UserPushSubscriptionRepository>();
+builder.Services.AddScoped<IBattleItRepository, BattleItRepository>();
 
 builder.Services.AddScoped<IWordScrambleSessionRepository, WordScrambleSessionRepository>();
 builder.Services.AddScoped<IWordScrambleRoundRepository, WordScrambleRoundRepository>();
@@ -239,6 +262,8 @@ builder.Services.AddScoped<WebPushService>();
 builder.Services.AddScoped<SupportSchemaService>();
 builder.Services.AddScoped<BattleTriviaPrizeOpsSchemaService>();
 builder.Services.AddScoped<SupportService>();
+builder.Services.AddScoped<BattleItSchemaService>();
+builder.Services.AddScoped<BattleItService>();
 builder.Services.AddSingleton<DirectMessageNotificationQueue>();
 if (redisOptions.Enabled &&
     redisOptions.UsePresence &&
@@ -278,6 +303,7 @@ else
 builder.Services.AddSingleton<UserPresenceService>();
 
 builder.Services.AddHostedService<BattleTriviaHostedService>();
+builder.Services.AddHostedService<BattleItHostedService>();
 builder.Services.AddHostedService<WordScrambleHostedService>();
 builder.Services.AddHostedService<ArenaHostedService>();
 builder.Services.AddHostedService<DirectMessageNotificationWorker>();
@@ -386,6 +412,8 @@ using (var scope = app.Services.CreateScope())
     await supportSchemaService.EnsureAsync();
     var battleTriviaPrizeOpsSchemaService = scope.ServiceProvider.GetRequiredService<BattleTriviaPrizeOpsSchemaService>();
     await battleTriviaPrizeOpsSchemaService.EnsureAsync();
+    var battleItSchemaService = scope.ServiceProvider.GetRequiredService<BattleItSchemaService>();
+    await battleItSchemaService.EnsureAsync();
 }
 
 app.Run();

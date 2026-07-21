@@ -10,4 +10,5 @@ public sealed class OpenAiOptions
     public string ReasoningEffort { get; set; } = "low";
     public int MaxOutputTokens { get; set; } = 400;
     public int QuestionStudioMaxOutputTokens { get; set; } = 3000;
+    public int BattleItMaxOutputTokens { get; set; } = 9000;
 }

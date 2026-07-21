@@ -10,6 +10,7 @@ import {
   getWordScrambleSessionStatus,
   getWordScrambleState,
 } from "../api/roomsApi";
+import { getBattleItState } from "../api/battleItApi";
 
 function getFeedbackDurationMs(message) {
   const value = (message || "").toLowerCase();
@@ -72,6 +73,9 @@ export default function useRoomLiveState({
     useState(null);
   const [arenaActivityVersion, setArenaActivityVersion] = useState(0);
   const [arenaNotice, setArenaNotice] = useState(null);
+  const [battleItState, setBattleItState] = useState(null);
+  const [battleItHalftime, setBattleItHalftime] = useState(null);
+  const [battleItCompleted, setBattleItCompleted] = useState(null);
 
   const connectionRef = useRef(null);
   const onReceiveMessageRef = useRef(onReceiveMessage);
@@ -90,6 +94,7 @@ export default function useRoomLiveState({
 
   const isBattleTriviaRoom =
     room?.slug === "battle-trivia" || room?.roomType === "trivia";
+  const isBattleItRoom = room?.slug === "battle-it";
   const isWordScrambleRoom = room?.slug === "word-scramble";
 
   useEffect(() => {
@@ -349,6 +354,9 @@ export default function useRoomLiveState({
     setWordScrambleStatus(null);
     setWordScrambleGuessFeedback(null);
     setArenaNotice(null);
+    setBattleItState(null);
+    setBattleItHalftime(null);
+    setBattleItCompleted(null);
     setAchievementUnlocks([]);
     setLiveStreak({
       current: 0,
@@ -429,6 +437,8 @@ export default function useRoomLiveState({
         questionImageUrl: payload.questionImageUrl || "",
         category: payload.category,
         difficulty: payload.difficulty,
+        totalQuestions: payload.totalQuestions ?? null,
+        sessionTitle: payload.sessionTitle || "",
       });
       setCurrentRoundId(payload.roundId);
       setCurrentRoundNumber(payload.roundNumber);
@@ -442,6 +452,7 @@ export default function useRoomLiveState({
         left: null,
         max: null,
       });
+      setBattleItHalftime(null);
 
       setSessionStatus((prev) =>
         prev
@@ -491,6 +502,10 @@ export default function useRoomLiveState({
               roundId: payload.roundId || prev.roundId,
               answerImageUrl: payload.answerImageUrl || "",
               answerExplanation: payload.answerExplanation || "",
+              sourceExcerpt: payload.sourceExcerpt || "",
+              concept: payload.concept || prev.concept || prev.category || "",
+              totalQuestions:
+                payload.totalQuestions ?? prev.totalQuestions ?? null,
             }
           : prev
       );
@@ -533,6 +548,31 @@ export default function useRoomLiveState({
     connection.on("SessionStatusUpdated", (payload) => {
       if (isCancelled) return;
       setSessionStatus(normalizeSessionStatus(payload));
+    });
+
+    const refreshBattleItState = async () => {
+      try {
+        const nextState = await getBattleItState(roomId);
+        if (!isCancelled) setBattleItState(nextState || null);
+      } catch {
+        // The room remains usable if a transient Battle It refresh fails.
+      }
+    };
+
+    connection.on("BattleItChanged", () => {
+      if (isCancelled) return;
+      refreshBattleItState();
+    });
+
+    connection.on("BattleItHalftime", (payload) => {
+      if (isCancelled) return;
+      setBattleItHalftime(payload || null);
+    });
+
+    connection.on("BattleItCompleted", (payload) => {
+      if (isCancelled) return;
+      setBattleItCompleted(payload || null);
+      refreshBattleItState();
     });
 
     connection.on("AnswerChecked", (payload) => {
@@ -762,10 +802,14 @@ export default function useRoomLiveState({
 
     async function loadModeState() {
       try {
-        if (isBattleTriviaRoom) {
-          const data = await getRoomSessionStatus(roomId);
+        if (isBattleTriviaRoom || isBattleItRoom) {
+          const [data, battleItData] = await Promise.all([
+            getRoomSessionStatus(roomId),
+            isBattleItRoom ? getBattleItState(roomId).catch(() => null) : null,
+          ]);
           if (isCancelled) return;
           setSessionStatus(normalizeSessionStatus(data));
+          if (isBattleItRoom) setBattleItState(battleItData);
           return;
         }
 
@@ -788,7 +832,9 @@ export default function useRoomLiveState({
               : null
           );
         }
-      } catch {}
+      } catch {
+        // Live room events will continue even if the initial mode snapshot fails.
+      }
     }
 
     loadModeState();
@@ -796,7 +842,14 @@ export default function useRoomLiveState({
     return () => {
       isCancelled = true;
     };
-  }, [roomId, room, status, isBattleTriviaRoom, isWordScrambleRoom]);
+  }, [
+    roomId,
+    room,
+    status,
+    isBattleTriviaRoom,
+    isBattleItRoom,
+    isWordScrambleRoom,
+  ]);
 
   const ensureConnected = useCallback(() => {
     const connection = connectionRef.current;
@@ -914,5 +967,9 @@ export default function useRoomLiveState({
     wordScrambleGuessFeedback,
     arenaActivityVersion,
     arenaNotice,
+    battleItState,
+    battleItHalftime,
+    battleItCompleted,
+    setBattleItState,
   };
 }

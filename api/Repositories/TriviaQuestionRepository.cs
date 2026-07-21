@@ -33,6 +33,8 @@ public sealed class TriviaQuestionRepository : ITriviaQuestionRepository
                 category,
                 difficulty,
                 is_active AS IsActive,
+                origin AS Origin,
+                created_by_user_id AS CreatedByUserId,
                 created_at AS CreatedAt
             FROM trivia_questions
             WHERE id = @Id;
@@ -83,9 +85,12 @@ public sealed class TriviaQuestionRepository : ITriviaQuestionRepository
                 category,
                 difficulty,
                 is_active AS IsActive,
+                origin AS Origin,
+                created_by_user_id AS CreatedByUserId,
                 created_at AS CreatedAt
             FROM trivia_questions
-            WHERE (@Category IS NULL OR category = @Category)
+            WHERE origin = 'public'
+              AND (@Category IS NULL OR category = @Category)
               AND (@Difficulty IS NULL OR difficulty = @Difficulty)
               AND (@IsActive IS NULL OR is_active = @IsActive)
             ORDER BY created_at DESC;
@@ -114,6 +119,8 @@ public sealed class TriviaQuestionRepository : ITriviaQuestionRepository
                 category,
                 difficulty,
                 is_active,
+                origin,
+                created_by_user_id,
                 created_at
             )
             VALUES (
@@ -127,6 +134,8 @@ public sealed class TriviaQuestionRepository : ITriviaQuestionRepository
                 @Category,
                 @Difficulty,
                 @IsActive,
+                @Origin,
+                @CreatedByUserId,
                 @CreatedAt
             );
             """;
@@ -149,7 +158,8 @@ public sealed class TriviaQuestionRepository : ITriviaQuestionRepository
                 category = @Category,
                 difficulty = @Difficulty,
                 is_active = @IsActive
-            WHERE id = @Id;
+            WHERE id = @Id
+              AND origin = 'public';
             """;
 
         using var connection = _context.CreateConnection();
@@ -162,7 +172,8 @@ public sealed class TriviaQuestionRepository : ITriviaQuestionRepository
         const string sql = """
             UPDATE trivia_questions
             SET is_active = @IsActive
-            WHERE id = @Id;
+            WHERE id = @Id
+              AND origin = 'public';
             """;
 
         using var connection = _context.CreateConnection();
@@ -179,7 +190,8 @@ public sealed class TriviaQuestionRepository : ITriviaQuestionRepository
         const string sql = """
             UPDATE trivia_questions
             SET is_active = @IsActive
-            WHERE (@Category IS NULL OR category = @Category)
+            WHERE origin = 'public'
+              AND (@Category IS NULL OR category = @Category)
               AND (@Difficulty IS NULL OR difficulty = @Difficulty)
               AND (@CurrentIsActive IS NULL OR is_active = @CurrentIsActive);
             """;
@@ -217,9 +229,12 @@ public sealed class TriviaQuestionRepository : ITriviaQuestionRepository
                         category,
                         difficulty,
                         is_active AS IsActive,
+                        origin AS Origin,
+                        created_by_user_id AS CreatedByUserId,
                         created_at AS CreatedAt
                     FROM trivia_questions
                     WHERE is_active = TRUE
+                      AND origin = 'public'
                     ORDER BY created_at DESC;
                     """;
 
