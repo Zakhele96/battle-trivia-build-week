@@ -228,6 +228,51 @@ const inputClass =
 const compactInputClass =
   "rounded-xl border border-white/10 bg-black/25 px-3 py-2 text-sm text-white outline-none transition placeholder:text-neutral-600 focus:border-blue-400/40";
 
+const adminNavigation = [
+  {
+    key: "dashboard",
+    label: "Dashboard",
+    shortLabel: "Overview",
+    description: "Live status and the next admin actions that need attention.",
+  },
+  {
+    key: "ops",
+    label: "Live Operations",
+    shortLabel: "Operations",
+    description: "Control schedules, rooms, moderation, and live battle settings.",
+  },
+  {
+    key: "content",
+    label: "Content",
+    shortLabel: "Content",
+    description: "Generate, review, and maintain playable trivia content.",
+  },
+  {
+    key: "people",
+    label: "People & Safety",
+    shortLabel: "People",
+    description: "Manage trusted admins and keep access under control.",
+  },
+  {
+    key: "competition",
+    label: "Competition",
+    shortLabel: "Competition",
+    description: "Review leaderboards and manage winner payouts.",
+  },
+  {
+    key: "growth",
+    label: "Growth",
+    shortLabel: "Growth",
+    description: "Create promos, monitor sharing, and schedule sponsors.",
+  },
+];
+
+const contentNavigation = [
+  ["ai", "AI Studio", "Generate and review GPT-5.6 drafts"],
+  ["trivia", "Trivia Bank", "Create and maintain battle questions"],
+  ["scramble", "Word Scramble", "Manage words, hints, and categories"],
+];
+
 function StatusPill({ children, tone = "neutral" }) {
   const toneClass =
     tone === "green"
@@ -292,6 +337,36 @@ function Panel({ title, description, eyebrow, action, children }) {
       </div>
       {children}
     </section>
+  );
+}
+
+function WorkspaceTabs({ items, value, onChange, label }) {
+  return (
+    <div
+      role="tablist"
+      aria-label={label}
+      className="grid gap-2 rounded-2xl border border-white/10 bg-neutral-900/60 p-2 sm:grid-cols-3"
+    >
+      {items.map(([key, title, description]) => (
+        <button
+          key={key}
+          type="button"
+          role="tab"
+          aria-selected={value === key}
+          onClick={() => onChange(key)}
+          className={`rounded-xl border px-3 py-3 text-left transition ${
+            value === key
+              ? "border-blue-400/30 bg-blue-500/15 text-white"
+              : "border-transparent text-neutral-400 hover:border-white/10 hover:bg-white/[0.04] hover:text-white"
+          }`}
+        >
+          <span className="block text-sm font-semibold">{title}</span>
+          <span className="mt-1 block text-[11px] leading-4 text-neutral-500">
+            {description}
+          </span>
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -428,7 +503,8 @@ export default function AdminTriviaManagementPage() {
     scramble: [],
     previousCombined: [],
   });
-  const [adminView, setAdminView] = useState("ops");
+  const [adminView, setAdminView] = useState("dashboard");
+  const [contentView, setContentView] = useState("ai");
   const [adminUsers, setAdminUsers] = useState([]);
   const [adminUsersLoading, setAdminUsersLoading] = useState(true);
   const [adminUsersError, setAdminUsersError] = useState("");
@@ -1408,60 +1484,146 @@ export default function AdminTriviaManagementPage() {
     }
   };
 
+  const activeAdminSection =
+    adminNavigation.find((item) => item.key === adminView) || adminNavigation[0];
+
+  const openContentWorkspace = (workspace) => {
+    setContentView(workspace);
+    setAdminView("content");
+  };
+
   return (
-    <div className="admin-page min-h-screen bg-[linear-gradient(180deg,#050505_0%,#0a0a0b_46%,#050505_100%)] px-3 py-4 text-white sm:px-5">
-      <div className="mx-auto max-w-[92rem]">
-        <header className="rounded-2xl border border-white/10 bg-[radial-gradient(circle_at_16%_0%,rgba(59,130,246,0.18),transparent_30%),linear-gradient(135deg,rgba(23,23,23,0.96),rgba(10,10,10,0.9))] p-4 shadow-[0_24px_70px_rgba(0,0,0,0.32)]">
+    <div className="admin-page min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.11),transparent_26rem),linear-gradient(180deg,#050505_0%,#0a0a0b_46%,#050505_100%)] px-3 py-3 text-white sm:px-5 sm:py-5">
+      <div className="mx-auto grid max-w-[96rem] gap-4 lg:grid-cols-[15.5rem_minmax(0,1fr)]">
+        <aside className="hidden h-[calc(100vh-2.5rem)] flex-col rounded-2xl border border-white/10 bg-neutral-950/80 p-3 shadow-[0_24px_70px_rgba(0,0,0,0.28)] backdrop-blur lg:sticky lg:top-5 lg:flex">
+          <div className="rounded-xl border border-white/8 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.22),transparent_70%)] p-3">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-300/80">
+              Battle Trivia
+            </div>
+            <div className="mt-1 text-lg font-semibold tracking-[-0.03em] text-white">
+              Command Center
+            </div>
+            <div className="mt-2 text-xs leading-5 text-neutral-500">
+              Run games, build content, and grow the competition.
+            </div>
+          </div>
+
+          <nav className="mt-4 space-y-1" aria-label="Admin sections">
+            {adminNavigation.map((item, index) => (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => setAdminView(item.key)}
+                className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition ${
+                  adminView === item.key
+                    ? "bg-white text-neutral-950 shadow-sm"
+                    : "text-neutral-400 hover:bg-white/[0.05] hover:text-white"
+                }`}
+              >
+                <span
+                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-[10px] font-bold ${
+                    adminView === item.key
+                      ? "bg-neutral-950 text-white"
+                      : "bg-white/[0.06] text-neutral-500 group-hover:text-white"
+                  }`}
+                >
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <span className="text-sm font-semibold">{item.label}</span>
+              </button>
+            ))}
+          </nav>
+
+          <div className="mt-auto space-y-3">
+            <div className="rounded-xl border border-white/8 bg-white/[0.025] p-3">
+              <div className="flex items-center justify-between gap-2 text-xs text-neutral-400">
+                <span>Battle session</span>
+                <StatusPill tone="blue">{sessionInfo?.sessionType || "Loading"}</StatusPill>
+              </div>
+              <div className="mt-2 flex items-center justify-between gap-2 text-xs text-neutral-400">
+                <span>Scramble</span>
+                <StatusPill tone={scrambleStatus?.hasActiveRound ? "green" : "violet"}>
+                  {scrambleStatus?.hasActiveRound ? "Live" : "Weekly"}
+                </StatusPill>
+              </div>
+            </div>
+            <Link
+              to="/"
+              className="flex w-full items-center justify-between rounded-xl border border-white/10 px-3 py-2.5 text-sm font-semibold text-neutral-300 transition hover:bg-white/[0.05] hover:text-white"
+            >
+              <span>Return to lobby</span>
+              <span aria-hidden="true">-&gt;</span>
+            </Link>
+          </div>
+        </aside>
+
+        <main className="min-w-0">
+          <nav
+            aria-label="Admin sections"
+            className="mb-3 flex gap-2 overflow-x-auto rounded-2xl border border-white/10 bg-neutral-950/80 p-2 lg:hidden"
+          >
+            {adminNavigation.map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => setAdminView(item.key)}
+                className={`shrink-0 rounded-xl px-3 py-2 text-xs font-semibold transition ${
+                  adminView === item.key
+                    ? "bg-white text-neutral-950"
+                    : "text-neutral-400 hover:bg-white/[0.05] hover:text-white"
+                }`}
+              >
+                {item.shortLabel}
+              </button>
+            ))}
+          </nav>
+
+        <header className="rounded-2xl border border-white/10 bg-[radial-gradient(circle_at_16%_0%,rgba(59,130,246,0.18),transparent_30%),linear-gradient(135deg,rgba(23,23,23,0.96),rgba(10,10,10,0.9))] p-4 shadow-[0_24px_70px_rgba(0,0,0,0.32)] sm:p-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="min-w-0">
-              <Link
-                to="/"
-                className="inline-flex items-center gap-1 text-xs font-medium text-blue-300 transition hover:text-blue-200"
-              >
-                <span aria-hidden="true">&lt;-</span>
-                <span>Lobby</span>
-              </Link>
-              <div className="mt-3 flex flex-wrap items-center gap-3">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-300/80">
+                Admin workspace
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-3">
                 <h1 className="text-2xl font-semibold tracking-[-0.03em] text-white sm:text-3xl">
-                  BTS Admin
+                  {activeAdminSection.label}
                 </h1>
                 <StatusPill tone="blue">{sessionInfo?.sessionType || "Loading"}</StatusPill>
                 <StatusPill tone={scrambleStatus?.hasActiveRound ? "green" : "violet"}>
                   Scramble {scrambleStatus?.hasActiveRound ? "live" : "weekly"}
                 </StatusPill>
               </div>
-              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-500">
+              <p className="mt-2 max-w-2xl text-sm leading-5 text-neutral-400">
+                {activeAdminSection.description}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-500">
                 <span>Battle: {formatShortDate(sessionInfo?.periodStart)} - {formatShortDate(sessionInfo?.periodEnd)}</span>
                 <span>{rooms.length} rooms</span>
                 <span>{questions.length + scrambleWords.length} content items</span>
               </div>
             </div>
 
-            <div className="flex rounded-xl border border-white/10 bg-black/25 p-1">
-              {[
-                ["ops", "Operations"],
-                ["content", "Content"],
-                ["people", "People"],
-                ["rankings", "Rankings"],
-              ].map(([key, label]) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setAdminView(key)}
-                  className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${
-                    adminView === key
-                      ? "bg-white text-neutral-950 shadow-sm"
-                      : "text-neutral-400 hover:text-white"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={refreshAdminWorkspace}
+                className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-neutral-950 transition hover:bg-neutral-200"
+              >
+                Refresh data
+              </button>
+              <Link
+                to="/"
+                className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.07] lg:hidden"
+              >
+                Lobby
+              </Link>
             </div>
           </div>
         </header>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {adminView === "dashboard" ? (
+          <>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             <StatCard
               label="Rooms"
               value={rooms.length}
@@ -1492,7 +1654,83 @@ export default function AdminTriviaManagementPage() {
             detail={`${adminUsers.length} users loaded`}
             tone="green"
           />
-        </div>
+          </div>
+
+          <div className="mt-4 grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+            <Panel
+              eyebrow="Start here"
+              title="What do you want to manage?"
+              description="Each workspace keeps one kind of admin job together, so live controls never get mixed with content or growth tools."
+              action={<StatusPill tone="green">Ready</StatusPill>}
+            >
+              <div className="grid gap-3 sm:grid-cols-2">
+                {[
+                  ["ops", "Run live games", "Schedules, rooms, moderation, and round timing", "blue"],
+                  ["content", "Build content", "Generate AI drafts or maintain question banks", "violet"],
+                  ["competition", "Review competition", "Leaderboard snapshots and winner payouts", "amber"],
+                  ["growth", "Grow the game", "Promo cards, sharing analytics, and sponsors", "green"],
+                ].map(([key, title, description, tone]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setAdminView(key)}
+                    className="group rounded-2xl border border-white/8 bg-black/20 p-4 text-left transition hover:border-blue-400/25 hover:bg-white/[0.045]"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-sm font-semibold text-white">{title}</span>
+                      <StatusPill tone={tone}>Open</StatusPill>
+                    </div>
+                    <p className="mt-2 text-xs leading-5 text-neutral-500">{description}</p>
+                  </button>
+                ))}
+              </div>
+            </Panel>
+
+            <Panel
+              eyebrow="Content readiness"
+              title="Battle library"
+              description="See what is playable now, then jump directly into the tool that needs attention."
+              action={<StatusPill tone="violet">{questions.length + scrambleWords.length} items</StatusPill>}
+            >
+              <div className="space-y-3">
+                <button
+                  type="button"
+                  onClick={() => openContentWorkspace("ai")}
+                  className="flex w-full items-center justify-between rounded-xl border border-violet-400/15 bg-violet-500/[0.07] px-3 py-3 text-left transition hover:bg-violet-500/10"
+                >
+                  <span>
+                    <span className="block text-sm font-semibold text-white">Generate AI questions</span>
+                    <span className="mt-1 block text-xs text-neutral-500">Create a reviewed draft batch with GPT-5.6 Luna</span>
+                  </span>
+                  <span className="text-violet-200" aria-hidden="true">-&gt;</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openContentWorkspace("trivia")}
+                  className="flex w-full items-center justify-between rounded-xl border border-white/8 bg-black/20 px-3 py-3 text-left transition hover:bg-white/[0.04]"
+                >
+                  <span>
+                    <span className="block text-sm font-semibold text-white">Review trivia bank</span>
+                    <span className="mt-1 block text-xs text-neutral-500">{activeQuestions} active, {inactiveQuestions} inactive</span>
+                  </span>
+                  <span className="text-neutral-400" aria-hidden="true">-&gt;</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openContentWorkspace("scramble")}
+                  className="flex w-full items-center justify-between rounded-xl border border-white/8 bg-black/20 px-3 py-3 text-left transition hover:bg-white/[0.04]"
+                >
+                  <span>
+                    <span className="block text-sm font-semibold text-white">Review scramble bank</span>
+                    <span className="mt-1 block text-xs text-neutral-500">{activeScrambleWords} active, {inactiveScrambleWords} inactive</span>
+                  </span>
+                  <span className="text-neutral-400" aria-hidden="true">-&gt;</span>
+                </button>
+              </div>
+            </Panel>
+          </div>
+          </>
+        ) : null}
 
         {adminView === "ops" ? (
           <div className="mt-4 grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
@@ -1914,7 +2152,14 @@ export default function AdminTriviaManagementPage() {
         ) : null}
 
         {adminView === "content" ? (
-          <div className="mt-4 grid gap-4 xl:grid-cols-2">
+          <div className="mt-4 space-y-4">
+            <WorkspaceTabs
+              items={contentNavigation}
+              value={contentView}
+              onChange={setContentView}
+              label="Content workspaces"
+            />
+            {contentView === "ai" ? (
             <div className="xl:col-span-2">
               <Panel
                 eyebrow="GPT-5.6 Luna"
@@ -2164,7 +2409,9 @@ export default function AdminTriviaManagementPage() {
                 ) : null}
               </Panel>
             </div>
+            ) : null}
 
+            {contentView === "trivia" ? (
             <Panel
               eyebrow="Battle Trivia"
               title={editingQuestionId ? "Edit question" : "Question bank"}
@@ -2286,7 +2533,9 @@ export default function AdminTriviaManagementPage() {
                 ) : null}
               </div>
             </Panel>
+            ) : null}
 
+            {contentView === "scramble" ? (
             <Panel
               eyebrow="Word Scramble"
               title={editingScrambleWordId ? "Edit word" : "Word bank"}
@@ -2368,6 +2617,7 @@ export default function AdminTriviaManagementPage() {
                 ) : null}
               </div>
             </Panel>
+            ) : null}
           </div>
         ) : null}
 
@@ -2472,8 +2722,10 @@ export default function AdminTriviaManagementPage() {
           </div>
         ) : null}
 
-        {adminView === "rankings" ? (
+        {adminView === "competition" || adminView === "growth" ? (
           <div className="mt-4">
+            {adminView === "growth" ? (
+              <>
             <Panel
               eyebrow="Client tools"
               title="Quick admin actions"
@@ -2814,7 +3066,11 @@ export default function AdminTriviaManagementPage() {
                 </div>
               </Panel>
             </div>
+              </>
+            ) : null}
 
+            {adminView === "competition" ? (
+              <div className="space-y-4">
             <Panel
               eyebrow="Rankings"
               title="Leaderboard snapshots"
@@ -3013,7 +3269,10 @@ export default function AdminTriviaManagementPage() {
                 </div>
               )}
             </Panel>
+              </div>
+            ) : null}
 
+            {adminView === "growth" ? (
             <div className="mt-4 grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
               <Panel
                 eyebrow="Sponsors"
@@ -3265,8 +3524,10 @@ export default function AdminTriviaManagementPage() {
                 </div>
               </Panel>
             </div>
+            ) : null}
           </div>
         ) : null}
+        </main>
       </div>
     </div>
   );
