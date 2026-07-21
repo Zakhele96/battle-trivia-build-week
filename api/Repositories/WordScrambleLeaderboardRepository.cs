@@ -21,6 +21,11 @@ public sealed class WordScrambleLeaderboardRepository : IWordScrambleLeaderboard
                 u.username AS Username,
                 u.display_name AS DisplayName,
                 u.avatar_url AS AvatarUrl,
+                (COALESCE(u.is_supporter, FALSE) AND (u.supporter_expires_at IS NULL OR u.supporter_expires_at > NOW())) AS IsSupporter,
+                CASE
+                    WHEN LOWER(COALESCE(u.supporter_tier, '')) = 'supporter' THEN 'Supporter'
+                    ELSE NULL
+                END AS SupporterBadgeLabel,
                 SUM(l.points)::int AS Score,
                 ROW_NUMBER() OVER (
                     ORDER BY SUM(l.points) DESC, u.display_name ASC, u.username ASC
@@ -29,7 +34,7 @@ public sealed class WordScrambleLeaderboardRepository : IWordScrambleLeaderboard
             INNER JOIN users u
                 ON u.id = l.user_id
             WHERE l.session_id = @SessionId
-            GROUP BY l.user_id, u.username, u.display_name, u.avatar_url
+            GROUP BY l.user_id, u.username, u.display_name, u.avatar_url, u.is_supporter, u.supporter_tier, u.supporter_expires_at
             ORDER BY Score DESC, u.display_name ASC, u.username ASC
             LIMIT @Take;
             """;
@@ -52,6 +57,11 @@ public sealed class WordScrambleLeaderboardRepository : IWordScrambleLeaderboard
                 u.username AS Username,
                 u.display_name AS DisplayName,
                 u.avatar_url AS AvatarUrl,
+                (COALESCE(u.is_supporter, FALSE) AND (u.supporter_expires_at IS NULL OR u.supporter_expires_at > NOW())) AS IsSupporter,
+                CASE
+                    WHEN LOWER(COALESCE(u.supporter_tier, '')) = 'supporter' THEN 'Supporter'
+                    ELSE NULL
+                END AS SupporterBadgeLabel,
                 SUM(l.points)::int AS Score,
                 ROW_NUMBER() OVER (
                     ORDER BY SUM(l.points) DESC, u.display_name ASC, u.username ASC
@@ -60,7 +70,7 @@ public sealed class WordScrambleLeaderboardRepository : IWordScrambleLeaderboard
             INNER JOIN users u
                 ON u.id = l.user_id
             WHERE l.room_id = @RoomId
-            GROUP BY l.user_id, u.username, u.display_name, u.avatar_url
+            GROUP BY l.user_id, u.username, u.display_name, u.avatar_url, u.is_supporter, u.supporter_tier, u.supporter_expires_at
             ORDER BY Score DESC, u.display_name ASC, u.username ASC
             LIMIT @Take;
             """;
@@ -83,6 +93,11 @@ public sealed class WordScrambleLeaderboardRepository : IWordScrambleLeaderboard
                 u.username AS Username,
                 u.display_name AS DisplayName,
                 u.avatar_url AS AvatarUrl,
+                (COALESCE(u.is_supporter, FALSE) AND (u.supporter_expires_at IS NULL OR u.supporter_expires_at > NOW())) AS IsSupporter,
+                CASE
+                    WHEN LOWER(COALESCE(u.supporter_tier, '')) = 'supporter' THEN 'Supporter'
+                    ELSE NULL
+                END AS SupporterBadgeLabel,
                 SUM(l.points)::int AS Score,
                 ROW_NUMBER() OVER (
                     ORDER BY SUM(l.points) DESC, u.display_name ASC, u.username ASC
@@ -90,7 +105,7 @@ public sealed class WordScrambleLeaderboardRepository : IWordScrambleLeaderboard
             FROM word_scramble_score_ledger l
             INNER JOIN users u
                 ON u.id = l.user_id
-            GROUP BY l.user_id, u.username, u.display_name, u.avatar_url
+            GROUP BY l.user_id, u.username, u.display_name, u.avatar_url, u.is_supporter, u.supporter_tier, u.supporter_expires_at
             ORDER BY Score DESC, u.display_name ASC, u.username ASC
             LIMIT @Take;
             """;

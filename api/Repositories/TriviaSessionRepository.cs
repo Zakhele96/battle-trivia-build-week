@@ -85,6 +85,37 @@ public sealed class TriviaSessionRepository : ITriviaSessionRepository
         return await connection.QuerySingleOrDefaultAsync<TriviaGameSession>(sql, new { RoomId = roomId });
     }
 
+    public async Task<IReadOnlyList<TriviaGameSession>> GetRecentEndedByRoomIdAsync(Guid roomId, int take = 6)
+    {
+        const string sql = """
+            SELECT
+                id,
+                room_id AS RoomId,
+                status,
+                session_type AS SessionType,
+                run_mode AS RunMode,
+                started_at AS StartedAt,
+                ended_at AS EndedAt,
+                period_start AS PeriodStart,
+                period_end AS PeriodEnd,
+                winners_announced AS WinnersAnnounced
+            FROM trivia_game_sessions
+            WHERE room_id = @RoomId
+              AND status = 'ended'
+            ORDER BY ended_at DESC NULLS LAST, period_end DESC NULLS LAST
+            LIMIT @Take;
+            """;
+
+        using var connection = _context.CreateConnection();
+        var rows = await connection.QueryAsync<TriviaGameSession>(sql, new
+        {
+            RoomId = roomId,
+            Take = take
+        });
+
+        return rows.ToList();
+    }
+
     public async Task CreateAsync(TriviaGameSession session)
     {
         const string sql = """

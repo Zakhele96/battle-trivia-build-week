@@ -7,6 +7,8 @@ public sealed class GameLeaderboardRowDto
     public string DisplayName { get; set; } = string.Empty;
     public string? AvatarUrl { get; set; }
     public bool IsOnline { get; set; }
+    public bool IsSupporter { get; set; }
+    public string? SupporterBadgeLabel { get; set; }
 
     public int Rank { get; set; }
     public int Score { get; set; }

@@ -22,6 +22,7 @@ import {
   writeLobbyDashboardSlice,
 } from "../services/lobbyDashboardCache";
 import MentionInboxCard from "../components/mentions/MentionInboxCard";
+import SupporterBadge from "../components/supporter/SupporterBadge";
 import { getUnreadMentions } from "../api/roomsApi";
 import { getActiveSponsor } from "../api/sponsorApi";
 import SponsorSpotlightCard, {
@@ -350,8 +351,16 @@ function LeaderCard({ entry, isLight = false }) {
           isLight ? "text-stone-900" : "text-white"
         }`}
       >
-        {entry.displayName || entry.username}
+        <span>{entry.displayName || entry.username}</span>
       </div>
+      {entry.isSupporter ? (
+        <div className="mt-1">
+          <SupporterBadge
+            label={entry.supporterBadgeLabel || "Supporter"}
+            isLight={isLight}
+          />
+        </div>
+      ) : null}
 
       <div
         className={`mt-1 text-[10px] sm:text-[11px] ${
@@ -672,6 +681,14 @@ function WinnerSpotlightCard({ winner, sessionPodium, isLight = false }) {
           <div className={titleClassName}>
             {winner ? winner.displayName || winner.username : "Waiting for a finish"}
           </div>
+          {winner?.isSupporter ? (
+            <div className="mt-2">
+              <SupporterBadge
+                label={winner.supporterBadgeLabel || "Supporter"}
+                isLight={isLight}
+              />
+            </div>
+          ) : null}
           <div className={bodyClassName}>
             {winner
               ? `${winner.score} pts on the latest Battle Trivia finish.`

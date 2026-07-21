@@ -61,6 +61,11 @@ public sealed class TriviaSessionResultRepository : ITriviaSessionResultReposito
                 u.username AS Username,
                 u.display_name AS DisplayName,
                 u.avatar_url AS AvatarUrl,
+                (COALESCE(u.is_supporter, FALSE) AND (u.supporter_expires_at IS NULL OR u.supporter_expires_at > NOW())) AS IsSupporter,
+                CASE
+                    WHEN LOWER(COALESCE(u.supporter_tier, '')) = 'supporter' THEN 'Supporter'
+                    ELSE NULL
+                END AS SupporterBadgeLabel,
                 r.score AS Score,
                 r.rank AS Rank
             FROM trivia_session_results r
@@ -89,6 +94,11 @@ public sealed class TriviaSessionResultRepository : ITriviaSessionResultReposito
                 u.username AS Username,
                 u.display_name AS DisplayName,
                 u.avatar_url AS AvatarUrl,
+                (COALESCE(u.is_supporter, FALSE) AND (u.supporter_expires_at IS NULL OR u.supporter_expires_at > NOW())) AS IsSupporter,
+                CASE
+                    WHEN LOWER(COALESCE(u.supporter_tier, '')) = 'supporter' THEN 'Supporter'
+                    ELSE NULL
+                END AS SupporterBadgeLabel,
                 r.score AS Score,
                 r.rank AS Rank
             FROM trivia_session_results r
@@ -122,6 +132,11 @@ public sealed class TriviaSessionResultRepository : ITriviaSessionResultReposito
                 u.username AS Username,
                 u.display_name AS DisplayName,
                 u.avatar_url AS AvatarUrl,
+                (COALESCE(u.is_supporter, FALSE) AND (u.supporter_expires_at IS NULL OR u.supporter_expires_at > NOW())) AS IsSupporter,
+                CASE
+                    WHEN LOWER(COALESCE(u.supporter_tier, '')) = 'supporter' THEN 'Supporter'
+                    ELSE NULL
+                END AS SupporterBadgeLabel,
                 r.score AS Score,
                 r.rank AS Rank
             FROM trivia_session_results r

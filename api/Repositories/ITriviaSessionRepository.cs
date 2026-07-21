@@ -10,6 +10,7 @@ public interface ITriviaSessionRepository
     Task EndAsync(Guid sessionId, DateTime endedAtUtc);
     Task UpdateRunModeAsync(Guid sessionId, string runMode);
     Task<TriviaGameSession?> GetLatestEndedByRoomIdAsync(Guid roomId);
+    Task<IReadOnlyList<TriviaGameSession>> GetRecentEndedByRoomIdAsync(Guid roomId, int take = 6);
     Task<IReadOnlyList<Guid>> GetUserIdsBySessionIdAsync(Guid sessionId);
 
 }

@@ -124,3 +124,18 @@ export async function updateWordScrambleSettings(payload) {
   const { data } = await api.put("/admin/word-scramble/settings", payload);
   return data;
 }
+
+export async function getAdminBattleTriviaPrizeOps(takeSessions = 6) {
+  const { data } = await api.get("/admin/battle-trivia/prize-ops", {
+    params: { takeSessions },
+  });
+  return data;
+}
+
+export async function updateAdminBattleTriviaPrizePayout(sessionId, userId, payload) {
+  const { data } = await api.put(
+    `/admin/battle-trivia/prize-ops/${sessionId}/winners/${userId}`,
+    payload
+  );
+  return data;
+}

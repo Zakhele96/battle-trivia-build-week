@@ -9,6 +9,7 @@ import { getActiveSponsor } from "../api/sponsorApi";
 import SponsorSpotlightCard, {
   hasSponsorPlacement,
 } from "../components/sponsor/SponsorSpotlightCard";
+import SupporterBadge from "../components/supporter/SupporterBadge";
 import { useAuth } from "../hooks/useAuth";
 import useLeaderboardRefreshSignal from "../hooks/useLeaderboardRefreshSignal";
 import { useTheme } from "../hooks/useTheme";
@@ -263,6 +264,14 @@ function PodiumCard({ row, mode }) {
           <div className="mt-2 truncate text-[14px] font-semibold text-white sm:mt-3 sm:text-base">
             {row.displayName || row.username}
           </div>
+          {row.isSupporter ? (
+            <div className="mt-1">
+              <SupporterBadge
+                label={row.supporterBadgeLabel || "Supporter"}
+                isLight={false}
+              />
+            </div>
+          ) : null}
 
           <div className="mt-1 text-[11px] text-neutral-500">
             @{row.username}
@@ -354,6 +363,14 @@ function MobileLeaderboardCard({
           <div className="mt-2 text-[15px] font-semibold leading-5 text-white">
             {row.displayName || row.username}
           </div>
+          {row.isSupporter ? (
+            <div className="mt-1">
+              <SupporterBadge
+                label={row.supporterBadgeLabel || "Supporter"}
+                isLight={false}
+              />
+            </div>
+          ) : null}
 
           <div className="mt-1 truncate text-[12px] text-neutral-400">
             @{row.username}
@@ -1204,6 +1221,12 @@ export default function LeaderboardsPage() {
                                 <div className="text-sm font-medium text-white">
                                   {row.displayName || row.username}
                                 </div>
+                                {row.isSupporter ? (
+                                  <SupporterBadge
+                                    label={row.supporterBadgeLabel || "Supporter"}
+                                    isLight={resolvedTheme === "light"}
+                                  />
+                                ) : null}
                                 {isCurrentUser ? (
                                   <span className="rounded-full border border-blue-300/18 bg-blue-400/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-blue-100">
                                     You

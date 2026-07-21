@@ -22,6 +22,11 @@ public sealed class TriviaLeaderboardRepository : ITriviaLeaderboardRepository
                     u.username AS Username,
                     u.display_name AS DisplayName,
                     u.avatar_url AS AvatarUrl,
+                    (COALESCE(u.is_supporter, FALSE) AND (u.supporter_expires_at IS NULL OR u.supporter_expires_at > NOW())) AS IsSupporter,
+                    CASE
+                        WHEN LOWER(COALESCE(u.supporter_tier, '')) = 'supporter' THEN 'Supporter'
+                        ELSE NULL
+                    END AS SupporterBadgeLabel,
                     SUM(tsl.points) AS Score
                 FROM trivia_score_ledger tsl
                 INNER JOIN users u
@@ -32,13 +37,18 @@ public sealed class TriviaLeaderboardRepository : ITriviaLeaderboardRepository
                     u.username,
                     u.display_name
                     ,
-                    u.avatar_url
+                    u.avatar_url,
+                    u.is_supporter,
+                    u.supporter_tier,
+                    u.supporter_expires_at
             )
             SELECT
                 UserId,
                 Username,
                 DisplayName,
                 AvatarUrl,
+                IsSupporter,
+                SupporterBadgeLabel,
                 Score,
                 DENSE_RANK() OVER (ORDER BY Score DESC) AS Rank
             FROM leaderboard

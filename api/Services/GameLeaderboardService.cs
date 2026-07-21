@@ -79,6 +79,8 @@ public sealed class GameLeaderboardService
                 DisplayName = x.DisplayName,
                 AvatarUrl = x.AvatarUrl,
                 IsOnline = onlineStatuses.TryGetValue(x.UserId, out var isOnline) && isOnline,
+                IsSupporter = x.IsSupporter,
+                SupporterBadgeLabel = x.SupporterBadgeLabel,
                 Rank = x.Rank,
                 Score = x.Score,
                 BattleTriviaScore = x.Score,
@@ -113,6 +115,8 @@ public sealed class GameLeaderboardService
                 DisplayName = x.DisplayName,
                 AvatarUrl = x.AvatarUrl,
                 IsOnline = onlineStatuses.TryGetValue(x.UserId, out var isOnline) && isOnline,
+                IsSupporter = x.IsSupporter,
+                SupporterBadgeLabel = x.SupporterBadgeLabel,
                 Rank = x.Rank,
                 Score = x.Score,
                 BattleTriviaScore = x.Score,
@@ -146,6 +150,8 @@ public sealed class GameLeaderboardService
                 DisplayName = x.DisplayName,
                 AvatarUrl = x.AvatarUrl,
                 IsOnline = onlineStatuses.TryGetValue(x.UserId, out var isOnline) && isOnline,
+                IsSupporter = x.IsSupporter,
+                SupporterBadgeLabel = x.SupporterBadgeLabel,
                 Rank = x.Rank,
                 Score = x.Score,
                 BattleTriviaScore = 0,
@@ -180,6 +186,8 @@ public sealed class GameLeaderboardService
                 DisplayName = x.DisplayName,
                 AvatarUrl = x.AvatarUrl,
                 IsOnline = onlineStatuses.TryGetValue(x.UserId, out var isOnline) && isOnline,
+                IsSupporter = x.IsSupporter,
+                SupporterBadgeLabel = x.SupporterBadgeLabel,
                 Rank = x.Rank,
                 Score = x.Score,
                 BattleTriviaScore = 0,
@@ -234,13 +242,17 @@ public sealed class GameLeaderboardService
                     Username = row.Username,
                     DisplayName = row.DisplayName,
                     AvatarUrl = row.AvatarUrl,
-                    IsOnline = row.IsOnline
+                    IsOnline = row.IsOnline,
+                    IsSupporter = row.IsSupporter,
+                    SupporterBadgeLabel = row.SupporterBadgeLabel
                 };
                 map[row.UserId] = entry;
             }
 
             entry.AvatarUrl ??= row.AvatarUrl;
             entry.IsOnline = entry.IsOnline || row.IsOnline;
+            entry.IsSupporter = entry.IsSupporter || row.IsSupporter;
+            entry.SupporterBadgeLabel ??= row.SupporterBadgeLabel;
             entry.BattleTriviaScore += row.BattleTriviaScore > 0 ? row.BattleTriviaScore : row.Score;
         }
 
@@ -254,13 +266,17 @@ public sealed class GameLeaderboardService
                     Username = row.Username,
                     DisplayName = row.DisplayName,
                     AvatarUrl = row.AvatarUrl,
-                    IsOnline = row.IsOnline
+                    IsOnline = row.IsOnline,
+                    IsSupporter = row.IsSupporter,
+                    SupporterBadgeLabel = row.SupporterBadgeLabel
                 };
                 map[row.UserId] = entry;
             }
 
             entry.AvatarUrl ??= row.AvatarUrl;
             entry.IsOnline = entry.IsOnline || row.IsOnline;
+            entry.IsSupporter = entry.IsSupporter || row.IsSupporter;
+            entry.SupporterBadgeLabel ??= row.SupporterBadgeLabel;
             entry.WordScrambleScore += row.WordScrambleScore > 0 ? row.WordScrambleScore : row.Score;
         }
 

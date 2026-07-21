@@ -98,6 +98,7 @@ builder.Services.AddScoped<ITriviaScoreLedgerRepository, TriviaScoreLedgerReposi
 builder.Services.AddScoped<ITriviaLeaderboardRepository, TriviaLeaderboardRepository>();
 builder.Services.AddScoped<ITriviaSessionWindowRepository, TriviaSessionWindowRepository>();
 builder.Services.AddScoped<ITriviaSessionResultRepository, TriviaSessionResultRepository>();
+builder.Services.AddScoped<IBattleTriviaPrizePayoutRepository, BattleTriviaPrizePayoutRepository>();
 builder.Services.AddScoped<IBattleTriviaProfileStatsRepository, BattleTriviaProfileStatsRepository>();
 builder.Services.AddScoped<IBattleTriviaSessionSummaryRepository, BattleTriviaSessionSummaryRepository>();
 builder.Services.AddScoped<IRoomModerationRepository, RoomModerationRepository>();
@@ -152,6 +153,7 @@ builder.Services.AddScoped<AdminRoomService>();
 builder.Services.AddScoped<AdminBattleTriviaSettingsService>();
 builder.Services.AddScoped<AdminWordScrambleSettingsService>();
 builder.Services.AddScoped<AdminLeaderboardSponsorService>();
+builder.Services.AddScoped<AdminBattleTriviaPrizeOpsService>();
 builder.Services.AddScoped<RoomModerationStateService>();
 builder.Services.AddScoped<ArenaSchemaService>();
 builder.Services.AddScoped<ArenaService>();
@@ -180,6 +182,7 @@ builder.Services.AddScoped<DirectMessageService>();
 builder.Services.AddScoped<WebPushSchemaService>();
 builder.Services.AddScoped<WebPushService>();
 builder.Services.AddScoped<SupportSchemaService>();
+builder.Services.AddScoped<BattleTriviaPrizeOpsSchemaService>();
 builder.Services.AddScoped<SupportService>();
 builder.Services.AddSingleton<DirectMessageNotificationQueue>();
 if (redisOptions.Enabled &&
@@ -325,6 +328,8 @@ using (var scope = app.Services.CreateScope())
     await webPushSchemaService.EnsureAsync();
     var supportSchemaService = scope.ServiceProvider.GetRequiredService<SupportSchemaService>();
     await supportSchemaService.EnsureAsync();
+    var battleTriviaPrizeOpsSchemaService = scope.ServiceProvider.GetRequiredService<BattleTriviaPrizeOpsSchemaService>();
+    await battleTriviaPrizeOpsSchemaService.EnsureAsync();
 }
 
 app.Run();

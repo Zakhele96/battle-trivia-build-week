@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useTheme } from "../../hooks/useTheme";
+import SupporterBadge from "../supporter/SupporterBadge";
 
 function getInitials(value) {
   if (!value) return "P";
@@ -143,6 +144,12 @@ function Row({ row, accent, isLight }) {
               {row.displayName || row.username}
             </div>
             {isTop ? <Crown rank={row.rank} /> : null}
+            {row.isSupporter ? (
+              <SupporterBadge
+                label={row.supporterBadgeLabel || "Supporter"}
+                isLight={isLight}
+              />
+            ) : null}
           </div>
 
           <div className={`truncate text-[10px] ${usernameClassName}`}>

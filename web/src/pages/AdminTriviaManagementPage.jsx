@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   createAdminLeaderboardSponsor,
+  getAdminBattleTriviaPrizeOps,
   createAdminWordScrambleWord,
   createAdminTriviaQuestion,
   getAdminGrowthSnapshot,
@@ -13,6 +14,7 @@ import {
   getWordScrambleSettings,
   setAdminLeaderboardSponsorActive,
   setAdminUserAccess,
+  updateAdminBattleTriviaPrizePayout,
   setAdminWordScrambleWordActive,
   setAdminTriviaQuestionActive,
   setAdminTriviaQuestionsActiveBulk,
@@ -42,6 +44,7 @@ import {
   getModeLabel,
   getPeriodLabel,
 } from "../services/leaderboardShare";
+import SupporterBadge from "../components/supporter/SupporterBadge";
 
 const dayNames = [
   "Sunday",
@@ -182,6 +185,33 @@ function formatShortDate(value) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(value));
+}
+
+function formatMoney(value) {
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return "R0.00";
+  return new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: "ZAR",
+    minimumFractionDigits: 2,
+  }).format(amount);
+}
+
+function buildPrizeDraftMap(sessions = []) {
+  const entries = {};
+  for (const session of sessions) {
+    for (const winner of session.winners || []) {
+      entries[`${session.sessionId}:${winner.userId}`] = {
+        amount: winner.amount ?? 0,
+        status: winner.status || "pending",
+        reference: winner.reference || "",
+        notes: winner.notes || "",
+        paidAt: winner.paidAt ? toDateTimeInputValue(winner.paidAt) : "",
+      };
+    }
+  }
+
+  return entries;
 }
 
 const inputClass =
@@ -400,6 +430,12 @@ export default function AdminTriviaManagementPage() {
   const [promoBoardKey, setPromoBoardKey] = useState("combined-current");
   const [promoUserId, setPromoUserId] = useState("");
   const [growthSnapshot, setGrowthSnapshot] = useState(null);
+  const [prizeSessions, setPrizeSessions] = useState([]);
+  const [prizeOpsLoading, setPrizeOpsLoading] = useState(true);
+  const [prizeOpsError, setPrizeOpsError] = useState("");
+  const [prizeOpsMessage, setPrizeOpsMessage] = useState("");
+  const [prizePayoutDrafts, setPrizePayoutDrafts] = useState({});
+  const [savingPrizeKey, setSavingPrizeKey] = useState("");
 
   const [filters, setFilters] = useState({
     category: "",
@@ -550,6 +586,23 @@ export default function AdminTriviaManagementPage() {
     }
   }
 
+  async function loadPrizeOps() {
+    setPrizeOpsLoading(true);
+    setPrizeOpsError("");
+
+    try {
+      const data = await getAdminBattleTriviaPrizeOps(6);
+      setPrizeSessions(Array.isArray(data) ? data : []);
+      setPrizePayoutDrafts(buildPrizeDraftMap(Array.isArray(data) ? data : []));
+    } catch {
+      setPrizeOpsError("Failed to load weekly prize ops.");
+      setPrizeSessions([]);
+      setPrizePayoutDrafts({});
+    } finally {
+      setPrizeOpsLoading(false);
+    }
+  }
+
   async function loadSettings() {
     setSettingsLoading(true);
     setSettingsError("");
@@ -648,6 +701,7 @@ export default function AdminTriviaManagementPage() {
         loadLeaderboards(),
         loadSponsors(),
         loadGrowthSnapshot(),
+        loadPrizeOps(),
         loadQuestions(),
         loadScrambleWords(),
         loadAdminUsers(),
@@ -681,6 +735,74 @@ export default function AdminTriviaManagementPage() {
     }
   }
 
+  function handlePrizeDraftChange(sessionId, userId, field, value) {
+    const key = `${sessionId}:${userId}`;
+    setPrizePayoutDrafts((current) => ({
+      ...current,
+      [key]: {
+        amount: 0,
+        status: "pending",
+        reference: "",
+        notes: "",
+        paidAt: "",
+        ...(current[key] || {}),
+        [field]: value,
+      },
+    }));
+  }
+
+  async function handleSavePrizePayout(sessionId, winner) {
+    const key = `${sessionId}:${winner.userId}`;
+    const draft = prizePayoutDrafts[key] || {};
+
+    setPrizeOpsMessage("");
+    setSavingPrizeKey(key);
+
+    try {
+      const updated = await updateAdminBattleTriviaPrizePayout(sessionId, winner.userId, {
+        amount: Number(draft.amount) || 0,
+        status: draft.status || "pending",
+        reference: draft.reference || null,
+        notes: draft.notes || null,
+        paidAt: draft.paidAt ? new Date(draft.paidAt).toISOString() : null,
+      });
+
+      setPrizeSessions((current) =>
+        current.map((session) =>
+          session.sessionId !== sessionId
+            ? session
+            : {
+                ...session,
+                winners: (session.winners || []).map((entry) =>
+                  entry.userId === winner.userId ? { ...entry, ...updated } : entry
+                ),
+              }
+        )
+      );
+
+      setPrizePayoutDrafts((current) => ({
+        ...current,
+        [key]: {
+          amount: updated.amount ?? 0,
+          status: updated.status || "pending",
+          reference: updated.reference || "",
+          notes: updated.notes || "",
+          paidAt: updated.paidAt ? toDateTimeInputValue(updated.paidAt) : "",
+        },
+      }));
+
+      setPrizeOpsMessage(
+        `Updated payout for ${updated.displayName || updated.username}.`
+      );
+    } catch (error) {
+      setPrizeOpsMessage(
+        error?.response?.data?.message || "Could not update that payout."
+      );
+    } finally {
+      setSavingPrizeKey("");
+    }
+  }
+
   useEffect(() => {
     loadQuestions();
   }, [filterParams]);
@@ -699,6 +821,7 @@ export default function AdminTriviaManagementPage() {
     loadLeaderboards();
     loadSponsors();
     loadGrowthSnapshot();
+    loadPrizeOps();
   }, []);
 
   useEffect(() => {
@@ -2338,6 +2461,191 @@ export default function AdminTriviaManagementPage() {
                 <MiniLeaderboard title="Word Scramble" rows={leaderboards.scramble} />
                 <MiniLeaderboard title="Combined previous" rows={leaderboards.previousCombined} />
               </div>
+            </Panel>
+
+            <Panel
+              eyebrow="Prize Ops"
+              title="Battle Trivia winner payouts"
+              description="Track the top 3 winners for recent completed weeks, set amounts, and mark payout progress."
+              action={<StatusPill tone="amber">{prizeSessions.length} sessions</StatusPill>}
+            >
+              {prizeOpsMessage ? (
+                <div className="mb-3 rounded-xl border border-white/8 bg-white/[0.03] px-3 py-2 text-sm text-blue-300">
+                  {prizeOpsMessage}
+                </div>
+              ) : null}
+
+              {prizeOpsError ? (
+                <div className="mb-3 rounded-xl border border-red-900/40 bg-red-950/30 px-3 py-2 text-sm text-red-400">
+                  {prizeOpsError}
+                </div>
+              ) : null}
+
+              {prizeOpsLoading ? (
+                <div className="rounded-xl border border-white/8 bg-black/20 px-3 py-5 text-sm text-neutral-400">
+                  Loading prize operations...
+                </div>
+              ) : prizeSessions.length === 0 ? (
+                <div className="rounded-xl border border-white/8 bg-black/20 px-3 py-5 text-sm text-neutral-500">
+                  No completed Battle Trivia winner sessions yet.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {prizeSessions.map((session) => (
+                    <div
+                      key={session.sessionId}
+                      className="rounded-2xl border border-white/8 bg-black/20 p-3"
+                    >
+                      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <div className="text-sm font-semibold text-white">
+                            Weekly winners
+                          </div>
+                          <div className="mt-1 text-xs text-neutral-500">
+                            {formatShortDate(session.periodStart)} - {formatShortDate(session.periodEnd)} · Finished {formatShortDate(session.endedAt)}
+                          </div>
+                        </div>
+                        <StatusPill tone="violet">
+                          {(session.winners || []).length} winners
+                        </StatusPill>
+                      </div>
+
+                      <div className="space-y-3">
+                        {(session.winners || []).map((winner) => {
+                          const draftKey = `${session.sessionId}:${winner.userId}`;
+                          const draft = prizePayoutDrafts[draftKey] || {
+                            amount: winner.amount ?? 0,
+                            status: winner.status || "pending",
+                            reference: winner.reference || "",
+                            notes: winner.notes || "",
+                            paidAt: winner.paidAt ? toDateTimeInputValue(winner.paidAt) : "",
+                          };
+
+                          return (
+                            <div
+                              key={draftKey}
+                              className="rounded-xl border border-white/6 bg-white/[0.03] p-3"
+                            >
+                              <div className="flex flex-wrap items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <StatusPill tone={winner.rank === 1 ? "amber" : winner.rank === 2 ? "blue" : "green"}>
+                                      #{winner.rank}
+                                    </StatusPill>
+                                    <div className="truncate text-sm font-semibold text-white">
+                                      {winner.displayName || winner.username}
+                                    </div>
+                                    {winner.isSupporter ? (
+                                      <SupporterBadge
+                                        label={winner.supporterBadgeLabel || "Supporter"}
+                                      />
+                                    ) : null}
+                                  </div>
+                                  <div className="mt-1 text-xs text-neutral-500">
+                                    @{winner.username} · {winner.score} pts
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <div className="text-xs text-neutral-500">Current payout</div>
+                                  <div className="mt-1 text-sm font-semibold text-white">
+                                    {formatMoney(draft.amount)}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="mt-3 grid gap-2 lg:grid-cols-4">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  value={draft.amount}
+                                  onChange={(e) =>
+                                    handlePrizeDraftChange(
+                                      session.sessionId,
+                                      winner.userId,
+                                      "amount",
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="Amount"
+                                  className={inputClass}
+                                />
+                                <select
+                                  value={draft.status}
+                                  onChange={(e) =>
+                                    handlePrizeDraftChange(
+                                      session.sessionId,
+                                      winner.userId,
+                                      "status",
+                                      e.target.value
+                                    )
+                                  }
+                                  className={inputClass}
+                                >
+                                  <option value="pending">Pending</option>
+                                  <option value="processing">Processing</option>
+                                  <option value="paid">Paid</option>
+                                  <option value="cancelled">Cancelled</option>
+                                </select>
+                                <input
+                                  value={draft.reference}
+                                  onChange={(e) =>
+                                    handlePrizeDraftChange(
+                                      session.sessionId,
+                                      winner.userId,
+                                      "reference",
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="Reference"
+                                  className={inputClass}
+                                />
+                                <input
+                                  type="datetime-local"
+                                  value={draft.paidAt}
+                                  onChange={(e) =>
+                                    handlePrizeDraftChange(
+                                      session.sessionId,
+                                      winner.userId,
+                                      "paidAt",
+                                      e.target.value
+                                    )
+                                  }
+                                  className={inputClass}
+                                />
+                              </div>
+
+                              <div className="mt-2 grid gap-2 lg:grid-cols-[minmax(0,1fr)_140px]">
+                                <input
+                                  value={draft.notes}
+                                  onChange={(e) =>
+                                    handlePrizeDraftChange(
+                                      session.sessionId,
+                                      winner.userId,
+                                      "notes",
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="Notes"
+                                  className={inputClass}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleSavePrizePayout(session.sessionId, winner)}
+                                  disabled={savingPrizeKey === draftKey}
+                                  className="rounded-xl bg-amber-400 px-4 py-2 text-sm font-semibold text-neutral-950 transition hover:bg-amber-300 disabled:opacity-60"
+                                >
+                                  {savingPrizeKey === draftKey ? "Saving..." : "Save payout"}
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </Panel>
 
             <div className="mt-4 grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">

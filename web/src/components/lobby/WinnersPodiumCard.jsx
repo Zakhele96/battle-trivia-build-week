@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useTheme } from "../../hooks/useTheme";
+import SupporterBadge from "../supporter/SupporterBadge";
 
 function getInitials(value) {
   if (!value) return "P";
@@ -222,10 +223,18 @@ function PodiumSpot({ winner, isLight }) {
           </div>
 
           <div className="mt-2 min-w-0 text-center">
-            <div
-              className={`truncate text-[13px] font-semibold tracking-[-0.03em] sm:text-[15px] ${tone.name}`}
-            >
-              {winner.displayName || winner.username}
+            <div className="flex items-center justify-center gap-1.5">
+              <div
+                className={`truncate text-[13px] font-semibold tracking-[-0.03em] sm:text-[15px] ${tone.name}`}
+              >
+                {winner.displayName || winner.username}
+              </div>
+              {winner.isSupporter ? (
+                <SupporterBadge
+                  label={winner.supporterBadgeLabel || "Supporter"}
+                  isLight={isLight}
+                />
+              ) : null}
             </div>
             <div className={`mt-0.5 hidden truncate text-[11px] sm:block ${tone.username}`}>
               @{winner.username}
