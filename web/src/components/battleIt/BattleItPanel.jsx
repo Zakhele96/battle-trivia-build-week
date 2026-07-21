@@ -489,19 +489,18 @@ function LiveStatus({ state, halftime, leaderboard, currentRoundNumber }) {
 
   return (
     <div className="space-y-3">
-      <div className="rounded-2xl border border-cyan-400/15 bg-black/20 p-3">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <StatusBadge>Live Battle It</StatusBadge>
-            <div className="mt-2 text-sm font-semibold text-white">{state.title}</div>
-          </div>
-          <div className="text-right text-xs text-neutral-400">
-            <div>{currentQuestionNumber} / {state.questionCount}</div>
-            <div className="mt-1">{state.creatorDisplayName}</div>
-          </div>
+      <div className="px-1">
+        <div className="mb-1.5 flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-500">
+          <span>Battle progress</span>
+          <span className="text-cyan-100/80">
+            {currentQuestionNumber} of {state.questionCount}
+          </span>
         </div>
-        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/8">
-          <div className="h-full rounded-full bg-cyan-300 transition-all duration-500" style={{ width: `${progress}%` }} />
+        <div className="h-1.5 overflow-hidden rounded-full bg-white/8">
+          <div
+            className="h-full rounded-full bg-cyan-300 transition-all duration-500"
+            style={{ width: `${progress}%` }}
+          />
         </div>
       </div>
 
