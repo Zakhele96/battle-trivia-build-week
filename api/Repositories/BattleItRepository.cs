@@ -401,8 +401,12 @@ public sealed class BattleItRepository : IBattleItRepository
             Id = Guid.NewGuid(),
             RoomId = battle.RoomId,
             Status = "active",
-            SessionType = "battle-it",
-            RunMode = "finite",
+            // The shared table also constrains session_type to its legacy value.
+            // Battle It identity lives in battle_it_sessions and the dedicated room.
+            SessionType = "weekly",
+            // The shared table currently constrains run_mode to continuous/scheduled.
+            // Battle It remains finite through its ordered session-question count.
+            RunMode = "continuous",
             StartedAt = now,
             PeriodStart = now,
             PeriodEnd = now.AddHours(2),
