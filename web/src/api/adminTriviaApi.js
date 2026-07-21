@@ -15,6 +15,18 @@ export async function createAdminTriviaQuestion(payload) {
   return data;
 }
 
+export async function generateAdminTriviaQuestions(payload) {
+  const { data } = await api.post("/admin/trivia-questions/ai/generate", payload);
+  return data;
+}
+
+export async function saveGeneratedAdminTriviaQuestions(questions) {
+  const { data } = await api.post("/admin/trivia-questions/ai/save", {
+    questions,
+  });
+  return data;
+}
+
 export async function updateAdminTriviaQuestion(id, payload) {
   const { data } = await api.put(`/admin/trivia-questions/${id}`, payload);
   return data;

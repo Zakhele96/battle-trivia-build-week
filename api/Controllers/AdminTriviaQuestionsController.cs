@@ -3,6 +3,7 @@ using Bts.Api.Models.Requests;
 using Bts.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Bts.Api.Controllers;
 
@@ -12,10 +13,14 @@ namespace Bts.Api.Controllers;
 public sealed class AdminTriviaQuestionsController : ControllerBase
 {
     private readonly AdminTriviaQuestionService _adminTriviaQuestionService;
+    private readonly AiTriviaQuestionStudioService _aiTriviaQuestionStudioService;
 
-    public AdminTriviaQuestionsController(AdminTriviaQuestionService adminTriviaQuestionService)
+    public AdminTriviaQuestionsController(
+        AdminTriviaQuestionService adminTriviaQuestionService,
+        AiTriviaQuestionStudioService aiTriviaQuestionStudioService)
     {
         _adminTriviaQuestionService = adminTriviaQuestionService;
+        _aiTriviaQuestionStudioService = aiTriviaQuestionStudioService;
     }
 
     [HttpGet]
@@ -48,6 +53,45 @@ public sealed class AdminTriviaQuestionsController : ControllerBase
 
         var row = await _adminTriviaQuestionService.CreateAsync(request);
         return CreatedAtAction(nameof(GetById), new { id = row.Id }, row);
+    }
+
+    [HttpPost("ai/generate")]
+    [EnableRateLimiting("ai-admin-generation")]
+    public async Task<IActionResult> GenerateWithAi(
+        [FromBody] GenerateTriviaQuestionsRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!IsAdmin()) return Forbid();
+
+        var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdValue, out var userId))
+            return Unauthorized(new { message = "Unauthorized." });
+
+        try
+        {
+            var result = await _aiTriviaQuestionStudioService.GenerateAsync(
+                request,
+                userId,
+                cancellationToken);
+            return Ok(result);
+        }
+        catch (AiQuestionGenerationUnavailableException exception)
+        {
+            return StatusCode(
+                StatusCodes.Status503ServiceUnavailable,
+                new { message = exception.Message });
+        }
+    }
+
+    [HttpPost("ai/save")]
+    public async Task<IActionResult> SaveGeneratedQuestions(
+        [FromBody] SaveGeneratedTriviaQuestionsRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!IsAdmin()) return Forbid();
+
+        var result = await _aiTriviaQuestionStudioService.SaveAsync(request, cancellationToken);
+        return Ok(result);
     }
 
     [HttpPut("{id:guid}")]

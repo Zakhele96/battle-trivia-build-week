@@ -5,6 +5,7 @@ import {
   getAdminBattleTriviaPrizeOps,
   createAdminWordScrambleWord,
   createAdminTriviaQuestion,
+  generateAdminTriviaQuestions,
   getAdminGrowthSnapshot,
   getAdminLeaderboardSponsors,
   getAdminUsers,
@@ -18,6 +19,7 @@ import {
   setAdminWordScrambleWordActive,
   setAdminTriviaQuestionActive,
   setAdminTriviaQuestionsActiveBulk,
+  saveGeneratedAdminTriviaQuestions,
   updateAdminLeaderboardSponsor,
   updateAdminWordScrambleWord,
   updateAdminTriviaQuestion,
@@ -66,6 +68,12 @@ const emptyQuestionForm = {
   answerImageUrl: "",
   answerExplanation: "",
   isActive: true,
+};
+
+const emptyAiQuestionStudioForm = {
+  topic: "",
+  difficulty: "medium",
+  count: 3,
 };
 
 const emptyScrambleWordForm = {
@@ -368,6 +376,15 @@ export default function AdminTriviaManagementPage() {
   const [editingQuestionId, setEditingQuestionId] = useState(null);
   const [savingQuestion, setSavingQuestion] = useState(false);
   const [bulkQuestionAction, setBulkQuestionAction] = useState("");
+  const [aiQuestionStudioForm, setAiQuestionStudioForm] = useState(
+    emptyAiQuestionStudioForm
+  );
+  const [aiQuestionDrafts, setAiQuestionDrafts] = useState([]);
+  const [aiQuestionStudioMessage, setAiQuestionStudioMessage] = useState("");
+  const [aiQuestionStudioError, setAiQuestionStudioError] = useState("");
+  const [aiQuestionSaveResult, setAiQuestionSaveResult] = useState(null);
+  const [generatingAiQuestions, setGeneratingAiQuestions] = useState(false);
+  const [savingAiQuestions, setSavingAiQuestions] = useState(false);
 
   const [scrambleWords, setScrambleWords] = useState([]);
   const [scrambleWordsLoading, setScrambleWordsLoading] = useState(true);
@@ -846,6 +863,105 @@ export default function AdminTriviaManagementPage() {
       setPromoUserId(promoRows[0].userId);
     }
   }, [promoRows, promoUserId]);
+
+  const handleGenerateAiQuestions = async (event) => {
+    event.preventDefault();
+    setGeneratingAiQuestions(true);
+    setAiQuestionStudioMessage("");
+    setAiQuestionStudioError("");
+    setAiQuestionSaveResult(null);
+
+    try {
+      const result = await generateAdminTriviaQuestions({
+        topic: aiQuestionStudioForm.topic.trim(),
+        difficulty: aiQuestionStudioForm.difficulty,
+        count: Number(aiQuestionStudioForm.count),
+      });
+      const generatedQuestions = Array.isArray(result?.questions)
+        ? result.questions
+        : [];
+      const generatedAt = Date.now();
+
+      setAiQuestionDrafts(
+        generatedQuestions.map((question, index) => ({
+          draftKey: `${generatedAt}-${index}`,
+          questionText: question.questionText || "",
+          correctAnswer: question.correctAnswer || "",
+          acceptedAnswersText: (question.acceptedAnswers || []).join("\n"),
+          category: question.category || aiQuestionStudioForm.topic.trim(),
+          difficulty:
+            question.difficulty || aiQuestionStudioForm.difficulty,
+          answerExplanation: question.answerExplanation || "",
+          isActive: !!question.isActive,
+        }))
+      );
+      setAiQuestionStudioMessage(
+        `${generatedQuestions.length} draft${generatedQuestions.length === 1 ? "" : "s"} generated with ${result?.model || "GPT-5.6"}. Review everything before saving.`
+      );
+    } catch (error) {
+      setAiQuestionStudioError(
+        error?.response?.data?.message ||
+          "AI questions could not be generated right now."
+      );
+    } finally {
+      setGeneratingAiQuestions(false);
+    }
+  };
+
+  const handleAiQuestionDraftChange = (index, field, value) => {
+    setAiQuestionDrafts((prev) =>
+      prev.map((draft, draftIndex) =>
+        draftIndex === index ? { ...draft, [field]: value } : draft
+      )
+    );
+  };
+
+  const handleRemoveAiQuestionDraft = (index) => {
+    setAiQuestionDrafts((prev) =>
+      prev.filter((_, draftIndex) => draftIndex !== index)
+    );
+  };
+
+  const handleSaveAiQuestions = async () => {
+    if (aiQuestionDrafts.length === 0) return;
+
+    setSavingAiQuestions(true);
+    setAiQuestionStudioMessage("");
+    setAiQuestionStudioError("");
+    setAiQuestionSaveResult(null);
+
+    const questionsToSave = aiQuestionDrafts.map((draft) => ({
+      questionText: draft.questionText.trim(),
+      correctAnswer: draft.correctAnswer.trim(),
+      acceptedAnswers: parseAcceptedAnswers(draft.acceptedAnswersText),
+      category: draft.category.trim() || null,
+      difficulty: draft.difficulty.trim() || null,
+      questionImageUrl: null,
+      answerImageUrl: null,
+      answerExplanation: draft.answerExplanation.trim() || null,
+      isActive: draft.isActive,
+    }));
+
+    try {
+      const result = await saveGeneratedAdminTriviaQuestions(questionsToSave);
+      const savedCount = Number(result?.savedCount) || 0;
+      const skippedCount = Number(result?.skippedCount) || 0;
+
+      setAiQuestionSaveResult(result);
+      setAiQuestionDrafts([]);
+      setAiQuestionStudioMessage(
+        `${savedCount} question${savedCount === 1 ? "" : "s"} saved${skippedCount > 0 ? `; ${skippedCount} duplicate${skippedCount === 1 ? " was" : "s were"} skipped` : ""}.`
+      );
+      await loadQuestions();
+    } catch (error) {
+      setAiQuestionStudioError(
+        error?.response?.data?.message ||
+          "The generated questions could not be saved. Review the drafts and try again."
+      );
+    } finally {
+      setSavingAiQuestions(false);
+    }
+  };
 
   const handleQuestionFormChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -1799,6 +1915,256 @@ export default function AdminTriviaManagementPage() {
 
         {adminView === "content" ? (
           <div className="mt-4 grid gap-4 xl:grid-cols-2">
+            <div className="xl:col-span-2">
+              <Panel
+                eyebrow="GPT-5.6 Luna"
+                title="AI Question Studio"
+                description="Generate a small batch of free-answer trivia drafts, review every field, then save. New drafts start inactive and database duplicates are skipped automatically."
+                action={
+                  <StatusPill tone="violet">
+                    {aiQuestionDrafts.length} drafts
+                  </StatusPill>
+                }
+              >
+                <form
+                  onSubmit={handleGenerateAiQuestions}
+                  className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_10rem_8rem_auto]"
+                >
+                  <input
+                    required
+                    minLength="2"
+                    maxLength="100"
+                    placeholder="Topic, e.g. South African history"
+                    value={aiQuestionStudioForm.topic}
+                    onChange={(event) =>
+                      setAiQuestionStudioForm((prev) => ({
+                        ...prev,
+                        topic: event.target.value,
+                      }))
+                    }
+                    className={inputClass}
+                  />
+                  <select
+                    value={aiQuestionStudioForm.difficulty}
+                    onChange={(event) =>
+                      setAiQuestionStudioForm((prev) => ({
+                        ...prev,
+                        difficulty: event.target.value,
+                      }))
+                    }
+                    className={inputClass}
+                  >
+                    <option value="easy">Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
+                  </select>
+                  <select
+                    value={aiQuestionStudioForm.count}
+                    onChange={(event) =>
+                      setAiQuestionStudioForm((prev) => ({
+                        ...prev,
+                        count: Number(event.target.value),
+                      }))
+                    }
+                    className={inputClass}
+                  >
+                    {[1, 2, 3, 4, 5].map((count) => (
+                      <option key={count} value={count}>
+                        {count} question{count === 1 ? "" : "s"}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="submit"
+                    disabled={generatingAiQuestions}
+                    className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-500 disabled:cursor-wait disabled:opacity-60"
+                  >
+                    {generatingAiQuestions ? "Generating..." : "Generate drafts"}
+                  </button>
+                </form>
+
+                {aiQuestionStudioMessage ? (
+                  <div className="mt-3 rounded-xl border border-emerald-400/15 bg-emerald-500/[0.07] px-3 py-2 text-sm text-emerald-200">
+                    {aiQuestionStudioMessage}
+                  </div>
+                ) : null}
+
+                {aiQuestionStudioError ? (
+                  <div className="mt-3 rounded-xl border border-red-900/40 bg-red-950/30 px-3 py-2 text-sm text-red-300">
+                    {aiQuestionStudioError}
+                  </div>
+                ) : null}
+
+                {Array.isArray(aiQuestionSaveResult?.skipped) &&
+                aiQuestionSaveResult.skipped.length > 0 ? (
+                  <div className="mt-3 rounded-xl border border-amber-400/15 bg-amber-500/[0.06] px-3 py-2">
+                    <div className="text-xs font-semibold text-amber-200">
+                      Skipped duplicates
+                    </div>
+                    <div className="mt-1 space-y-1 text-xs text-neutral-400">
+                      {aiQuestionSaveResult.skipped.map((item, index) => (
+                        <div key={`${item.questionText}-${index}`}>
+                          {item.questionText} — {item.reason}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {aiQuestionDrafts.length > 0 ? (
+                  <div className="mt-4 space-y-3">
+                    {aiQuestionDrafts.map((draft, index) => (
+                      <div
+                        key={draft.draftKey}
+                        className="rounded-2xl border border-violet-400/15 bg-violet-500/[0.045] p-3"
+                      >
+                        <div className="mb-2 flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2">
+                            <StatusPill tone="violet">Draft {index + 1}</StatusPill>
+                            <span className="text-[11px] text-neutral-500">
+                              Review before saving
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveAiQuestionDraft(index)}
+                            className="rounded-lg border border-red-400/15 px-2.5 py-1 text-xs text-red-300 hover:bg-red-500/10"
+                          >
+                            Remove
+                          </button>
+                        </div>
+
+                        <textarea
+                          rows="2"
+                          maxLength="500"
+                          aria-label={`Draft ${index + 1} question text`}
+                          value={draft.questionText}
+                          onChange={(event) =>
+                            handleAiQuestionDraftChange(
+                              index,
+                              "questionText",
+                              event.target.value
+                            )
+                          }
+                          className={inputClass}
+                        />
+
+                        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                          <input
+                            maxLength="50"
+                            aria-label={`Draft ${index + 1} category`}
+                            value={draft.category}
+                            onChange={(event) =>
+                              handleAiQuestionDraftChange(
+                                index,
+                                "category",
+                                event.target.value
+                              )
+                            }
+                            className={inputClass}
+                          />
+                          <select
+                            aria-label={`Draft ${index + 1} difficulty`}
+                            value={draft.difficulty}
+                            onChange={(event) =>
+                              handleAiQuestionDraftChange(
+                                index,
+                                "difficulty",
+                                event.target.value
+                              )
+                            }
+                            className={inputClass}
+                          >
+                            <option value="easy">Easy</option>
+                            <option value="medium">Medium</option>
+                            <option value="hard">Hard</option>
+                          </select>
+                        </div>
+
+                        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                          <input
+                            maxLength="200"
+                            placeholder="Correct answer"
+                            aria-label={`Draft ${index + 1} correct answer`}
+                            value={draft.correctAnswer}
+                            onChange={(event) =>
+                              handleAiQuestionDraftChange(
+                                index,
+                                "correctAnswer",
+                                event.target.value
+                              )
+                            }
+                            className={inputClass}
+                          />
+                          <textarea
+                            rows="1"
+                            placeholder="Accepted aliases, one per line"
+                            aria-label={`Draft ${index + 1} accepted answers`}
+                            value={draft.acceptedAnswersText}
+                            onChange={(event) =>
+                              handleAiQuestionDraftChange(
+                                index,
+                                "acceptedAnswersText",
+                                event.target.value
+                              )
+                            }
+                            className={inputClass}
+                          />
+                        </div>
+
+                        <textarea
+                          rows="2"
+                          maxLength="500"
+                          placeholder="Answer explanation"
+                          aria-label={`Draft ${index + 1} answer explanation`}
+                          value={draft.answerExplanation}
+                          onChange={(event) =>
+                            handleAiQuestionDraftChange(
+                              index,
+                              "answerExplanation",
+                              event.target.value
+                            )
+                          }
+                          className={`${inputClass} mt-2`}
+                        />
+
+                        <label className="mt-2 flex items-center gap-2 text-xs text-neutral-300">
+                          <input
+                            type="checkbox"
+                            checked={draft.isActive}
+                            onChange={(event) =>
+                              handleAiQuestionDraftChange(
+                                index,
+                                "isActive",
+                                event.target.checked
+                              )
+                            }
+                          />
+                          Activate immediately after saving
+                        </label>
+                      </div>
+                    ))}
+
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="text-xs text-neutral-500">
+                        Saving performs a fresh duplicate check against the full question bank.
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleSaveAiQuestions}
+                        disabled={savingAiQuestions}
+                        className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-neutral-950 disabled:cursor-wait disabled:opacity-60"
+                      >
+                        {savingAiQuestions
+                          ? "Checking and saving..."
+                          : `Save ${aiQuestionDrafts.length} reviewed draft${aiQuestionDrafts.length === 1 ? "" : "s"}`}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </Panel>
+            </div>
+
             <Panel
               eyebrow="Battle Trivia"
               title={editingQuestionId ? "Edit question" : "Question bank"}

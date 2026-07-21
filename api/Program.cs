@@ -43,6 +43,23 @@ builder.Services.AddRateLimiter(options =>
                 AutoReplenishment = true
             });
     });
+    options.AddPolicy("ai-admin-generation", context =>
+    {
+        var partitionKey =
+            context.User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+            context.Connection.RemoteIpAddress?.ToString() ??
+            "anonymous";
+
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey,
+            static _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 3,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            });
+    });
 });
 
 builder.Services.Configure<RedisOptions>(redisSection);
@@ -52,6 +69,11 @@ builder.Services.AddHttpClient<ITriviaExplanationService, OpenAiTriviaExplanatio
 {
     client.BaseAddress = new Uri("https://api.openai.com/v1/");
     client.Timeout = TimeSpan.FromSeconds(20);
+});
+builder.Services.AddHttpClient<AiTriviaQuestionStudioService>(client =>
+{
+    client.BaseAddress = new Uri("https://api.openai.com/v1/");
+    client.Timeout = TimeSpan.FromSeconds(45);
 });
 
 var signalRBuilder = builder.Services.AddSignalR();
