@@ -49,6 +49,7 @@ export default function useRoomLiveState({
   const [weeklyWinners, setWeeklyWinners] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
   const [answerFeedback, setAnswerFeedback] = useState("");
+  const [answerResult, setAnswerResult] = useState(null);
   const [sessionStatus, setSessionStatus] = useState(null);
   const [playerRank, setPlayerRank] = useState(null);
   const [lastRoundPlacement, setLastRoundPlacement] = useState(null);
@@ -347,6 +348,7 @@ export default function useRoomLiveState({
     setWeeklyWinners(null);
     setLeaderboard([]);
     setAnswerFeedback("");
+    setAnswerResult(null);
     setSessionStatus(null);
     setPlayerRank(null);
     setLastRoundPlacement(null);
@@ -450,6 +452,7 @@ export default function useRoomLiveState({
       setCorrectAnswer("");
       setRoundWinners([]);
       setAnswerFeedback("");
+      setAnswerResult(null);
       setLastRoundPlacement(null);
       setAttemptsInfo({
         used: 0,
@@ -517,6 +520,7 @@ export default function useRoomLiveState({
       setRoundEndsAt(null);
       setCurrentRoundId(null);
       setAnswerFeedback("");
+      setAnswerResult(null);
 
       setSessionStatus((prev) =>
         prev
@@ -581,6 +585,12 @@ export default function useRoomLiveState({
 
     connection.on("AnswerChecked", (payload) => {
       if (isCancelled) return;
+
+      setAnswerResult({
+        roundId: payload?.roundId ?? currentRoundIdRef.current,
+        isCorrect:
+          payload?.alreadyAnsweredCorrectly || payload?.isCorrect === true,
+      });
 
       if (typeof payload?.wrongAttemptsUsed === "number") {
         setAttemptsInfo({
@@ -974,6 +984,7 @@ export default function useRoomLiveState({
     weeklyWinners,
     leaderboard,
     answerFeedback,
+    answerResult,
     sessionStatus,
     playerRank,
     lastRoundPlacement,

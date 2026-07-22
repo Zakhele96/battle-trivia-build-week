@@ -692,6 +692,7 @@ const {
     weeklyWinners,
     leaderboard,
     answerFeedback,
+    answerResult,
     sessionStatus,
     playerRank,
     lastRoundPlacement,
@@ -1998,6 +1999,7 @@ const {
             roundId={currentRoundId}
             options={currentQuestion?.answerOptions || []}
             onSelect={handleSend}
+            answerResult={answerResult}
             disabled={status !== "connected" || isLoadingRoom}
           />
         ) : (
