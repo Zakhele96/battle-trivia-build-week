@@ -28,6 +28,15 @@ public sealed class BattleItController : ControllerBase
         return await ExecuteAsync(() => _battleItService.GetStateAsync(roomId, userId));
     }
 
+    [HttpGet("public-sessions")]
+    public async Task<IActionResult> GetPublicSessions(Guid roomId)
+    {
+        if (!TryGetUserId(out _))
+            return Unauthorized();
+
+        return await ExecuteAsync(() => _battleItService.GetPublicSessionsAsync(roomId));
+    }
+
     [HttpPost("generate")]
     [EnableRateLimiting("ai-battle-it-generation")]
     [RequestSizeLimit(13 * 1024 * 1024)]
@@ -35,7 +44,10 @@ public sealed class BattleItController : ControllerBase
         Guid roomId,
         [FromForm] string? sourceText,
         [FromForm] string difficulty = "medium",
+        [FromForm] string answerMode = "text",
+        [FromForm] string visibility = "code-only",
         [FromForm] int questionDurationSeconds = 20,
+        [FromForm] int revealDelaySeconds = 5,
         [FromForm] List<IFormFile>? images = null,
         CancellationToken cancellationToken = default)
     {
@@ -63,7 +75,10 @@ public sealed class BattleItController : ControllerBase
                 sourceText,
                 uploadedImages,
                 difficulty,
+                answerMode,
+                visibility,
                 questionDurationSeconds,
+                revealDelaySeconds,
                 cancellationToken);
             return Ok(state);
         }
@@ -91,6 +106,24 @@ public sealed class BattleItController : ControllerBase
             return Unauthorized();
 
         return await ExecuteAsync(() => _battleItService.UpdateDraftAsync(roomId, sessionId, userId, request));
+    }
+
+    [HttpPost("join")]
+    public async Task<IActionResult> Join(Guid roomId, [FromBody] JoinBattleItRequest request)
+    {
+        if (!TryGetUserId(out var userId))
+            return Unauthorized();
+
+        return await ExecuteAsync(() => _battleItService.JoinAsync(roomId, userId, request));
+    }
+
+    [HttpPost("sessions/{sessionId:guid}/join")]
+    public async Task<IActionResult> JoinPublic(Guid roomId, Guid sessionId)
+    {
+        if (!TryGetUserId(out var userId))
+            return Unauthorized();
+
+        return await ExecuteAsync(() => _battleItService.JoinPublicAsync(roomId, sessionId, userId));
     }
 
     [HttpPost("sessions/{sessionId:guid}/open")]

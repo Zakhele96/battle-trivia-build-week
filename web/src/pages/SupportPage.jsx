@@ -102,7 +102,7 @@ export default function SupportPage() {
       className={`support-page min-h-screen bg-neutral-950 text-white ${isLight ? "support-page--light" : ""}`}
       style={lightModeUndoFilter}
     >
-      <div className="mx-auto w-full max-w-[76rem] px-4 py-4 pb-24 sm:px-5 sm:py-7 sm:pb-7 lg:px-6 lg:py-9">
+      <div className="mx-auto w-full max-w-[76rem] px-4 py-4 pb-24 sm:px-5 sm:py-7 md:pb-7 lg:px-6 lg:py-9">
         <AppSectionNav />
 
         <AppTopBar

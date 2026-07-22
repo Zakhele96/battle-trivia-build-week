@@ -2,6 +2,7 @@ using Bts.Api.Hubs;
 using Bts.Api.Models.Domain;
 using Bts.Api.Repositories;
 using Microsoft.AspNetCore.SignalR;
+using System.Text.Json;
 
 namespace Bts.Api.Services;
 
@@ -161,7 +162,7 @@ public sealed class BattleItHostedService : BackgroundService
         };
 
         await roundRepository.CreateAsync(round);
-        await _hubContext.Clients.Group(room.Id.ToString()).SendAsync(
+        await _hubContext.Clients.Group(BattleItService.GetSessionGroupName(battle.Id)).SendAsync(
             "QuestionStarted",
             new
             {
@@ -173,6 +174,8 @@ public sealed class BattleItHostedService : BackgroundService
                 roundNumber = round.RoundNumber,
                 totalQuestions = questions.Count,
                 sessionTitle = battle.Title,
+                answerMode = battle.AnswerMode,
+                answerOptions = ReadAnswerOptions(question.AnswerOptionsJson),
                 endsAt = round.EndsAt.ToUniversalTime().ToString("O")
             },
             cancellationToken);
@@ -187,6 +190,18 @@ public sealed class BattleItHostedService : BackgroundService
             "Started Battle It round {RoundId} for session {BattleId}.",
             round.Id,
             battle.Id);
+    }
+
+    private static IReadOnlyList<string> ReadAnswerOptions(string json)
+    {
+        try
+        {
+            return JsonSerializer.Deserialize<List<string>>(json) ?? [];
+        }
+        catch
+        {
+            return [];
+        }
     }
 
     private async Task EndRoundAsync(
@@ -204,7 +219,7 @@ public sealed class BattleItHostedService : BackgroundService
         await roundRepository.SetStatusAsync(activeRound.RoundId, "ended");
         var question = await battleRepository.GetQuestionByIdAsync(battle.Id, activeRound.QuestionId);
 
-        await _hubContext.Clients.Group(roomId.ToString()).SendAsync(
+        await _hubContext.Clients.Group(BattleItService.GetSessionGroupName(battle.Id)).SendAsync(
             "RoundEnded",
             new
             {
@@ -234,18 +249,18 @@ public sealed class BattleItHostedService : BackgroundService
             })
             .ToList();
 
-        await _hubContext.Clients.Group(roomId.ToString())
+        await _hubContext.Clients.Group(BattleItService.GetSessionGroupName(battle.Id))
             .SendAsync("RoundWinners", winners, cancellationToken);
 
         var leaderboard = await leaderboardService.GetSessionLeaderboardAsync(battle.GameSessionId!.Value, 10);
-        await _hubContext.Clients.Group(roomId.ToString())
+        await _hubContext.Clients.Group(BattleItService.GetSessionGroupName(battle.Id))
             .SendAsync("LeaderboardUpdated", leaderboard, cancellationToken);
 
         var delay = battle.RevealDelaySeconds;
         if (activeRound.RoundNumber == 10 && questionCount > 10)
         {
             delay = Math.Max(delay, 8);
-            await _hubContext.Clients.Group(roomId.ToString()).SendAsync(
+            await _hubContext.Clients.Group(BattleItService.GetSessionGroupName(battle.Id)).SendAsync(
                 "BattleItHalftime",
                 new { roundNumber = 10, totalQuestions = questionCount, leaderboard },
                 cancellationToken);
@@ -288,7 +303,7 @@ public sealed class BattleItHostedService : BackgroundService
             })
             .ToList();
 
-        await _hubContext.Clients.Group(roomId.ToString()).SendAsync(
+        await _hubContext.Clients.Group(BattleItService.GetSessionGroupName(battle.Id)).SendAsync(
             "BattleItCompleted",
             new { sessionId = battle.Id, title = battle.Title, podium },
             cancellationToken);

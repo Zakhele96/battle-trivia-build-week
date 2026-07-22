@@ -23,23 +23,40 @@ function ActionShell({
   );
 }
 
-function MobileAction({ to, onClick, label, tone = "default", isLight = false }) {
+function MobileAction({
+  to,
+  onClick,
+  label,
+  tone = "default",
+  isLight = false,
+  fullWidth = false,
+}) {
   const toneClass =
     tone === "primary"
       ? isLight
-        ? "border-sky-300 bg-sky-50 text-sky-800"
-        : "border-blue-400/20 bg-blue-500/10 text-blue-100"
+        ? "border-sky-700 bg-sky-700 text-white shadow-[0_10px_24px_rgba(3,105,161,0.18)]"
+        : "border-blue-500 bg-blue-500 text-white shadow-[0_12px_26px_rgba(37,99,235,0.22)]"
       : isLight
       ? "border-stone-200 bg-white/76 text-stone-700"
       : "border-white/10 bg-white/[0.035] text-neutral-200";
+  const interactionClass =
+    tone === "primary"
+      ? isLight
+        ? "hover:border-sky-800 hover:bg-sky-800"
+        : "hover:border-blue-400 hover:bg-blue-400"
+      : isLight
+        ? "hover:border-stone-300 hover:bg-white"
+        : "hover:border-white/15 hover:bg-white/[0.05]";
 
   return (
     <ActionShell
       to={to}
       onClick={onClick}
-      className={`inline-flex shrink-0 items-center justify-center rounded-full border px-3 py-1.5 text-[11px] font-medium transition ${
-        isLight ? "hover:border-stone-300 hover:bg-white" : "hover:border-white/15 hover:bg-white/[0.05]"
-      } ${toneClass}`}
+      className={`inline-flex min-h-11 items-center justify-center border font-medium transition ${
+        fullWidth
+          ? "w-full rounded-[16px] px-4 py-2.5 text-[12px]"
+          : "shrink-0 rounded-full px-3 py-1.5 text-[11px]"
+      } ${interactionClass} ${toneClass}`}
     >
       {label}
     </ActionShell>
@@ -56,15 +73,13 @@ function DesktopAction({
 }) {
   const cardClassName = primary
     ? isLight
-      ? "border-sky-300 bg-white hover:border-sky-400 hover:bg-sky-50"
-      : "border-blue-400/20 bg-blue-500/10 hover:border-blue-400/30 hover:bg-blue-500/15"
+      ? "border-sky-700 bg-sky-700 shadow-[0_12px_28px_rgba(3,105,161,0.18)] hover:bg-sky-800"
+      : "border-blue-500 bg-blue-500 shadow-[0_14px_30px_rgba(37,99,235,0.22)] hover:bg-blue-400"
     : isLight
     ? "border-stone-200 bg-white/82 hover:border-stone-300 hover:bg-white"
     : "border-white/10 bg-white/[0.03] hover:border-white/15 hover:bg-white/[0.05]";
   const labelClassName = primary
-    ? isLight
-      ? "text-sky-800"
-      : "text-blue-100"
+    ? "text-white"
     : isLight
     ? "text-stone-900"
     : "text-white";
@@ -78,7 +93,11 @@ function DesktopAction({
       <span className={`text-[13px] font-medium ${labelClassName}`}>{label}</span>
 
       {sublabel ? (
-        <span className={`mt-1 text-[10px] leading-4 ${isLight ? "text-stone-500" : "text-neutral-500"}`}>
+        <span
+          className={`mt-1 text-[10px] leading-4 ${
+            primary ? "text-blue-100" : isLight ? "text-stone-500" : "text-neutral-500"
+          }`}
+        >
           {sublabel}
         </span>
       ) : null}
@@ -113,8 +132,8 @@ export default function AppTopBar({
     ? "mt-1.5 max-w-[38rem] text-[12px] leading-5 text-stone-600"
     : "mt-1.5 max-w-[38rem] text-[12px] leading-5 text-neutral-400";
   const desktopShellClassName = isLight
-    ? "hidden rounded-[26px] border border-[#d8c3a0] bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(245,158,11,0.1),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.96),rgba(243,231,214,0.98))] p-5 shadow-[0_18px_40px_rgba(114,84,41,0.12)] sm:block lg:p-6"
-    : "hidden rounded-[26px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.08),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-5 shadow-[0_18px_40px_rgba(0,0,0,0.14)] sm:block lg:p-6";
+    ? "hidden rounded-[26px] border border-[#d8c3a0] bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(245,158,11,0.1),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.96),rgba(243,231,214,0.98))] p-5 shadow-[0_18px_40px_rgba(114,84,41,0.12)] md:block lg:p-6"
+    : "hidden rounded-[26px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.08),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-5 shadow-[0_18px_40px_rgba(0,0,0,0.14)] md:block lg:p-6";
   const desktopBackClassName = isLight
     ? "inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white/82 px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.15em] text-stone-700 transition hover:border-stone-300 hover:bg-white"
     : "inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.15em] text-neutral-300 transition hover:border-white/15 hover:bg-white/[0.05]";
@@ -129,8 +148,8 @@ export default function AppTopBar({
     : "mt-2 max-w-[44rem] text-[14px] leading-7 text-neutral-400";
 
   return (
-    <div className="mb-5 sm:mb-7">
-      <div className={`sm:hidden ${mobileShellClassName}`}>
+    <div className="mb-5 md:mb-7">
+      <div className={`md:hidden ${mobileShellClassName}`}>
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-2">
             {showBackToLobby ? (
@@ -150,7 +169,7 @@ export default function AppTopBar({
           </div>
 
           {actions.length > 0 ? (
-            <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-0.5">
+            <div className="space-y-2.5">
               {primaryAction ? (
                 <MobileAction
                   to={primaryAction.to}
@@ -158,18 +177,23 @@ export default function AppTopBar({
                   label={primaryAction.label}
                   tone="primary"
                   isLight={isLight}
+                  fullWidth
                 />
               ) : null}
 
-              {secondaryActions.map((action) => (
-                <MobileAction
-                  key={`${action.to || action.label}-${action.label}`}
-                  to={action.to}
-                  onClick={action.onClick}
-                  label={action.label}
-                  isLight={isLight}
-                />
-              ))}
+              {secondaryActions.length > 0 ? (
+                <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-0.5">
+                  {secondaryActions.map((action) => (
+                    <MobileAction
+                      key={`${action.to || action.label}-${action.label}`}
+                      to={action.to}
+                      onClick={action.onClick}
+                      label={action.label}
+                      isLight={isLight}
+                    />
+                  ))}
+                </div>
+              ) : null}
             </div>
           ) : null}
         </div>

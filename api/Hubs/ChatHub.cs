@@ -1,8 +1,10 @@
 ﻿using System.Security.Claims;
+using Bts.Api.Models.Domain;
 using Bts.Api.Repositories;
 using Bts.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using System.Text.Json;
 
 namespace Bts.Api.Hubs;
 
@@ -14,12 +16,14 @@ public sealed class ChatHub : Hub
     private readonly TriviaAnswerService _triviaAnswerService;
     private readonly TriviaLeaderboardService _triviaLeaderboardService;
     private readonly ITriviaRoundRepository _triviaRoundRepository;
+    private readonly ITriviaAnswerRepository _triviaAnswerRepository;
     private readonly BattleTriviaSessionStatusService _battleTriviaSessionStatusService;
     private readonly WordScrambleAnswerService _wordScrambleAnswerService;
     private readonly WordScrambleStateService _wordScrambleStateService;
     private readonly WordScrambleSessionStatusService _wordScrambleSessionStatusService;
     private readonly IUserRepository _userRepository;
     private readonly IRoomRepository _roomRepository;
+    private readonly IBattleItRepository _battleItRepository;
     private readonly UserPresenceService _userPresenceService;
     private readonly IRoomOccupancyTracker _roomOccupancyTracker;
     private readonly DirectMessageService _directMessageService;
@@ -30,12 +34,14 @@ public sealed class ChatHub : Hub
         TriviaAnswerService triviaAnswerService,
         TriviaLeaderboardService triviaLeaderboardService,
         ITriviaRoundRepository triviaRoundRepository,
+        ITriviaAnswerRepository triviaAnswerRepository,
         BattleTriviaSessionStatusService battleTriviaSessionStatusService,
         WordScrambleAnswerService wordScrambleAnswerService,
         WordScrambleStateService wordScrambleStateService,
         WordScrambleSessionStatusService wordScrambleSessionStatusService,
         IUserRepository userRepository,
         IRoomRepository roomRepository,
+        IBattleItRepository battleItRepository,
         UserPresenceService userPresenceService,
         IRoomOccupancyTracker roomOccupancyTracker,
         DirectMessageService directMessageService,
@@ -45,12 +51,14 @@ public sealed class ChatHub : Hub
         _triviaAnswerService = triviaAnswerService;
         _triviaLeaderboardService = triviaLeaderboardService;
         _triviaRoundRepository = triviaRoundRepository;
+        _triviaAnswerRepository = triviaAnswerRepository;
         _battleTriviaSessionStatusService = battleTriviaSessionStatusService;
         _wordScrambleAnswerService = wordScrambleAnswerService;
         _wordScrambleStateService = wordScrambleStateService;
         _wordScrambleSessionStatusService = wordScrambleSessionStatusService;
         _userRepository = userRepository;
         _roomRepository = roomRepository;
+        _battleItRepository = battleItRepository;
         _userPresenceService = userPresenceService;
         _roomOccupancyTracker = roomOccupancyTracker;
         _directMessageService = directMessageService;
@@ -216,10 +224,24 @@ public sealed class ChatHub : Hub
         if (room is null)
             return;
 
+        var isBattleItRoom =
+            string.Equals(room.Slug, BattleItService.RoomSlug, StringComparison.OrdinalIgnoreCase);
+        BattleItSession? visibleBattleItSession = null;
+        if (isBattleItRoom && Guid.TryParse(Context.UserIdentifier, out var battleItUserId))
+        {
+            visibleBattleItSession = await _battleItRepository.GetVisibleSessionAsync(roomId, battleItUserId);
+            if (visibleBattleItSession?.Status is "lobby" or "active")
+            {
+                await Groups.AddToGroupAsync(
+                    Context.ConnectionId,
+                    BattleItService.GetSessionGroupName(visibleBattleItSession.Id));
+            }
+        }
+
         var isBattleTriviaRoom =
             string.Equals(room.Slug, "battle-trivia", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(room.Slug, "battle-it", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(room.RoomType, "trivia", StringComparison.OrdinalIgnoreCase);
+            string.Equals(room.RoomType, "trivia", StringComparison.OrdinalIgnoreCase) ||
+            (isBattleItRoom && visibleBattleItSession?.Status == "active");
         var isWordScrambleRoom =
             string.Equals(room.Slug, "word-scramble", StringComparison.OrdinalIgnoreCase);
 
@@ -238,6 +260,11 @@ public sealed class ChatHub : Hub
             if (activeRound is not null &&
                 string.Equals(activeRound.Status, "active", StringComparison.OrdinalIgnoreCase))
             {
+                var battleQuestion = visibleBattleItSession is null
+                    ? null
+                    : await _battleItRepository.GetQuestionByIdAsync(
+                        visibleBattleItSession.Id,
+                        activeRound.QuestionId);
                 await Clients.Caller.SendAsync("QuestionStarted", new
                 {
                     roundId = activeRound.RoundId,
@@ -246,6 +273,12 @@ public sealed class ChatHub : Hub
                     category = activeRound.Category,
                     difficulty = activeRound.Difficulty,
                     roundNumber = activeRound.RoundNumber,
+                    totalQuestions = visibleBattleItSession is null
+                        ? (int?)null
+                        : (await _battleItRepository.GetQuestionsAsync(visibleBattleItSession.Id)).Count,
+                    sessionTitle = visibleBattleItSession?.Title,
+                    answerMode = visibleBattleItSession?.AnswerMode ?? "text",
+                    answerOptions = ReadAnswerOptions(battleQuestion?.AnswerOptionsJson),
                     endsAt = activeRound.EndsAt.ToUniversalTime().ToString("O")
                 });
             }
@@ -288,6 +321,51 @@ public sealed class ChatHub : Hub
 
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId.ToString());
         await _roomOccupancyTracker.MarkLeftAsync(Context.ConnectionId, roomId);
+    }
+
+    public async Task JoinBattleItSession(Guid sessionId)
+    {
+        var userId = GetCurrentUserId();
+        var session = await _battleItRepository.GetByIdAsync(sessionId);
+        if (session is null || session.Status is not ("lobby" or "active") ||
+            !await _battleItRepository.IsMemberAsync(sessionId, userId))
+        {
+            throw new HubException("Join this Battle It session with its code first.");
+        }
+
+        await Groups.AddToGroupAsync(
+            Context.ConnectionId,
+            BattleItService.GetSessionGroupName(sessionId));
+
+        if (session.Status != "active")
+            return;
+
+        var activeRound = await _triviaRoundRepository.GetActiveRoundDetailsByRoomIdAsync(session.RoomId);
+        if (activeRound is not null &&
+            string.Equals(activeRound.Status, "active", StringComparison.OrdinalIgnoreCase))
+        {
+            var battleQuestion = await _battleItRepository.GetQuestionByIdAsync(
+                session.Id,
+                activeRound.QuestionId);
+            var questionCount = (await _battleItRepository.GetQuestionsAsync(session.Id)).Count;
+            await Clients.Caller.SendAsync("QuestionStarted", new
+            {
+                roundId = activeRound.RoundId,
+                questionText = activeRound.QuestionText,
+                questionImageUrl = (string?)null,
+                category = activeRound.Category,
+                difficulty = activeRound.Difficulty,
+                roundNumber = activeRound.RoundNumber,
+                totalQuestions = questionCount,
+                sessionTitle = session.Title,
+                answerMode = session.AnswerMode,
+                answerOptions = ReadAnswerOptions(battleQuestion?.AnswerOptionsJson),
+                endsAt = activeRound.EndsAt.ToUniversalTime().ToString("O")
+            });
+        }
+
+        var leaderboard = await _triviaLeaderboardService.GetActiveRoomLeaderboardAsync(session.RoomId, 5);
+        await Clients.Caller.SendAsync("LeaderboardUpdated", leaderboard);
     }
 
     public async Task<object> SendMessage(Guid roomId, string messageText, Guid? replyToMessageId = null)
@@ -422,7 +500,44 @@ public sealed class ChatHub : Hub
         if (!Guid.TryParse(Context.UserIdentifier, out var userId))
             throw new HubException("Unauthorized.");
 
+        var room = await _roomRepository.GetByIdAsync(roomId);
+        var activeBattleItSession = string.Equals(
+            room?.Slug,
+            BattleItService.RoomSlug,
+            StringComparison.OrdinalIgnoreCase)
+            ? await _battleItRepository.GetActiveByRoomIdAsync(roomId)
+            : null;
+
+        if (activeBattleItSession is not null &&
+            !await _battleItRepository.IsMemberAsync(activeBattleItSession.Id, userId))
+        {
+            throw new HubException("Join this Battle It session before answering.");
+        }
+
+        if (activeBattleItSession?.AnswerMode == "multiple-choice")
+        {
+            var activeRound = await _triviaRoundRepository.GetActiveRoundDetailsByRoomIdAsync(roomId);
+            if (activeRound is not null &&
+                await _triviaAnswerRepository.GetLatestSubmissionAtAsync(activeRound.RoundId, userId) is not null)
+            {
+                throw new HubException("Your multiple-choice answer is final for this round.");
+            }
+
+            var battleQuestion = activeRound is null
+                ? null
+                : await _battleItRepository.GetQuestionByIdAsync(
+                    activeBattleItSession.Id,
+                    activeRound.QuestionId);
+            var options = ReadAnswerOptions(battleQuestion?.AnswerOptionsJson);
+            if (options.Count != 4 ||
+                !options.Contains(answerText.Trim(), StringComparer.OrdinalIgnoreCase))
+            {
+                throw new HubException("Choose one of the four available answers.");
+            }
+        }
+
         var result = await _triviaAnswerService.SubmitAnswerAsync(roomId, userId, answerText);
+        var isMultipleChoice = activeBattleItSession?.AnswerMode == "multiple-choice";
 
         if (!result.Success)
         {
@@ -430,9 +545,9 @@ public sealed class ChatHub : Hub
             {
                 message = result.Message,
                 roundId = result.RoundId,
-                wrongAttemptsUsed = result.WrongAttemptsUsed,
-                wrongAttemptsLeft = result.WrongAttemptsLeft,
-                maxWrongAttempts = result.MaxWrongAttempts
+                wrongAttemptsUsed = isMultipleChoice ? Math.Min(1, result.WrongAttemptsUsed) : result.WrongAttemptsUsed,
+                wrongAttemptsLeft = isMultipleChoice ? 0 : result.WrongAttemptsLeft,
+                maxWrongAttempts = isMultipleChoice ? 1 : result.MaxWrongAttempts
             });
 
             return;
@@ -443,12 +558,14 @@ public sealed class ChatHub : Hub
             await Clients.Caller.SendAsync("AnswerChecked", new
             {
                 isCorrect = false,
-                message = result.Message,
+                message = isMultipleChoice
+                    ? "Incorrect. Your answer is locked for this round."
+                    : result.Message,
                 roundId = result.RoundId,
                 submittedAnswer = result.SubmittedAnswer,
-                wrongAttemptsUsed = result.WrongAttemptsUsed,
-                wrongAttemptsLeft = result.WrongAttemptsLeft,
-                maxWrongAttempts = result.MaxWrongAttempts
+                wrongAttemptsUsed = isMultipleChoice ? 1 : result.WrongAttemptsUsed,
+                wrongAttemptsLeft = isMultipleChoice ? 0 : result.WrongAttemptsLeft,
+                maxWrongAttempts = isMultipleChoice ? 1 : result.MaxWrongAttempts
             });
 
             return;
@@ -468,14 +585,17 @@ public sealed class ChatHub : Hub
             return;
         }
 
+        var liveGroup = activeBattleItSession is null
+            ? roomId.ToString()
+            : BattleItService.GetSessionGroupName(activeBattleItSession.Id);
+
         var scoreMessage = await _chatService.CreateSystemMessageAsync(
             roomId,
             $"{result.DisplayName} got {result.PointsAwarded} points!");
 
-        await Clients.Group(roomId.ToString())
-            .SendAsync("ReceiveMessage", scoreMessage);
+        await Clients.Group(liveGroup).SendAsync("ReceiveMessage", scoreMessage);
 
-        await Clients.Group(roomId.ToString())
+        await Clients.Group(liveGroup)
             .SendAsync("ScoreAwarded", new
             {
                 userId = result.UserId,
@@ -502,7 +622,7 @@ public sealed class ChatHub : Hub
                 result.SessionId.Value,
                 5);
 
-            await Clients.Group(roomId.ToString())
+            await Clients.Group(liveGroup)
                 .SendAsync("LeaderboardUpdated", leaderboard);
 
             await Clients.All
@@ -518,6 +638,21 @@ public sealed class ChatHub : Hub
                 result.UserId);
 
             await Clients.Caller.SendAsync("PlayerRankUpdated", playerRank);
+        }
+    }
+
+    private static IReadOnlyList<string> ReadAnswerOptions(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+            return [];
+
+        try
+        {
+            return JsonSerializer.Deserialize<List<string>>(json) ?? [];
+        }
+        catch
+        {
+            return [];
         }
     }
 

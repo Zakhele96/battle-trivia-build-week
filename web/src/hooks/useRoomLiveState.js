@@ -439,6 +439,10 @@ export default function useRoomLiveState({
         difficulty: payload.difficulty,
         totalQuestions: payload.totalQuestions ?? null,
         sessionTitle: payload.sessionTitle || "",
+        answerMode: payload.answerMode || "text",
+        answerOptions: Array.isArray(payload.answerOptions)
+          ? payload.answerOptions
+          : [],
       });
       setCurrentRoundId(payload.roundId);
       setCurrentRoundNumber(payload.roundNumber);
@@ -782,6 +786,27 @@ export default function useRoomLiveState({
         .catch(() => {});
     };
   }, [roomId, token, applyWordScrambleGuessPayload]);
+
+  useEffect(() => {
+    const sessionId = battleItState?.sessionId;
+    const sessionStatus = battleItState?.status;
+    const connection = connectionRef.current;
+
+    if (
+      !isBattleItRoom ||
+      !sessionId ||
+      !["lobby", "active"].includes(sessionStatus) ||
+      status !== "connected" ||
+      !connection ||
+      connection.state !== "Connected"
+    ) {
+      return;
+    }
+
+    connection.invoke("JoinBattleItSession", sessionId).catch(() => {
+      // The state refresh will surface an expired or inaccessible session.
+    });
+  }, [battleItState?.sessionId, battleItState?.status, isBattleItRoom, status]);
 
   useEffect(() => {
     if (!arenaNotice?.id) return undefined;

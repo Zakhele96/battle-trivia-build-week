@@ -13,8 +13,12 @@ public sealed class BattleItStateResponse
     public string? SourceType { get; set; }
     public string? SourceLabel { get; set; }
     public string Difficulty { get; set; } = "medium";
+    public string AnswerMode { get; set; } = "text";
+    public string Visibility { get; set; } = "code-only";
     public int QuestionDurationSeconds { get; set; } = 20;
     public int RevealDelaySeconds { get; set; } = 5;
+    public string? JoinCode { get; set; }
+    public int PlayerCount { get; set; }
     public int QuestionCount { get; set; }
     public int CurrentQuestionNumber { get; set; }
     public int CoveredConceptCount { get; set; }
@@ -34,6 +38,7 @@ public sealed class BattleItQuestionResponse
     public string QuestionText { get; set; } = string.Empty;
     public string CorrectAnswer { get; set; } = string.Empty;
     public IReadOnlyList<string> AcceptedAnswers { get; set; } = [];
+    public IReadOnlyList<string> AnswerOptions { get; set; } = [];
     public string Difficulty { get; set; } = "medium";
     public string AnswerExplanation { get; set; } = string.Empty;
     public string SourceExcerpt { get; set; } = string.Empty;
@@ -46,4 +51,18 @@ public sealed class BattleItPodiumRowResponse
     public string DisplayName { get; set; } = string.Empty;
     public int Score { get; set; }
     public int Rank { get; set; }
+}
+
+public sealed class BattleItPublicSessionResponse
+{
+    public Guid SessionId { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string CreatorDisplayName { get; set; } = string.Empty;
+    public string Status { get; set; } = "lobby";
+    public string Difficulty { get; set; } = "medium";
+    public string AnswerMode { get; set; } = "text";
+    public int QuestionDurationSeconds { get; set; }
+    public int QuestionCount { get; set; }
+    public int PlayerCount { get; set; }
+    public DateTime? StartedAt { get; set; }
 }

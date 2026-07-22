@@ -108,12 +108,9 @@ export default function FeaturedTriviaCard({ room }) {
   const descriptionClassName = isLight
     ? "mt-1.5 max-w-[44rem] text-[13px] leading-6 text-stone-600 sm:text-[14px]"
     : "mt-1.5 max-w-[44rem] text-[13px] leading-6 text-neutral-400 sm:text-[14px]";
-  const metaClassName = isLight
-    ? "rounded-full border border-stone-200 bg-white/72 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-stone-600"
-    : "rounded-full border border-white/8 bg-black/20 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-neutral-400";
   const ctaClassName = isLight
-    ? "inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#0f5fa8] transition group-hover:text-[#0b4f8e]"
-    : "inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-200 transition group-hover:text-white";
+    ? "inline-flex min-h-11 items-center justify-center gap-2 rounded-[14px] bg-sky-700 px-4 text-sm font-semibold text-white transition group-hover:bg-sky-800"
+    : "inline-flex min-h-11 items-center justify-center gap-2 rounded-[14px] bg-blue-500 px-4 text-sm font-semibold text-white transition group-hover:bg-blue-400";
 
   return (
     <Link to={`/rooms/${room.id}`} className={cardClassName}>
@@ -127,7 +124,6 @@ export default function FeaturedTriviaCard({ room }) {
             >
               {statusText}
             </div>
-            <div className={metaClassName}>{runModeLabel}</div>
           </div>
 
           <div className="mt-3">
@@ -136,15 +132,13 @@ export default function FeaturedTriviaCard({ room }) {
             <p className={descriptionClassName}>{description}</p>
           </div>
 
-          {metaItems.length > 0 ? (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {metaItems.map((item) => (
-                <div key={item} className={metaClassName}>
-                  {item}
-                </div>
-              ))}
-            </div>
-          ) : null}
+          <div
+            className={`mt-3 text-[10px] font-medium uppercase tracking-[0.12em] ${
+              isLight ? "text-stone-500" : "text-neutral-500"
+            }`}
+          >
+            {[runModeLabel, ...metaItems].filter(Boolean).join(" · ")}
+          </div>
         </div>
 
         <div className={ctaClassName}>

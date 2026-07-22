@@ -105,17 +105,6 @@ function formatMessageTime(value) {
   }).format(new Date(value));
 }
 
-function formatReadReceiptTime(value) {
-  if (!value) return "";
-
-  return new Intl.DateTimeFormat(undefined, {
-    hour: "2-digit",
-    minute: "2-digit",
-    month: "short",
-    day: "numeric",
-  }).format(new Date(value));
-}
-
 function ProfileAvatar({ name, avatarUrl, isOnline, size = "h-11 w-11", textSize = "text-sm" }) {
   return (
     <div className={`relative ${size} shrink-0`}>
@@ -167,7 +156,7 @@ function ConversationRow({ item, active, onClick }) {
     <button
       type="button"
       onClick={() => onClick?.(item)}
-      className={`w-full rounded-[20px] border px-3.5 py-3.5 text-left transition ${
+      className={`w-full rounded-[18px] border px-3.5 py-3 text-left transition ${
         active
           ? "border-blue-300/22 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.18),transparent_34%),linear-gradient(180deg,rgba(37,99,235,0.12),rgba(12,17,27,0.96))] shadow-[0_16px_32px_rgba(37,99,235,0.16)]"
           : "border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015))] hover:border-white/12 hover:bg-white/[0.05]"
@@ -181,22 +170,17 @@ function ConversationRow({ item, active, onClick }) {
         />
 
         <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center justify-between gap-2">
             <div className="min-w-0 flex-1 pr-1">
-              <div className="break-words text-[15px] font-semibold leading-5 text-white">
-                {item.otherDisplayName || item.otherUsername}
-              </div>
-              {item.otherIsSupporter ? (
-                <div className="mt-1 inline-flex rounded-full border border-amber-300/18 bg-amber-400/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-amber-100">
-                  {item.otherSupporterBadgeLabel || "Supporter"}
+              <div className="flex min-w-0 items-center gap-2">
+                <div className="truncate text-[15px] font-semibold leading-5 text-white">
+                  {item.otherDisplayName || item.otherUsername}
                 </div>
-              ) : null}
-              <div
-                className={`mt-1 line-clamp-2 break-words text-[11px] leading-4 ${
-                  item.isOnline ? "text-emerald-300" : "text-neutral-500"
-                }`}
-              >
-                {item.otherStatusMessage || formatPresence(item)}
+                {item.otherIsSupporter ? (
+                  <span className="shrink-0 text-[9px] font-semibold uppercase tracking-[0.12em] text-amber-200/75">
+                    {item.otherSupporterBadgeLabel || "Supporter"}
+                  </span>
+                ) : null}
               </div>
             </div>
 
@@ -212,7 +196,7 @@ function ConversationRow({ item, active, onClick }) {
             </div>
           </div>
 
-          <div className="mt-2 max-w-[11rem] truncate text-[12px] leading-5 text-neutral-400 sm:max-w-none sm:line-clamp-2 sm:whitespace-normal sm:break-words">
+          <div className="mt-1.5 truncate text-[12px] leading-5 text-neutral-400">
             {item.lastMessageText
               ? `${isSentByMe ? "You: " : ""}${item.lastMessageText}`
               : "Start the conversation."}
@@ -224,16 +208,11 @@ function ConversationRow({ item, active, onClick }) {
 }
 
 function FriendStarterRow({ friend, onStart }) {
-  const preview = friend.conversation?.lastMessageText || "Tap to open chat";
-  const lastSeen = friend.conversation?.lastMessageAt
-    ? formatMessageTime(friend.conversation.lastMessageAt)
-    : "";
-
   return (
     <button
       type="button"
       onClick={() => onStart?.(friend)}
-      className="flex w-full min-w-0 items-center gap-3 overflow-hidden rounded-[20px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015))] px-3.5 py-3.5 text-left transition hover:border-white/12 hover:bg-white/[0.05]"
+      className="flex w-full min-w-0 items-center gap-3 overflow-hidden rounded-[18px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.015))] px-3.5 py-3 text-left transition hover:border-blue-300/18 hover:bg-blue-500/[0.05]"
     >
       <ProfileAvatar
         name={friend.displayName || friend.username || "U"}
@@ -242,37 +221,173 @@ function FriendStarterRow({ friend, onStart }) {
       />
 
       <div className="min-w-0 flex-1 overflow-hidden">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0 flex-1 overflow-hidden">
-            <div className="flex min-w-0 items-center gap-2">
-              <div className="min-w-0 break-words text-[15px] font-medium leading-5 text-white">
-                {friend.displayName || friend.username}
-              </div>
-              {friend.conversation?.unreadCount > 0 ? (
-                <div className="inline-flex shrink-0 rounded-full border border-blue-300/18 bg-blue-400/10 px-2 py-0.5 text-[10px] font-semibold text-blue-100">
-                  {friend.conversation.unreadCount}
-                </div>
-              ) : null}
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="truncate text-[15px] font-medium leading-5 text-white">
+              {friend.displayName || friend.username}
             </div>
-            <div className="mt-1 line-clamp-2 break-words text-[11px] leading-4 text-neutral-500">
+            <div className="mt-1 truncate text-[11px] leading-4 text-neutral-500">
               {friend.statusMessage || `@${friend.username}`}
             </div>
           </div>
-
-          <div className="hidden shrink-0 text-right sm:block">
-            {lastSeen ? (
-              <div className="max-w-full truncate text-[10px] text-neutral-500">
-                {lastSeen}
-              </div>
-            ) : null}
-          </div>
-        </div>
-
-        <div className="mt-2 block min-w-0 max-w-[11rem] truncate text-[12px] leading-5 text-neutral-400 sm:max-w-none sm:line-clamp-2 sm:whitespace-normal sm:break-words">
-          {preview}
+          <span className="shrink-0 text-[11px] font-semibold text-blue-200">
+            Message &rarr;
+          </span>
         </div>
       </div>
     </button>
+  );
+}
+
+function MessageDirectory({
+  search,
+  onSearchChange,
+  conversations,
+  conversationCount,
+  selectedConversationId,
+  isLoading,
+  liveConnectionStatus,
+  onOpenConversation,
+}) {
+  return (
+    <div className="overflow-hidden rounded-[26px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.08),transparent_28%),linear-gradient(180deg,rgba(18,22,31,0.98),rgba(8,10,16,0.98))] p-4 shadow-[0_18px_40px_rgba(0,0,0,0.18)]">
+      <div className="flex items-end justify-between gap-3">
+        <div>
+          <div className="text-[10px] uppercase tracking-[0.18em] text-blue-200/70">
+            Inbox
+          </div>
+          <h2 className="mt-1 text-[22px] font-semibold tracking-[-0.05em] text-white">
+            Your conversations
+          </h2>
+        </div>
+        <div
+          className={`mb-1 flex items-center gap-1.5 text-[10px] font-medium ${
+            liveConnectionStatus === "connected" ? "text-emerald-300" : "text-neutral-500"
+          }`}
+        >
+          <span
+            className={`h-1.5 w-1.5 rounded-full ${
+              liveConnectionStatus === "connected" ? "bg-emerald-400" : "bg-neutral-600"
+            }`}
+          />
+          {liveConnectionStatus === "connected"
+            ? "Live"
+            : liveConnectionStatus === "connecting"
+            ? "Connecting"
+            : "Unavailable"}
+        </div>
+      </div>
+
+      <SearchInput
+        value={search}
+        onChange={onSearchChange}
+        placeholder="Search conversations"
+        className="mt-4"
+      />
+
+      <div className="mt-5 flex items-center justify-between gap-3">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-400">
+          Recent
+        </div>
+        <div className="text-[11px] text-neutral-600">{conversations.length}</div>
+      </div>
+
+      <div className="mt-2.5 space-y-2">
+        {isLoading ? (
+          <div className="py-4 text-sm text-neutral-500">Loading conversations...</div>
+        ) : conversations.length === 0 ? (
+          <div className="rounded-[18px] border border-white/8 bg-black/20 px-4 py-5 text-sm leading-6 text-neutral-500">
+            {conversationCount === 0
+              ? "No conversations yet. Start a new message to get going."
+              : "No conversations match your search."}
+          </div>
+        ) : (
+          conversations.map((conversation) => (
+            <ConversationRow
+              key={conversation.conversationId}
+              item={conversation}
+              active={conversation.conversationId === selectedConversationId}
+              onClick={onOpenConversation}
+            />
+          ))
+        )}
+      </div>
+
+    </div>
+  );
+}
+
+function NewMessageDirectory({
+  search,
+  onSearchChange,
+  friends,
+  friendCount,
+  isLoading,
+  onBack,
+  onStartConversation,
+}) {
+  const hasSearch = Boolean(search.trim());
+
+  return (
+    <div className="flex flex-col overflow-hidden rounded-[26px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.1),transparent_30%),linear-gradient(180deg,rgba(18,22,31,0.98),rgba(8,10,16,0.98))] p-4 shadow-[0_18px_40px_rgba(0,0,0,0.18)] lg:h-[42rem] lg:p-5">
+      <div className="flex items-start gap-3">
+        <button
+          type="button"
+          onClick={onBack}
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-sm text-white transition hover:bg-white/[0.08]"
+          aria-label="Back to inbox"
+        >
+          <span aria-hidden="true">&larr;</span>
+        </button>
+        <div>
+          <div className="text-[10px] uppercase tracking-[0.18em] text-blue-200/70">
+            New message
+          </div>
+          <h2 className="mt-1 text-[24px] font-semibold tracking-[-0.05em] text-white">
+            Choose a friend
+          </h2>
+          <p className="mt-1 text-[12px] leading-5 text-neutral-500">
+            Search your friend list, then open or start a private conversation.
+          </p>
+        </div>
+      </div>
+
+      <SearchInput
+        value={search}
+        onChange={onSearchChange}
+        placeholder="Search friends"
+        className="mt-5"
+      />
+
+      <div className="mt-5 flex items-center justify-between gap-3">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-400">
+          Friends
+        </div>
+        <div className="text-[11px] text-neutral-600">{friends.length}</div>
+      </div>
+
+      <div className="mt-2.5 space-y-2 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
+        {isLoading ? (
+          <div className="py-4 text-sm text-neutral-500">Loading friends...</div>
+        ) : friends.length === 0 ? (
+          <div className="rounded-[18px] border border-white/8 bg-black/20 px-4 py-5 text-sm leading-6 text-neutral-500">
+            {friendCount === 0
+              ? "Add friends first to start private conversations."
+              : hasSearch
+              ? "No friends match your search."
+              : "No friends are available right now."}
+          </div>
+        ) : (
+          friends.map((friend) => (
+            <FriendStarterRow
+              key={friend.userId}
+              friend={friend}
+              onStart={onStartConversation}
+            />
+          ))
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -353,6 +468,7 @@ export default function DirectMessagesPage() {
   }, []);
 
   const selectedConversationId = searchParams.get("conversationId") || "";
+  const isStartingNewChat = searchParams.get("view") === "new";
 
   const selectedConversation = useMemo(
     () =>
@@ -467,8 +583,9 @@ export default function DirectMessagesPage() {
         if (!isMounted) return;
         setError("Failed to load your inbox.");
       } finally {
-        if (!isMounted) return;
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     }
 
@@ -572,13 +689,17 @@ export default function DirectMessagesPage() {
                 joinedConversationIdRef.current
               );
             }
-          } catch {}
+          } catch {
+            // The connection may already be closing during page cleanup.
+          }
 
           try {
             if (connection.state !== "Disconnected") {
               await connection.stop();
             }
-          } catch {}
+          } catch {
+            // A disconnected realtime client does not need another stop attempt.
+          }
         });
     };
   }, [token, selectedConversationId, refreshConversations, markConversationRead]);
@@ -602,17 +723,26 @@ export default function DirectMessagesPage() {
         } else {
           joinedConversationIdRef.current = "";
         }
-      } catch {}
+      } catch {
+        // The connection status handler surfaces realtime availability to the UI.
+      }
     })();
   }, [selectedConversationId, liveConnectionStatus]);
 
   const handleOpenConversation = (conversation) => {
     if (!conversation?.conversationId) return;
+    setFriendSearch("");
     setSearchParams({ conversationId: conversation.conversationId });
   };
 
   const handleBackToInbox = () => {
+    setFriendSearch("");
     setSearchParams({});
+  };
+
+  const handleOpenNewMessage = () => {
+    setFriendSearch("");
+    setSearchParams({ view: "new" });
   };
 
   const handleOpenProfile = () => {
@@ -626,6 +756,7 @@ export default function DirectMessagesPage() {
       upsertConversation(conversation);
       const selectedId = conversation?.conversationId;
       if (selectedId) {
+        setFriendSearch("");
         setSearchParams({ conversationId: selectedId });
       }
       refreshConversations().catch(() => null);
@@ -735,14 +866,18 @@ export default function DirectMessagesPage() {
       }`}
       style={lightModeUndoFilter}
     >
-      <div className="mx-auto w-full max-w-[76rem] px-4 py-4 pb-24 sm:px-5 sm:py-7 sm:pb-7 lg:px-6 lg:py-9">
+      <div className="mx-auto w-full max-w-[76rem] px-4 py-4 pb-24 sm:px-5 sm:py-7 md:pb-7 lg:px-6 lg:py-9">
         <AppSectionNav hideMobileNav={Boolean(selectedConversation)} />
 
-        <div className={selectedConversation ? "hidden sm:block" : ""}>
+        <div className="hidden lg:block">
           <AppTopBar
             eyebrow="Messages"
-            title="Direct messages"
-            description="Friends first on mobile, then a full chat view once you tap in."
+            title={isStartingNewChat ? "New message" : "Your conversations"}
+            description={
+              isStartingNewChat
+                ? "Choose a friend to open or start a private conversation."
+                : "Keep up with friends and continue private conversations without leaving the competition."
+            }
             actions={[]}
           />
         </div>
@@ -754,205 +889,70 @@ export default function DirectMessagesPage() {
         ) : null}
 
 
-        <div className="grid min-h-0 gap-4 lg:grid-cols-[22rem_minmax(0,1fr)]">
-          <section className={`space-y-4 lg:hidden ${selectedConversation ? "hidden" : ""}`}>
-            <div className="overflow-hidden rounded-[30px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.14),transparent_30%),radial-gradient(circle_at_top_right,rgba(139,92,246,0.12),transparent_24%),linear-gradient(180deg,rgba(20,24,34,0.98),rgba(8,10,16,0.98))] p-4 shadow-[0_22px_48px_rgba(0,0,0,0.24)]">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="text-[10px] uppercase tracking-[0.18em] text-blue-200/70">
-                    Direct messages
-                  </div>
-                  <h1 className="mt-2 text-[30px] font-semibold tracking-[-0.06em] text-white">
-                    Friends first. Chat fast.
-                  </h1>
-                  <p className="mt-2 max-w-[22rem] text-[13px] leading-6 text-neutral-400">
-                    Search friends, reopen recent chats, and jump straight into the full thread.
-                  </p>
+        <div
+          className={`grid min-h-0 gap-4 ${
+            isStartingNewChat ? "" : "lg:grid-cols-[22rem_minmax(0,1fr)]"
+          }`}
+        >
+          {isStartingNewChat ? (
+            <section className="mx-auto w-full max-w-[42rem]">
+              <div className="px-1 pb-4 pt-1 lg:hidden">
+                <div className="text-[10px] uppercase tracking-[0.18em] text-blue-200/70">
+                  Direct messages
                 </div>
-
-                <div className="rounded-[18px] border border-white/10 bg-white/[0.04] px-3 py-2 text-right shadow-[0_12px_24px_rgba(0,0,0,0.14)]">
-                  <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
-                    Chats
-                  </div>
-                  <div className="mt-1 text-[20px] font-semibold tracking-[-0.04em] text-white">
-                    {filteredConversations.length}
-                  </div>
-                </div>
+                <h1 className="mt-2 text-[29px] font-semibold leading-none tracking-[-0.055em] text-white">
+                  New message
+                </h1>
               </div>
 
-              <SearchInput
-                value={friendSearch}
-                onChange={(event) => setFriendSearch(event.target.value)}
-                placeholder="Search friends or messages"
-                className="mt-4"
+              <NewMessageDirectory
+                search={friendSearch}
+                onSearchChange={(event) => setFriendSearch(event.target.value)}
+                friends={filteredFriends}
+                friendCount={acceptedFriends.length}
+                isLoading={isLoading || isLoadingConversations}
+                onBack={handleBackToInbox}
+                onStartConversation={handleStartConversation}
               />
-
-              <div className="mt-4 grid grid-cols-2 gap-2.5">
-                <div className="rounded-[20px] border border-white/8 bg-white/[0.03] px-3 py-3">
-                  <div className="text-[9px] uppercase tracking-[0.16em] text-neutral-500">
-                    Friends
-                  </div>
-                  <div className="mt-1 text-[16px] font-semibold text-white">
-                    {filteredFriends.length}
-                  </div>
-                </div>
-                <div className="rounded-[20px] border border-white/8 bg-white/[0.03] px-3 py-3">
-                  <div className="text-[9px] uppercase tracking-[0.16em] text-neutral-500">
-                    Live state
-                  </div>
-                  <div className="mt-1 text-[16px] font-semibold text-white">
-                    {liveConnectionStatus === "connected" ? "Synced" : "Waiting"}
-                  </div>
-                </div>
+            </section>
+          ) : (
+            <>
+          <section className={`space-y-4 lg:hidden ${selectedConversation ? "hidden" : ""}`}>
+            <div className="px-1 pb-1 pt-1">
+              <div className="text-[10px] uppercase tracking-[0.18em] text-blue-200/70">
+                Direct messages
               </div>
+              <h1 className="mt-2 text-[29px] font-semibold leading-none tracking-[-0.055em] text-white">
+                Messages
+              </h1>
+              <p className="mt-2 text-[13px] leading-6 text-neutral-400">
+                Reopen a conversation or start one with a friend.
+              </p>
             </div>
 
-            <div className="rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(18,22,31,0.98),rgba(8,10,16,0.98))] p-4 shadow-[0_18px_40px_rgba(0,0,0,0.2)]">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <div>
-                  <div className="text-[10px] uppercase tracking-[0.18em] text-blue-200/70">
-                    Recent chats
-                  </div>
-                  <div className="mt-1 text-[22px] font-semibold tracking-[-0.05em] text-white">
-                    Inbox
-                  </div>
-                </div>
-                <div className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-300">
-                  {filteredConversations.length}
-                </div>
-              </div>
-
-              <div className="space-y-2.5">
-                {isLoading || isLoadingConversations ? (
-                  <div className="text-sm text-neutral-500">Loading chats...</div>
-                ) : filteredConversations.length === 0 ? (
-                  <div className="rounded-[18px] border border-white/8 bg-black/20 px-4 py-5 text-sm text-neutral-500">
-                    {conversations.length === 0
-                      ? "No chats yet. Start with a friend below."
-                      : "No conversations match that search yet."}
-                  </div>
-                ) : (
-                  filteredConversations.map((conversation) => (
-                    <ConversationRow
-                      key={conversation.conversationId}
-                      item={conversation}
-                      active={conversation.conversationId === selectedConversationId}
-                      onClick={handleOpenConversation}
-                    />
-                  ))
-                )}
-              </div>
-            </div>
-
-            <div className="rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(18,22,31,0.98),rgba(8,10,16,0.98))] p-4 shadow-[0_18px_40px_rgba(0,0,0,0.2)]">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <div>
-                  <div className="text-[10px] uppercase tracking-[0.18em] text-blue-200/70">
-                    Start chat
-                  </div>
-                  <div className="mt-1 text-[22px] font-semibold tracking-[-0.05em] text-white">
-                    Friends
-                  </div>
-                  <div className="mt-1 text-[12px] text-neutral-400">
-                    Tap a friend and the full chat opens.
-                  </div>
-                </div>
-                <div className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-300">
-                  {filteredFriends.length}
-                </div>
-              </div>
-
-              <div className="space-y-2.5">
-                {isLoading || isLoadingConversations ? (
-                  <div className="text-sm text-neutral-500">Loading chats...</div>
-                ) : filteredFriends.length === 0 ? (
-                  <div className="rounded-[18px] border border-white/8 bg-black/20 px-4 py-5 text-sm text-neutral-500">
-                    {acceptedFriends.length === 0
-                      ? "Add friends first, then your private chats start here."
-                      : "No friends match that search yet."}
-                  </div>
-                ) : (
-                  filteredFriends.map((friend) => (
-                    <FriendStarterRow
-                      key={friend.userId}
-                      friend={friend}
-                      onStart={handleStartConversation}
-                    />
-                  ))
-                )}
-              </div>
-            </div>
+            <MessageDirectory
+              search={friendSearch}
+              onSearchChange={(event) => setFriendSearch(event.target.value)}
+              conversations={filteredConversations}
+              conversationCount={conversations.length}
+              selectedConversationId={selectedConversationId}
+              isLoading={isLoading || isLoadingConversations}
+              liveConnectionStatus={liveConnectionStatus}
+              onOpenConversation={handleOpenConversation}
+            />
           </section>
 
-          <section className="hidden space-y-4 lg:block">
-            <div className="rounded-[26px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.08),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.012))] p-4">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <div>
-                  <div className="text-sm font-semibold text-white">Inbox</div>
-                  <div className="mt-1 text-[12px] text-neutral-400">
-                    {liveConnectionStatus === "connected"
-                      ? "Live and synced"
-                      : liveConnectionStatus === "connecting"
-                      ? "Connecting..."
-                      : "Live connection unavailable"}
-                  </div>
-                </div>
-                <div className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-300">
-                  {conversations.length}
-                </div>
-              </div>
-
-              {isLoading || isLoadingConversations ? (
-                <div className="text-sm text-neutral-500">Loading conversations...</div>
-              ) : conversations.length === 0 ? (
-                <div className="rounded-[18px] border border-white/8 bg-black/20 px-4 py-5 text-sm text-neutral-500">
-                  No chats yet. Start with a friend below.
-                </div>
-              ) : (
-                <div className="space-y-2.5">
-                  {filteredConversations.map((conversation) => (
-                    <ConversationRow
-                      key={conversation.conversationId}
-                      item={conversation}
-                      active={conversation.conversationId === selectedConversationId}
-                      onClick={handleOpenConversation}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-4">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <div className="text-sm font-semibold text-white">Select a user and send a message</div>
-                <div className="text-[11px] text-neutral-500">Friends only</div>
-              </div>
-
-              <SearchInput
-                value={friendSearch}
-                onChange={(event) => setFriendSearch(event.target.value)}
-                placeholder="Search your friends"
-                className="mb-3"
-              />
-
-              <div className="space-y-2.5">
-                {filteredFriends.length === 0 ? (
-                  <div className="text-sm text-neutral-500">
-                    {acceptedFriends.length === 0
-                      ? "Add friends first, then they can show up here for DMs."
-                      : "No friends match that search yet."}
-                  </div>
-                ) : (
-                  filteredFriends.map((friend) => (
-                    <FriendStarterRow
-                      key={friend.userId}
-                      friend={friend}
-                      onStart={handleStartConversation}
-                    />
-                  ))
-                )}
-              </div>
-            </div>
+          <section className="hidden lg:block">
+            <MessageDirectory
+              search={friendSearch}
+              onSearchChange={(event) => setFriendSearch(event.target.value)}
+              conversations={filteredConversations}
+              conversationCount={conversations.length}
+              selectedConversationId={selectedConversationId}
+              isLoading={isLoading || isLoadingConversations}
+              liveConnectionStatus={liveConnectionStatus}
+              onOpenConversation={handleOpenConversation}
+            />
           </section>
 
           <section
@@ -960,7 +960,7 @@ export default function DirectMessagesPage() {
               !selectedConversation ? "hidden lg:flex" : "flex"
             } ${
               selectedConversation
-                ? "fixed inset-x-0 top-0 bottom-0 z-40 rounded-none border-x-0 border-t-0 pb-0 pt-[env(safe-area-inset-top)] sm:inset-auto sm:relative sm:h-[calc(100vh-8.5rem)] sm:rounded-[26px] sm:border sm:pt-0"
+                ? "fixed inset-x-0 top-0 bottom-0 z-40 rounded-none border-x-0 border-t-0 pb-0 pt-[env(safe-area-inset-top)] lg:inset-auto lg:relative lg:h-[42rem] lg:rounded-[30px] lg:border lg:pt-0"
                 : "h-[42rem] rounded-[30px]"
             } lg:relative lg:inset-auto lg:h-[42rem] lg:rounded-[30px] lg:border lg:px-0 lg:pb-0 lg:pt-0 flex-col`}
           >
@@ -1095,7 +1095,40 @@ export default function DirectMessagesPage() {
               </div>
             </form>
           </section>
+            </>
+          )}
         </div>
+
+        {!selectedConversation && !isStartingNewChat ? (
+          <button
+            type="button"
+            onClick={handleOpenNewMessage}
+            className="fixed bottom-32 right-4 z-30 inline-flex h-14 w-14 items-center justify-center rounded-full border border-blue-300/20 bg-blue-500 text-white shadow-[0_18px_38px_rgba(37,99,235,0.38)] transition hover:-translate-y-0.5 hover:bg-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200/70 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950 md:bottom-7 md:right-7 lg:h-16 lg:w-16"
+            aria-label="Start a new chat"
+            title="Start a new chat"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              className="h-6 w-6 lg:h-7 lg:w-7"
+              aria-hidden="true"
+            >
+              <path
+                d="M7.25 18.5L4.5 20V7.75A3.25 3.25 0 0 1 7.75 4.5h8.5a3.25 3.25 0 0 1 3.25 3.25v5.5a3.25 3.25 0 0 1-3.25 3.25H9.3L7.25 18.5Z"
+                className="stroke-current"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M12 8v5M9.5 10.5h5"
+                className="stroke-current"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+        ) : null}
       </div>
     </div>
   );

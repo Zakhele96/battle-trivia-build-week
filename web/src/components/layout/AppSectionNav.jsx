@@ -372,7 +372,7 @@ export default function AppSectionNav({ hideMobileNav = false }) {
 
   const mobileNav = (
     <div
-      className={`pointer-events-none fixed inset-x-0 bottom-0 z-50 isolate overflow-visible sm:hidden [backface-visibility:hidden] [transform:translateZ(0)] [will-change:transform] ${
+      className={`pointer-events-none fixed inset-x-0 bottom-0 z-50 isolate overflow-visible md:hidden [backface-visibility:hidden] [transform:translateZ(0)] [will-change:transform] ${
         isKeyboardOpen ? "hidden" : ""
       }`}
     >
@@ -556,9 +556,9 @@ export default function AppSectionNav({ hideMobileNav = false }) {
 
   return (
     <>
-      <div className="mb-5 hidden sm:block sm:mb-6">
+      <div className="mb-5 hidden md:block md:mb-6">
         <div className={desktopShellClassName}>
-          <div className="flex flex-wrap gap-1 overflow-hidden lg:gap-1.5">
+          <div className="grid grid-cols-5 gap-1 overflow-hidden xl:grid-cols-10 xl:gap-1.5">
             {DESKTOP_ITEMS.map((item) => {
               const Icon = item.icon;
               const active = isItemActive(item, location.pathname);
@@ -575,7 +575,7 @@ export default function AppSectionNav({ hideMobileNav = false }) {
                   key={item.to}
                   to={item.to}
                   end={item.exact}
-                  className={`relative inline-flex min-w-0 flex-[1_1_5.35rem] flex-col items-center justify-center gap-1 rounded-[16px] px-1.5 py-2 text-center text-[9px] font-medium transition lg:px-2 lg:text-[10px] ${itemClassName}`}
+                  className={`relative inline-flex min-w-0 flex-col items-center justify-center gap-1 rounded-[16px] px-1.5 py-2 text-center text-[9px] font-medium transition lg:px-2 lg:text-[10px] ${itemClassName}`}
                 >
                   <NavIconShell active={active} isLight={isLight}>
                     <Icon />

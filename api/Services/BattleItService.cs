@@ -5,6 +5,7 @@ using Bts.Api.Models.Requests;
 using Bts.Api.Models.Responses;
 using Bts.Api.Repositories;
 using Microsoft.AspNetCore.SignalR;
+using System.Security.Cryptography;
 
 namespace Bts.Api.Services;
 
@@ -55,7 +56,15 @@ public sealed class BattleItService
         if (session is null)
             return new BattleItStateResponse { RoomId = room.Id };
 
+        session = await EnsureJoinCodeAsync(session, userId);
+
         return await MapStateAsync(session, userId);
+    }
+
+    public async Task<IReadOnlyList<BattleItPublicSessionResponse>> GetPublicSessionsAsync(Guid roomId)
+    {
+        await RequireBattleItRoomAsync(roomId);
+        return await _battleItRepository.GetPublicSessionsAsync(roomId);
     }
 
     public async Task<BattleItStateResponse> GenerateAsync(
@@ -64,7 +73,10 @@ public sealed class BattleItService
         string? sourceText,
         IReadOnlyList<BattleItUploadedImage> images,
         string difficulty,
+        string answerMode,
+        string visibility,
         int questionDurationSeconds,
+        int revealDelaySeconds,
         CancellationToken cancellationToken)
     {
         await RequireBattleItRoomAsync(roomId);
@@ -78,7 +90,10 @@ public sealed class BattleItService
         }
 
         var normalizedDifficulty = NormalizeDifficulty(difficulty);
+        var normalizedAnswerMode = NormalizeAnswerMode(answerMode);
+        var normalizedVisibility = NormalizeVisibility(visibility);
         var duration = Math.Clamp(questionDurationSeconds, 10, 60);
+        var revealDelay = Math.Clamp(revealDelaySeconds, 3, 15);
         var imageInputs = images.Select(image => new BattleItImageInput
         {
             ContentType = image.ContentType,
@@ -89,6 +104,7 @@ public sealed class BattleItService
             sourceText,
             imageInputs,
             normalizedDifficulty,
+            normalizedAnswerMode,
             userId,
             cancellationToken);
 
@@ -99,6 +115,7 @@ public sealed class BattleItService
             ? images.Count == 1 ? "1 note image" : $"{images.Count} note images"
             : "Pasted notes";
 
+        var joinCode = await CreateJoinCodeAsync();
         var session = await _battleItRepository.CreateDraftAsync(
             roomId,
             userId,
@@ -106,7 +123,11 @@ public sealed class BattleItService
             sourceLabel,
             generated.SourceHash,
             normalizedDifficulty,
+            normalizedAnswerMode,
+            normalizedVisibility,
             duration,
+            revealDelay,
+            joinCode,
             generated.Model,
             generated.Pack);
 
@@ -131,10 +152,44 @@ public sealed class BattleItService
         return await GetOwnedStateAsync(sessionId, userId);
     }
 
+    public async Task<BattleItStateResponse> JoinAsync(
+        Guid roomId,
+        Guid userId,
+        JoinBattleItRequest request)
+    {
+        await RequireBattleItRoomAsync(roomId);
+        var code = NormalizeJoinCode(request.Code);
+        var session = await _battleItRepository.JoinByCodeAsync(roomId, userId, code);
+        if (session is null)
+            throw new InvalidOperationException("That Battle It code is invalid or has expired.");
+
+        await NotifyChangedAsync(roomId);
+        return await MapStateAsync(session, userId);
+    }
+
+    public async Task<BattleItStateResponse> JoinPublicAsync(
+        Guid roomId,
+        Guid sessionId,
+        Guid userId)
+    {
+        await RequireBattleItRoomAsync(roomId);
+        var session = await _battleItRepository.JoinPublicAsync(roomId, sessionId, userId);
+        if (session is null)
+            throw new InvalidOperationException("This public battle is no longer open.");
+
+        await NotifyChangedAsync(roomId);
+        return await MapStateAsync(session, userId);
+    }
+
     public async Task<BattleItStateResponse> OpenLobbyAsync(Guid roomId, Guid sessionId, Guid userId)
     {
         await RequireBattleItRoomAsync(roomId);
-        var opened = await _battleItRepository.OpenLobbyAsync(sessionId, userId);
+        var existing = await _battleItRepository.GetByIdAsync(sessionId)
+            ?? throw new KeyNotFoundException("Battle It session not found.");
+        if (existing.CreatorUserId != userId)
+            throw new UnauthorizedAccessException("Only the battle creator can control this session.");
+        var joinCode = existing.JoinCode ?? await CreateJoinCodeAsync();
+        var opened = await _battleItRepository.OpenLobbyAsync(sessionId, userId, joinCode);
         if (!opened)
             throw new InvalidOperationException("Another Battle It session is already open, or this draft is not ready.");
 
@@ -166,7 +221,8 @@ public sealed class BattleItService
     public async Task<BattleItStateResponse> ReplayAsync(Guid roomId, Guid sessionId, Guid userId)
     {
         await RequireBattleItRoomAsync(roomId);
-        var replayed = await _battleItRepository.ReplayAsync(sessionId, userId);
+        var joinCode = await CreateJoinCodeAsync();
+        var replayed = await _battleItRepository.ReplayAsync(sessionId, userId, joinCode);
         if (!replayed)
             throw new InvalidOperationException("This battle cannot be replayed right now.");
 
@@ -179,6 +235,8 @@ public sealed class BattleItService
         return _hubContext.Clients.Group(roomId.ToString())
             .SendAsync("BattleItChanged", new { roomId });
     }
+
+    public static string GetSessionGroupName(Guid sessionId) => $"battle-it:{sessionId}";
 
     private async Task<BattleItStateResponse> GetOwnedStateAsync(Guid sessionId, Guid userId)
     {
@@ -212,6 +270,7 @@ public sealed class BattleItService
         }
 
         var canSeeDraftQuestions = isCreator && string.Equals(session.Status, "draft", StringComparison.OrdinalIgnoreCase);
+        var playerCount = await _battleItRepository.GetMemberCountAsync(session.Id);
         return new BattleItStateResponse
         {
             RoomId = session.RoomId,
@@ -225,8 +284,12 @@ public sealed class BattleItService
             SourceType = session.SourceType,
             SourceLabel = session.SourceLabel,
             Difficulty = session.Difficulty,
+            AnswerMode = session.AnswerMode,
+            Visibility = session.Visibility,
             QuestionDurationSeconds = session.QuestionDurationSeconds,
             RevealDelaySeconds = session.RevealDelaySeconds,
+            JoinCode = session.JoinCode,
+            PlayerCount = playerCount,
             QuestionCount = questions.Count,
             CurrentQuestionNumber = currentQuestionNumber,
             CoveredConceptCount = questions
@@ -247,6 +310,7 @@ public sealed class BattleItService
     private static BattleItQuestionResponse MapQuestion(BattleItQuestion question)
     {
         IReadOnlyList<string> acceptedAnswers;
+        IReadOnlyList<string> answerOptions;
         try
         {
             acceptedAnswers = JsonSerializer.Deserialize<List<string>>(question.AcceptedAnswersJson) ?? [];
@@ -254,6 +318,15 @@ public sealed class BattleItService
         catch
         {
             acceptedAnswers = [];
+        }
+
+        try
+        {
+            answerOptions = JsonSerializer.Deserialize<List<string>>(question.AnswerOptionsJson) ?? [];
+        }
+        catch
+        {
+            answerOptions = [];
         }
 
         return new BattleItQuestionResponse
@@ -264,6 +337,7 @@ public sealed class BattleItService
             QuestionText = question.QuestionText,
             CorrectAnswer = question.CorrectAnswer,
             AcceptedAnswers = acceptedAnswers,
+            AnswerOptions = answerOptions,
             Difficulty = question.Difficulty,
             AnswerExplanation = question.AnswerExplanation,
             SourceExcerpt = question.SourceExcerpt
@@ -327,12 +401,17 @@ public sealed class BattleItService
             throw new InvalidOperationException("A Battle It session must contain between 4 and 20 questions.");
 
         request.Difficulty = NormalizeDifficulty(request.Difficulty);
+        request.AnswerMode = NormalizeAnswerMode(request.AnswerMode);
+        request.Visibility = NormalizeVisibility(request.Visibility);
         request.QuestionDurationSeconds = Math.Clamp(request.QuestionDurationSeconds, 10, 60);
+        request.RevealDelaySeconds = Math.Clamp(request.RevealDelaySeconds, 3, 15);
         var ids = new HashSet<Guid>();
         var normalizedQuestions = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var questionNumber = 0;
 
         foreach (var question in request.Questions)
         {
+            questionNumber++;
             if (question.QuestionId == Guid.Empty || !ids.Add(question.QuestionId))
                 throw new InvalidOperationException("The question list contains an invalid duplicate.");
 
@@ -344,10 +423,39 @@ public sealed class BattleItService
             question.Difficulty = NormalizeDifficulty(question.Difficulty);
             question.AcceptedAnswers = (question.AcceptedAnswers ?? [])
                 .Select(answer => answer?.Trim() ?? string.Empty)
-                .Where(answer => answer.Length > 0)
+                .Where(answer => answer.Length > 0 &&
+                    !string.Equals(answer, question.CorrectAnswer, StringComparison.OrdinalIgnoreCase))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .Take(8)
                 .ToList();
+            question.AnswerOptions = (question.AnswerOptions ?? [])
+                .Select(answer => answer?.Trim() ?? string.Empty)
+                .Where(answer => answer.Length > 0)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (request.AnswerMode == "multiple-choice")
+            {
+                if (question.AnswerOptions.Count != 4)
+                    throw new InvalidOperationException(
+                        $"Question {questionNumber} must have exactly four distinct options.");
+                if (question.AnswerOptions.Count(answer =>
+                        string.Equals(answer, question.CorrectAnswer, StringComparison.OrdinalIgnoreCase)) != 1)
+                {
+                    throw new InvalidOperationException(
+                        $"Question {questionNumber} must include its correct answer exactly once.");
+                }
+                if (question.AnswerOptions.Any(option =>
+                        question.AcceptedAnswers.Contains(option, StringComparer.OrdinalIgnoreCase)))
+                {
+                    throw new InvalidOperationException(
+                        $"Question {questionNumber} has an accepted answer variant duplicated among its choices.");
+                }
+            }
+            else
+            {
+                question.AnswerOptions = [];
+            }
 
             var normalized = string.Join(' ', question.QuestionText.ToLowerInvariant().Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
             if (!normalizedQuestions.Add(normalized))
@@ -371,6 +479,54 @@ public sealed class BattleItService
             "hard" => "hard",
             _ => "medium"
         };
+    }
+
+    private static string NormalizeAnswerMode(string? value)
+    {
+        return string.Equals(value?.Trim(), "multiple-choice", StringComparison.OrdinalIgnoreCase)
+            ? "multiple-choice"
+            : "text";
+    }
+
+    private static string NormalizeVisibility(string? value)
+    {
+        return string.Equals(value?.Trim(), "public", StringComparison.OrdinalIgnoreCase)
+            ? "public"
+            : "code-only";
+    }
+
+    private async Task<string> CreateJoinCodeAsync()
+    {
+        for (var attempt = 0; attempt < 10; attempt++)
+        {
+            var code = RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6");
+            if (!await _battleItRepository.JoinCodeExistsAsync(code))
+                return code;
+        }
+
+        throw new InvalidOperationException("Could not create a unique Battle It join code. Please try again.");
+    }
+
+    private async Task<BattleItSession> EnsureJoinCodeAsync(BattleItSession session, Guid userId)
+    {
+        if (!string.IsNullOrWhiteSpace(session.JoinCode) ||
+            session.CreatorUserId != userId ||
+            session.Status is not ("draft" or "lobby" or "active"))
+        {
+            return session;
+        }
+
+        var joinCode = await CreateJoinCodeAsync();
+        await _battleItRepository.SetJoinCodeIfMissingAsync(session.Id, userId, joinCode);
+        return await _battleItRepository.GetByIdAsync(session.Id) ?? session;
+    }
+
+    private static string NormalizeJoinCode(string? value)
+    {
+        var code = new string((value ?? string.Empty).Where(char.IsDigit).ToArray());
+        if (code.Length != 6)
+            throw new InvalidOperationException("Enter the six-digit Battle It code.");
+        return code;
     }
 }
 

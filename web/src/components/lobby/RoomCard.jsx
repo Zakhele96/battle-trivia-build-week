@@ -148,24 +148,14 @@ export default function RoomCard({ room }) {
   const visual = getRoomVisual(room, isLight);
 
   const cardClassName = isLight
-    ? "group block rounded-[22px] border border-[#d8c3a0] bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.08),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(245,158,11,0.08),transparent_26%),linear-gradient(180deg,#fffaf1,#f2e4d1)] p-4 shadow-[0_18px_36px_rgba(122,84,37,0.12)] transition hover:-translate-y-[1px] hover:border-[#c69a57] hover:shadow-[0_22px_42px_rgba(122,84,37,0.16)] sm:rounded-[24px] sm:p-4"
-    : "group block rounded-[24px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.14),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(251,191,36,0.08),transparent_22%),linear-gradient(180deg,rgba(20,24,34,0.98),rgba(8,10,16,0.98))] p-4 shadow-[0_22px_46px_rgba(0,0,0,0.24)] transition hover:-translate-y-[1px] hover:border-white/16 hover:bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.18),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(251,191,36,0.1),transparent_24%),linear-gradient(180deg,rgba(24,30,42,1),rgba(8,10,16,1))] sm:rounded-[24px] sm:p-4";
+    ? "group block rounded-[22px] border border-[#d8c3a0] bg-[linear-gradient(180deg,#fffaf1,#f2e4d1)] p-4 shadow-[0_16px_32px_rgba(122,84,37,0.1)] transition hover:-translate-y-[1px] hover:border-[#c69a57] hover:shadow-[0_20px_38px_rgba(122,84,37,0.14)] sm:rounded-[24px]"
+    : "group block rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(18,22,31,0.98),rgba(8,10,16,0.98))] p-4 shadow-[0_18px_38px_rgba(0,0,0,0.2)] transition hover:-translate-y-[1px] hover:border-white/16 hover:bg-[linear-gradient(180deg,rgba(22,27,38,1),rgba(8,10,16,1))] sm:rounded-[24px]";
   const titleClassName = isLight
     ? "text-[19px] font-semibold tracking-[-0.04em] text-stone-900 sm:text-[20px]"
     : "text-[19px] font-semibold tracking-[-0.04em] text-white sm:text-[20px]";
   const descriptionClassName = isLight
     ? "mt-1.5 text-[12px] leading-5 text-stone-600 sm:text-[13px] sm:leading-6"
     : "mt-1.5 text-[12px] leading-5 text-neutral-400 sm:text-[13px] sm:leading-6";
-  const metaClassName = isLight
-    ? "rounded-full border border-stone-200 bg-white/72 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-stone-600"
-    : "rounded-full border border-white/8 bg-black/20 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-neutral-400";
-  const liveToneClassName = isLive
-    ? isLight
-      ? "border-emerald-300 bg-emerald-50 text-emerald-800"
-      : "border-emerald-400/18 bg-emerald-500/10 text-emerald-200"
-    : isLight
-      ? "border-stone-200 bg-white/76 text-stone-700"
-      : "border-white/10 bg-white/[0.045] text-neutral-300";
   const ctaClassName = isLight
     ? "inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#0f5fa8] transition group-hover:text-[#0b4f8e]"
     : "inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-200 transition group-hover:text-white";
@@ -180,15 +170,10 @@ export default function RoomCard({ room }) {
             >
               {meta.badge}
             </div>
-            <div
-              className={`rounded-full border px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.14em] ${liveToneClassName}`}
-            >
-              {statusLabel}
-            </div>
           </div>
 
           <div
-            className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full border text-[24px] ${visual.shellClassName}`}
+            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] border text-[20px] ${visual.shellClassName}`}
           >
             <span aria-hidden="true">{visual.glyph}</span>
           </div>
@@ -199,36 +184,22 @@ export default function RoomCard({ room }) {
           <p className={`${descriptionClassName} line-clamp-3`}>{description}</p>
         </div>
 
-        {metaPills.length > 0 ? (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {metaPills.map((item) => (
-              <div key={item} className={metaClassName}>
-                {item}
-              </div>
-            ))}
+        <div
+          className={`mt-4 flex items-end justify-between gap-3 border-t pt-4 ${
+            isLight ? "border-stone-200/80" : "border-white/8"
+          }`}
+        >
+          <div
+            className={`min-w-0 truncate text-[10px] uppercase tracking-[0.12em] ${
+              isLight ? "text-stone-500" : "text-neutral-500"
+            }`}
+          >
+            {metaPills.join(" · ") || statusLabel}
           </div>
-        ) : null}
-
-        <div className="mt-4 sm:hidden">
-          <div className="flex items-center justify-between gap-3 rounded-[18px] border border-white/8 bg-black/20 px-3.5 py-3">
-            <div className="min-w-0">
-              <div className="text-[10px] uppercase tracking-[0.14em] text-neutral-500">
-                Ready to join
-              </div>
-              <div className="mt-1 truncate text-[13px] font-medium text-white">
-                {meta.cta}
-              </div>
-            </div>
-
-            <div className="inline-flex h-10 items-center rounded-[14px] border border-blue-400/18 bg-blue-500/10 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-100">
-              Open
-            </div>
+          <div className={`${ctaClassName} shrink-0`}>
+            {meta.cta}
+            <span aria-hidden="true">&rarr;</span>
           </div>
-        </div>
-
-        <div className={`mt-4 hidden sm:inline-flex ${ctaClassName}`}>
-          {meta.cta}
-          <span aria-hidden="true">&rarr;</span>
         </div>
       </div>
     </Link>

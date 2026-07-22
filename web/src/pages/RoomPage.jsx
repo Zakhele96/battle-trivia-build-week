@@ -7,6 +7,7 @@ import AchievementToastStack from "../components/profile/AchievementToastStack";
 import ArenaCreateChallengeModal from "../components/arena/ArenaCreateChallengeModal";
 import ArenaRoomPanel from "../components/arena/ArenaRoomPanel";
 import BattleItPanel from "../components/battleIt/BattleItPanel";
+import BattleItAnswerOptions from "../components/battleIt/BattleItAnswerOptions";
 import RoomFooterBar from "../components/room/RoomFooterBar";
 import RoomModerationControlCard from "../components/room/RoomModerationControlCard";
 import RoomShell from "../components/room/RoomShell";
@@ -1952,6 +1953,12 @@ const {
       chatStream
     );
 
+  const isBattleItMultipleChoice =
+    isBattleIt &&
+    battleItState?.status === "active" &&
+    (currentQuestion?.answerMode || battleItState?.answerMode) ===
+      "multiple-choice";
+
   const chatFooter = (
     <RoomFooterBar
       whisper={
@@ -1960,6 +1967,7 @@ const {
             answerFeedback={answerFeedback}
             attemptsInfo={attemptsInfo}
             currentRoundId={currentRoundId}
+            singleChoice={isBattleItMultipleChoice}
           />
         ) : isWordScramble ? (
           <WordScrambleWhisperStatus
@@ -1984,7 +1992,16 @@ const {
         ) : null
       }
       composer={
-        <ChatInput
+        isBattleItMultipleChoice ? (
+          <BattleItAnswerOptions
+            key={currentRoundId || "waiting"}
+            roundId={currentRoundId}
+            options={currentQuestion?.answerOptions || []}
+            onSelect={handleSend}
+            disabled={status !== "connected" || isLoadingRoom}
+          />
+        ) : (
+          <ChatInput
           onSend={handleSend}
           replyTarget={!showGameSidebar ? replyTarget : null}
           onCancelReply={!showGameSidebar ? handleCancelReply : undefined}
@@ -2040,7 +2057,8 @@ const {
             (!showGameSidebar &&
               (Boolean(mutedBannerMessage) || isModerationStateLoading))
           }
-        />
+          />
+        )
       }
     />
   );

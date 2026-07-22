@@ -90,24 +90,6 @@ function formatDifficulty(value) {
   return String(value);
 }
 
-function getDifficultyPillClass(value) {
-  const lower = String(value || "").toLowerCase();
-
-  if (lower === "easy") {
-    return "border-emerald-400/20 bg-emerald-500/10 text-emerald-200";
-  }
-
-  if (lower === "medium") {
-    return "border-amber-400/20 bg-amber-500/10 text-amber-200";
-  }
-
-  if (lower === "hard") {
-    return "border-rose-400/20 bg-rose-500/10 text-rose-200";
-  }
-
-  return "border-white/10 bg-white/[0.05] text-neutral-300";
-}
-
 function MetaPill({ children, className = "" }) {
   return (
     <span
@@ -251,26 +233,13 @@ export default function TriviaHeroCard({
                 {isLive ? "Live now" : "Standby"}
               </MetaPill>
 
-              <MetaPill className="border-white/10 bg-white/[0.05] text-neutral-400">
-                {runModeLabel}
-              </MetaPill>
-
-              {questionCategory ? (
-                <MetaPill className="border-white/10 bg-white/[0.05] text-neutral-300">
-                  {questionCategory}
-                </MetaPill>
-              ) : null}
-
-              {questionDifficulty ? (
-                <MetaPill className={getDifficultyPillClass(questionDifficulty)}>
-                  {questionDifficulty}
-                </MetaPill>
-              ) : null}
             </div>
 
-            {question.sessionTitle ? (
-              <div className="mt-2 truncate text-xs font-medium text-cyan-100/80">
-                {question.sessionTitle}
+            {question.sessionTitle || questionCategory || questionDifficulty ? (
+              <div className="mt-2 truncate text-[11px] font-medium text-neutral-400 sm:text-xs">
+                {[question.sessionTitle, runModeLabel, questionCategory, questionDifficulty]
+                  .filter(Boolean)
+                  .join(" · ")}
               </div>
             ) : null}
           </div>
@@ -318,7 +287,7 @@ export default function TriviaHeroCard({
 
                 <div
                   className={`font-semibold tracking-[-0.02em] text-white transition-all duration-500 ${
-                    compact ? "text-[14px] sm:text-[16px]" : "text-[17px] sm:text-[17px]"
+                    compact ? "text-[16px] sm:text-[18px]" : "text-[18px] sm:text-[22px]"
                   } ${
                     isQuestionFresh
                       ? "translate-y-0 opacity-100 drop-shadow-[0_0_10px_rgba(96,165,250,0.16)]"
@@ -376,7 +345,7 @@ export default function TriviaHeroCard({
                 </div>
               ) : null}
             </div>
-          ) : (
+          ) : !hasActiveRound ? (
             <div
               className={`flex items-center justify-between rounded-[14px] border border-white/8 bg-black/20 ${
                 compact ? "px-3 py-2 sm:rounded-[14px] sm:px-3 sm:py-2" : "px-3 py-2 sm:rounded-[16px] sm:px-3.5 sm:py-2.5"
@@ -400,6 +369,11 @@ export default function TriviaHeroCard({
                     : "bg-neutral-600"
                 }`}
               />
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 px-1 text-[11px] font-medium text-blue-200/80 sm:text-xs">
+              <span className="h-2 w-2 shrink-0 rounded-full bg-blue-300 shadow-[0_0_10px_rgba(147,197,253,0.7)]" />
+              Submit your answer below before the timer ends.
             </div>
           )}
         </div>

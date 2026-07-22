@@ -889,7 +889,7 @@ export default function LeaderboardsPage() {
       }`}
       style={lightModeUndoFilter}
     >
-      <div className="mx-auto w-full max-w-[76rem] px-4 py-6 pb-24 sm:px-5 sm:py-8 sm:pb-8 lg:px-6 lg:py-10">
+      <div className="mx-auto w-full max-w-[76rem] px-4 py-6 pb-24 sm:px-5 sm:py-8 md:pb-8 lg:px-6 lg:py-10">
         <AppSectionNav />
 
         <AppTopBar

@@ -31,66 +31,51 @@ function SectionHeader({ eyebrow, title, description, action }) {
 }
 
 function MobileRoomsHero({
-  totalUnreadMentions,
-  roomCount,
-  creativeCount,
   priorityRoom,
+  featuredRoom,
+  battleItRoom,
 }) {
   return (
     <section className="mb-5 sm:hidden">
       <div className="overflow-hidden rounded-[30px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.12),transparent_30%),radial-gradient(circle_at_top_right,rgba(251,191,36,0.1),transparent_24%),linear-gradient(180deg,rgba(20,24,34,0.98),rgba(8,10,16,0.98))] p-4 shadow-[0_22px_48px_rgba(0,0,0,0.24)]">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <div className="text-[10px] uppercase tracking-[0.18em] text-blue-200/70">
-              Competition rooms
-            </div>
-            <h1 className="mt-2 text-[29px] font-semibold tracking-[-0.05em] text-white">
-              Pick a room and jump in live.
-            </h1>
-            <p className="mt-2 max-w-[22rem] text-[13px] leading-6 text-neutral-400">
-              Trivia, word battles, and RapNometry all live here with a tighter mobile layout.
-            </p>
-          </div>
-
-          <div className="rounded-[18px] border border-white/10 bg-white/[0.04] px-3 py-2 text-right shadow-[0_12px_24px_rgba(0,0,0,0.14)]">
-            <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
-              Rooms
-            </div>
-            <div className="mt-1 text-[20px] font-semibold tracking-[-0.04em] text-white">
-              {roomCount}
-            </div>
-          </div>
+        <div className="text-[10px] uppercase tracking-[0.18em] text-blue-200/70">
+          Competition rooms
         </div>
+        <h1 className="mt-2 text-[28px] font-semibold leading-[1.04] tracking-[-0.05em] text-white">
+          Choose how you want to play.
+        </h1>
+        <p className="mt-2 max-w-[28rem] text-[13px] leading-6 text-neutral-400">
+          Continue the main competition, build a battle from your notes, or browse the other live rooms.
+        </p>
 
-        <div className="mt-4 grid grid-cols-3 gap-2.5">
-          <div className="rounded-[20px] border border-white/8 bg-white/[0.03] px-3 py-3">
-            <div className="text-[9px] uppercase tracking-[0.16em] text-neutral-500">
-              Featured
-            </div>
-            <div className="mt-1 text-[16px] font-semibold text-white">Trivia</div>
-          </div>
-          <div className="rounded-[20px] border border-white/8 bg-white/[0.03] px-3 py-3">
-            <div className="text-[9px] uppercase tracking-[0.16em] text-neutral-500">
-              Arena
-            </div>
-            <div className="mt-1 text-[16px] font-semibold text-white">{creativeCount}</div>
-          </div>
-          <div className="rounded-[20px] border border-white/8 bg-white/[0.03] px-3 py-3">
-            <div className="text-[9px] uppercase tracking-[0.16em] text-neutral-500">
-              Mentions
-            </div>
-            <div className="mt-1 text-[16px] font-semibold text-white">
-              {totalUnreadMentions}
-            </div>
-          </div>
+        <div className="mt-4 grid gap-2.5">
+          {featuredRoom ? (
+            <Link
+              to={`/rooms/${featuredRoom.id}`}
+              className="flex min-h-12 items-center justify-between rounded-[16px] bg-blue-500 px-4 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(37,99,235,0.24)]"
+            >
+              <span>Continue Battle Trivia</span>
+              <span aria-hidden="true">&rarr;</span>
+            </Link>
+          ) : null}
+
+          {battleItRoom ? (
+            <Link
+              to={`/rooms/${battleItRoom.id}`}
+              className="flex min-h-12 items-center justify-between rounded-[16px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-medium text-neutral-200"
+            >
+              <span>Battle your own notes</span>
+              <span aria-hidden="true">&rarr;</span>
+            </Link>
+          ) : null}
         </div>
 
         {priorityRoom ? (
           <Link
             to={`/rooms/${priorityRoom.id}`}
-            className="mt-4 inline-flex w-full items-center justify-between rounded-[20px] border border-blue-400/18 bg-blue-500/10 px-4 py-3 text-sm font-medium text-white shadow-[0_14px_28px_rgba(37,99,235,0.14)]"
+            className="mt-4 inline-flex w-full items-center justify-between border-t border-white/8 pt-3 text-[11px] font-medium text-amber-200"
           >
-            <span>Open latest room activity</span>
+            <span>Open your latest mention</span>
             <span aria-hidden="true">&rarr;</span>
           </Link>
         ) : null}
@@ -116,6 +101,44 @@ function MobileSectionShell({ eyebrow, title, description, children }) {
 
       <div className="mt-4 sm:mt-0">{children}</div>
     </section>
+  );
+}
+
+function BattleItSpotlight({ room }) {
+  if (!room?.id) return null;
+
+  return (
+    <Link
+      to={`/rooms/${room.id}`}
+      className="group flex h-full flex-col rounded-[22px] border border-violet-400/18 bg-[radial-gradient(circle_at_top_left,rgba(139,92,246,0.12),transparent_38%),linear-gradient(180deg,rgba(18,16,30,0.98),rgba(8,10,16,0.98))] p-4 shadow-[0_18px_38px_rgba(0,0,0,0.18)] transition hover:-translate-y-[1px] hover:border-violet-300/28 sm:rounded-[24px] sm:p-5"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="rounded-full border border-violet-400/20 bg-violet-500/10 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-violet-200">
+          AI Battle Creator
+        </div>
+        <div className="flex h-11 w-11 items-center justify-center rounded-[14px] border border-violet-400/20 bg-violet-500/10 text-lg text-violet-100">
+          <span aria-hidden="true">+</span>
+        </div>
+      </div>
+
+      <div className="mt-5">
+        <h3 className="text-[21px] font-semibold tracking-[-0.04em] text-white sm:text-[24px]">
+          Battle your own notes
+        </h3>
+        <p className="mt-2 text-[13px] leading-6 text-neutral-400 sm:text-sm">
+          Paste study material or upload note images, review the generated questions, and invite players into a finite live battle.
+        </p>
+      </div>
+
+      <div className="mt-auto flex items-center justify-between gap-3 border-t border-white/8 pt-4">
+        <span className="text-[10px] font-medium uppercase tracking-[0.12em] text-neutral-500">
+          Create · review · play
+        </span>
+        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-200 transition group-hover:text-white">
+          Start &rarr;
+        </span>
+      </div>
+    </Link>
   );
 }
 
@@ -194,6 +217,14 @@ export default function RoomsPage() {
     };
   }, [rooms, featuredRoomStatus]);
 
+  const battleItRoom = useMemo(
+    () =>
+      rooms.find(
+        (room) => room.slug === "battle-it" || room.roomType === "battle-it"
+      ) || null,
+    [rooms]
+  );
+
   const gameRooms = useMemo(() => {
     return rooms.filter((room) => {
       const isGameLike =
@@ -205,10 +236,11 @@ export default function RoomsPage() {
 
       if (!isGameLike) return false;
       if (featuredRoom && room.id === featuredRoom.id) return false;
+      if (battleItRoom && room.id === battleItRoom.id) return false;
 
       return true;
     });
-  }, [rooms, featuredRoom]);
+  }, [rooms, featuredRoom, battleItRoom]);
 
   const creativeBattleRooms = useMemo(() => {
     return rooms
@@ -236,11 +268,27 @@ export default function RoomsPage() {
     });
   }, [gameRooms]);
 
+  const remainingRooms = useMemo(() => {
+    return [...sortedGameRooms, ...creativeBattleRooms].sort((a, b) => {
+      const mentionDelta =
+        (Number(b?.unreadMentionCount) || 0) -
+        (Number(a?.unreadMentionCount) || 0);
+
+      if (mentionDelta !== 0) return mentionDelta;
+
+      return String(a?.name || "").localeCompare(String(b?.name || ""));
+    });
+  }, [sortedGameRooms, creativeBattleRooms]);
+
   const roomsWithUnreadMentions = useMemo(() => {
-    return sortedGameRooms.filter(
-      (room) => (Number(room?.unreadMentionCount) || 0) > 0
-    );
-  }, [sortedGameRooms]);
+    return rooms
+      .filter((room) => (Number(room?.unreadMentionCount) || 0) > 0)
+      .sort(
+        (a, b) =>
+          (Number(b?.unreadMentionCount) || 0) -
+          (Number(a?.unreadMentionCount) || 0)
+      );
+  }, [rooms]);
 
   const totalUnreadMentions = useMemo(() => {
     return roomsWithUnreadMentions.reduce(
@@ -258,9 +306,6 @@ export default function RoomsPage() {
       }
     : undefined;
 
-  const totalRoomCount =
-    sortedGameRooms.length + creativeBattleRooms.length + (featuredRoom ? 1 : 0);
-
   return (
     <div
       className={`rooms-page min-h-screen bg-neutral-950 text-white ${
@@ -268,27 +313,45 @@ export default function RoomsPage() {
       }`}
       style={lightModeUndoFilter}
     >
-      <div className="mx-auto w-full max-w-[76rem] px-4 py-4 pb-24 sm:px-5 sm:py-7 sm:pb-7 lg:px-6 lg:py-9">
+      <div className="mx-auto w-full max-w-[76rem] px-4 py-4 pb-24 sm:px-5 sm:py-7 md:pb-7 lg:px-6 lg:py-9">
         <AppSectionNav />
 
         <MobileRoomsHero
-          totalUnreadMentions={totalUnreadMentions}
-          roomCount={totalRoomCount}
-          creativeCount={creativeBattleRooms.length}
           priorityRoom={priorityRoom}
+          featuredRoom={featuredRoom}
+          battleItRoom={battleItRoom}
         />
 
         <div className="hidden sm:block">
           <AppTopBar
             eyebrow="Rooms"
-            title="Competition rooms"
-            description="Game rooms and battle spaces live here."
-            actions={[]}
+            title="Choose how you want to play"
+            description="Continue the main competition, create a battle from your notes, or explore the other live rooms."
+            actions={[
+              ...(featuredRoom
+                ? [
+                    {
+                      to: `/rooms/${featuredRoom.id}`,
+                      label: "Continue Battle Trivia",
+                      sublabel: "Enter the main competition",
+                    },
+                  ]
+                : []),
+              ...(battleItRoom
+                ? [
+                    {
+                      to: `/rooms/${battleItRoom.id}`,
+                      label: "Battle your own notes",
+                      sublabel: "Create a finite AI battle",
+                    },
+                  ]
+                : []),
+            ]}
           />
         </div>
 
         {totalUnreadMentions > 0 ? (
-          <div className="mb-5 rounded-[20px] border border-amber-400/18 bg-[radial-gradient(circle_at_top_right,rgba(245,158,11,0.12),transparent_36%),linear-gradient(180deg,rgba(245,158,11,0.1),rgba(245,158,11,0.04))] px-4 py-4 shadow-[0_14px_30px_rgba(0,0,0,0.12)] sm:mb-6 sm:rounded-[22px]">
+          <div className="mb-5 hidden rounded-[20px] border border-amber-400/18 bg-[radial-gradient(circle_at_top_right,rgba(245,158,11,0.12),transparent_36%),linear-gradient(180deg,rgba(245,158,11,0.1),rgba(245,158,11,0.04))] px-4 py-4 shadow-[0_14px_30px_rgba(0,0,0,0.12)] sm:mb-6 sm:block sm:rounded-[22px]">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <div className="text-[10px] uppercase tracking-[0.18em] text-amber-200/80 sm:text-[11px]">
@@ -329,31 +392,25 @@ export default function RoomsPage() {
           </div>
         ) : (
           <>
-            {featuredRoom ? (
+            {featuredRoom || battleItRoom ? (
               <section className="mb-6 sm:mb-8">
                 <MobileSectionShell
-                  eyebrow="Featured"
-                  title="Main competition"
-                  description="The flagship live room stays pinned here for fast access."
+                  eyebrow="Start here"
+                  title="Pick your next battle"
+                  description="Continue the live competition or create one from material you already have."
                 >
                   <div className="hidden sm:block">
                     <SectionHeader
-                      eyebrow="Featured"
-                      title="Main competition"
-                      description="The flagship live room stays pinned here for fast access."
-                      action={
-                        <Link
-                          to={`/rooms/${featuredRoom.id}`}
-                          className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.035] px-3 py-1.5 text-[11px] font-medium text-white transition hover:border-white/15 hover:bg-white/[0.05] sm:rounded-[18px] sm:px-4 sm:py-2 sm:text-sm"
-                        >
-                          Open room
-                          <span aria-hidden="true">&rarr;</span>
-                        </Link>
-                      }
+                      eyebrow="Start here"
+                      title="Pick your next battle"
+                      description="Continue the live competition or create one from material you already have."
                     />
                   </div>
 
-                  <FeaturedTriviaCard room={featuredRoom} />
+                  <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
+                    {featuredRoom ? <FeaturedTriviaCard room={featuredRoom} /> : null}
+                    {battleItRoom ? <BattleItSpotlight room={battleItRoom} /> : null}
+                  </div>
                 </MobileSectionShell>
               </section>
             ) : null}
@@ -361,24 +418,24 @@ export default function RoomsPage() {
             <section>
               <MobileSectionShell
                 eyebrow="Browse"
-                title="Game rooms"
-                description="Trivia and game-based competition rooms."
+                title="More rooms"
+                description="Everything else, grouped into one quieter place."
               >
                 <div className="hidden sm:block">
                   <SectionHeader
                     eyebrow="Browse"
-                    title="Game rooms"
-                    description="Trivia and game-based competition rooms."
+                    title="More rooms"
+                    description="Game rooms, community competitions, and creative arenas."
                   />
                 </div>
 
-                {sortedGameRooms.length === 0 ? (
+                {remainingRooms.length === 0 ? (
                   <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-10 text-center text-sm text-neutral-500 sm:rounded-[24px] sm:py-12">
-                    No game rooms available yet.
+                    No additional rooms available yet.
                   </div>
                 ) : (
                   <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
-                    {sortedGameRooms.map((room) => (
+                    {remainingRooms.map((room) => (
                       <RoomCard key={room.id} room={room} />
                     ))}
                   </div>
@@ -386,29 +443,6 @@ export default function RoomsPage() {
               </MobileSectionShell>
             </section>
 
-            {creativeBattleRooms.length > 0 ? (
-              <section className="mt-6 sm:mt-8">
-                <MobileSectionShell
-                  eyebrow="Creative"
-                  title="Battle arenas"
-                  description="Open mic, rap, and poetry challenge rooms."
-                >
-                  <div className="hidden sm:block">
-                    <SectionHeader
-                      eyebrow="Creative"
-                      title="Battle arenas"
-                      description="Open mic, rap, and poetry challenge rooms."
-                    />
-                  </div>
-
-                  <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
-                    {creativeBattleRooms.map((room) => (
-                      <RoomCard key={room.id} room={room} />
-                    ))}
-                  </div>
-                </MobileSectionShell>
-              </section>
-            ) : null}
           </>
         )}
       </div>

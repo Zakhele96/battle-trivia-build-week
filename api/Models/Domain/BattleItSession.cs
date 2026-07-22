@@ -12,8 +12,11 @@ public sealed class BattleItSession
     public string SourceType { get; set; } = "text";
     public string? SourceLabel { get; set; }
     public string Difficulty { get; set; } = "medium";
+    public string AnswerMode { get; set; } = "text";
+    public string Visibility { get; set; } = "code-only";
     public int QuestionDurationSeconds { get; set; } = 20;
     public int RevealDelaySeconds { get; set; } = 5;
+    public string? JoinCode { get; set; }
     public string Model { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
@@ -31,6 +34,7 @@ public sealed class BattleItQuestion
     public string QuestionText { get; set; } = string.Empty;
     public string CorrectAnswer { get; set; } = string.Empty;
     public string AcceptedAnswersJson { get; set; } = "[]";
+    public string AnswerOptionsJson { get; set; } = "[]";
     public string AnswerExplanation { get; set; } = string.Empty;
     public string Difficulty { get; set; } = "medium";
 }
@@ -48,6 +52,7 @@ public sealed class BattleItGeneratedQuestion
     public string QuestionText { get; set; } = string.Empty;
     public string CorrectAnswer { get; set; } = string.Empty;
     public List<string> AcceptedAnswers { get; set; } = [];
+    public List<string> AnswerOptions { get; set; } = [];
     public string Difficulty { get; set; } = "medium";
     public string AnswerExplanation { get; set; } = string.Empty;
     public string SourceExcerpt { get; set; } = string.Empty;

@@ -32,12 +32,29 @@ function getWhisperTone(message) {
   };
 }
 
-function getWhisperStatus(answerFeedback, attemptsInfo, currentRoundId) {
+function getWhisperStatus(
+  answerFeedback,
+  attemptsInfo,
+  currentRoundId,
+  singleChoice
+) {
   if (!currentRoundId) {
     return {
       text: "",
       meta: "",
     };
+  }
+
+  if (singleChoice) {
+    return answerFeedback
+      ? {
+          text: answerFeedback,
+          meta: "Answer locked",
+        }
+      : {
+          text: "Choose one answer. Your choice is final.",
+          meta: "Round live",
+        };
   }
 
   const leftAttempts =
@@ -88,11 +105,13 @@ export default function TriviaWhisperStatus({
   answerFeedback,
   attemptsInfo,
   currentRoundId,
+  singleChoice = false,
 }) {
   const status = getWhisperStatus(
     answerFeedback,
     attemptsInfo,
-    currentRoundId
+    currentRoundId,
+    singleChoice
   );
 
   if (!status.text) {
